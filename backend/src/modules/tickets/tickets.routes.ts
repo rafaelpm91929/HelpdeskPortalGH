@@ -276,7 +276,12 @@ router.get('/agencia/:agencia_id', authMiddleware, async (req: any, res: any) =>
                     u.apellido as usuario_apellido,
                     u.email as usuario_email,
                     a.nombre as agente_nombre,
-                    a.apellido as agente_apellido
+                    a.apellido as agente_apellido,
+                    (SELECT TOP 1 ur.rol 
+                     FROM tbl_mensajes m 
+                     INNER JOIN tbl_usuarios ur ON ur.id = m.usuario_id 
+                     WHERE m.ticket_id = t.id 
+                     ORDER BY m.fecha_creacion DESC) as ultimo_mensaje_rol
                 FROM tbl_tickets t
                 LEFT JOIN tbl_usuarios u ON t.usuario_id = u.id
                 LEFT JOIN tbl_usuarios a ON t.agente_id = a.id
@@ -347,7 +352,12 @@ router.get('/usuario/:usuario_id', authMiddleware, async (req: any, res: any) =>
                     t.archivos_adjuntos,
                     t.numero_secuencial,
                     u.nombre as agente_nombre,
-                    u.apellido as agente_apellido
+                    u.apellido as agente_apellido,
+                    (SELECT TOP 1 ur.rol 
+                     FROM tbl_mensajes m 
+                     INNER JOIN tbl_usuarios ur ON ur.id = m.usuario_id 
+                     WHERE m.ticket_id = t.id 
+                     ORDER BY m.fecha_creacion DESC) as ultimo_mensaje_rol
                 FROM tbl_tickets t
                 LEFT JOIN tbl_usuarios u ON t.agente_id = u.id
                 WHERE t.usuario_id = @usuario_id
@@ -931,7 +941,121 @@ router.post('/:id/responder', authMiddleware, async (req: any, res: any) => {
                 writeLog(`[POST /responder] ⚠️ No se encontró info del ticket o usuario en base de datos.`);
             }
         } else {
-            writeLog(`[POST /responder] El remitente no es rol 'usuario' (rol actual: ${currentUser.rol}). No se genera notificación.`);
+            // El remitente es un admin/agente/superadmin. Notificar al cliente (creador del ticket).
+            writeLog(`[POST /responder] El remitente no es rol 'usuario' (rol actual: ${currentUser.rol}). Creando notificación para el cliente.`);
+            
+            const ticketInfo = await pool.request()
+                .input('id', parseInt(id))
+                .query(`
+                    SELECT t.numero_secuencial, t.usuario_id, t.agencia_id, u.email
+                    FROM tbl_tickets t
+                    INNER JOIN tbl_usuarios u ON u.id = t.usuario_id
+                    WHERE t.id = @id
+                `);
+            
+            if (ticketInfo.recordset.length > 0) {
+                const { numero_secuencial, usuario_id, agencia_id, email } = ticketInfo.recordset[0];
+                const remitenteNombre = currentUser.nombre ? `${currentUser.nombre} ${currentUser.apellido || ''}`.trim() : 'Soporte';
+                
+                const titulo = 'Nuevo Mensaje';
+                const mensajeNotif = `Soporte respondió a tu ticket #${numero_secuencial} (Respuesta de ${remitenteNombre})`;
+
+                writeLog(`[POST /responder] Insertando notificación para el cliente ID: ${usuario_id}`);
+                const insertResult = await pool.request()
+                    .input('usuario_id', usuario_id)
+                    .input('ticket_id', parseInt(id))
+                    .input('titulo', titulo)
+                    .input('mensaje', mensajeNotif)
+                    .query(`
+                        INSERT INTO tbl_notificaciones (usuario_id, ticket_id, titulo, mensaje)
+                        VALUES (@usuario_id, @ticket_id, @titulo, @mensaje);
+                        
+                        SELECT id, ticket_id, mensaje, leido, fecha_creacion
+                        FROM tbl_notificaciones
+                        WHERE id = SCOPE_IDENTITY();
+                    `);
+                
+                const newNotif = insertResult.recordset[0];
+                writeLog(`[POST /responder] ✅ Inserción exitosa para cliente: ${usuario_id} - Notif ID: ${newNotif?.id}`);
+                
+                // Emitir evento para SSE en tiempo real
+                notificationEvents.emit('new-notification', { usuario_id: usuario_id, notification: newNotif });
+
+                // 🔥 ENVIAR NOTIFICACIÓN POR EMAIL AL CLIENTE VÍA EMAILJS/SMTP/RESEND
+                if (process.env.EMAILJS_PUBLIC_KEY || process.env.SMTP_USER || process.env.RESEND_API_KEY) {
+                    writeLog(`[POST /responder] Enviando correo de alerta al cliente: ${email}`);
+                    const emailHtml = `
+                        <table cellpadding="0" cellspacing="0" border="0" width="100%" bgcolor="#f3f4f6" style="background-color: #f3f4f6; width: 100%;">
+                            <tr>
+                                <td align="center" style="padding: 40px 10px;">
+                                    <table cellpadding="0" cellspacing="0" border="0" width="600" bgcolor="#ffffff" style="background-color: #ffffff; width: 600px; border: 1px solid #e5e7eb;">
+                                        <tr>
+                                            <td bgcolor="#1e3a8a" align="center" style="background-color: #1e3a8a; padding: 32px 24px; text-align: center;">
+                                                <h1 style="color: #ffffff; margin: 0; font-family: 'Segoe UI', Arial, sans-serif; font-size: 24px; font-weight: bold;">
+                                                    Helpdesk Portal
+                                                </h1>
+                                                <p style="color: #bfdbfe; margin: 4px 0 0 0; font-family: 'Segoe UI', Arial, sans-serif; font-size: 14px;">
+                                                    Respuesta de Soporte Técnico
+                                                </p>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding: 32px 24px;">
+                                                <table cellpadding="0" cellspacing="0" border="0" width="100%">
+                                                    <tr>
+                                                        <td style="padding-bottom: 16px;">
+                                                            <span style="font-family: 'Segoe UI', Arial, sans-serif; font-size: 12px; font-weight: bold; color: #1d4ed8; background-color: #eff6ff; padding: 6px 12px; border-radius: 20px; text-transform: uppercase;">
+                                                                NUEVA RESPUESTA
+                                                            </span>
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td style="padding-bottom: 12px;">
+                                                            <h2 style="color: #1f2937; margin: 0; font-family: 'Segoe UI', Arial, sans-serif; font-size: 18px; font-weight: bold;">
+                                                                Detalles de la Respuesta
+                                                            </h2>
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td bgcolor="#f9fafb" style="background-color: #f9fafb; border-left: 4px solid #3b82f6; padding: 20px; border-top: 1px solid #e5e7eb; border-right: 1px solid #e5e7eb; border-bottom: 1px solid #e5e7eb;">
+                                                            <p style="font-family: 'Segoe UI', Arial, sans-serif; font-size: 14px; line-height: 1.6; color: #4b5563; margin: 0; white-space: pre-line;">
+                                                                ${mensajeNotif}
+                                                            </p>
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td align="center" style="padding-top: 28px; padding-bottom: 8px;">
+                                                            <table cellpadding="0" cellspacing="0" border="0">
+                                                                <tr>
+                                                                    <td bgcolor="#2563eb" align="center" style="background-color: #2563eb; border-radius: 6px;">
+                                                                        <a href="http://201.149.60.82:5173/" target="_blank" style="display: block; font-family: 'Segoe UI', Arial, sans-serif; font-size: 15px; font-weight: bold; color: #ffffff; text-decoration: none; padding: 14px 32px; border: 1px solid #2563eb; border-radius: 6px;">
+                                                                            Ver Respuesta
+                                                                        </a>
+                                                                    </td>
+                                                                </tr>
+                                                            </table>
+                                                        </td>
+                                                    </tr>
+                                                </table>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td bgcolor="#f9fafb" align="center" style="background-color: #f9fafb; padding: 24px; text-align: center; border-top: 1px solid #e5e7eb;">
+                                                <p style="font-family: 'Segoe UI', Arial, sans-serif; font-size: 11px; color: #9ca3af; margin: 0 0 4px 0; line-height: 1.5;">
+                                                    Este correo es de carácter informativo y automático. Por favor no respondas directamente a este mensaje.
+                                                </p>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </td>
+                            </tr>
+                        </table>
+                    `;
+                    sendNotificationEmail(email, `Helpdesk: Nueva Respuesta`, emailHtml, titulo, mensajeNotif, 'Helpdesk', 'http://201.149.60.82:5173/').catch(err => {
+                        writeLog(`[POST /responder] ❌ Error asíncrono al enviar email al cliente: ${err.message}`);
+                    });
+                }
+            }
         }
 
         res.json({

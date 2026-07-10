@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { api } from '../api/axios.config';
 import toast from 'react-hot-toast';
 import { logout } from '../utils/logout';
-import { IMAGE_BASE_URL } from '../config';
+import { IMAGE_BASE_URL, API_BASE_URL } from '../config';
 
 // ============================================
 // TIPOS
@@ -44,6 +44,7 @@ interface ITicket {
     usuario_nombre?: string;
     usuario_apellido?: string;
     usuario_email?: string;
+    ultimo_mensaje_rol?: string;
 }
 
 interface IArea {
@@ -83,6 +84,180 @@ export const UserPortal: React.FC<UserPortalProps> = ({ agenciaParam }) => {
             localStorage.setItem(`active_tab_user_${user.id}`, activeTab);
         }
     }, [activeTab, user]);
+
+    // ============================================
+    // NOTIFICACIONES EN TIEMPO REAL PARA USUARIO
+    // ============================================
+    const [notificaciones, setNotificaciones] = useState<any[]>([]);
+    const [unreadCount, setUnreadCount] = useState(0);
+    const [showNotifications, setShowNotifications] = useState(false);
+    const [notifPermission, setNotifPermission] = useState<string>(() => 'Notification' in window ? Notification.permission : 'default');
+
+    const handleEnableNotifications = () => {
+        if ('Notification' in window) {
+            if (Notification.permission === 'denied') {
+                toast.error('⚠️ Las notificaciones están bloqueadas. Haz clic en el ícono del candado junto a la dirección web (URL) y activa "Notificaciones".', {
+                    duration: 8000
+                });
+                return;
+            }
+            
+            Notification.requestPermission().then(permission => {
+                setNotifPermission(permission);
+                if (permission === 'granted') {
+                    toast.success('🔔 ¡Notificaciones de escritorio activadas!');
+                    new Notification('Helpdesk Portal', {
+                        body: '¡Las notificaciones de escritorio están activas para este equipo!',
+                        icon: agenciaInfo?.logo_url || '/favicon.ico'
+                    });
+                }
+            });
+        }
+    };
+
+    const loadNotificaciones = async () => {
+        if (!user?.id) return;
+        try {
+            const response = await api.get(`/notificaciones/usuario/${user.id}`);
+            if (response.data.success) {
+                const data = response.data.data;
+                setNotificaciones(prev => {
+                    if (prev.length > 0) {
+                        data.forEach((n: any) => {
+                            if (!prev.some(p => p.id === n.id)) {
+                                if ('Notification' in window && Notification.permission === 'granted') {
+                                    const nativeNotif = new Notification('🔔 Helpdesk Portal', {
+                                        body: n.mensaje,
+                                        icon: agenciaInfo?.logo_url || '/favicon.ico'
+                                    });
+                                    nativeNotif.onclick = () => {
+                                        window.focus();
+                                        handleNotificationClick(n);
+                                    };
+                                }
+                            }
+                        });
+                    }
+                    setUnreadCount(data.filter((n: any) => !n.leido).length);
+                    return data;
+                });
+            }
+        } catch (error) {
+            console.error('Error al cargar notificaciones:', error);
+        }
+    };
+
+    const marcarNotificacionLeida = async (id: number) => {
+        try {
+            await api.put(`/notificaciones/${id}/leer`);
+            setNotificaciones(prev =>
+                prev.map(n => n.id === id ? { ...n, leido: true } : n)
+            );
+            setUnreadCount(c => Math.max(0, c - 1));
+        } catch (e) {
+            console.error('Error al marcar leída:', e);
+        }
+    };
+
+    const marcarTodasComoLeidas = async () => {
+        if (!user?.id) return;
+        try {
+            await api.put(`/notificaciones/usuario/${user.id}/leer-todas`);
+            setNotificaciones(prev => prev.map(n => ({ ...n, leido: true })));
+            setUnreadCount(0);
+            toast.success('Todas las notificaciones leídas');
+        } catch (e) {
+            console.error(e);
+        }
+    };
+
+    const handleNotificationClick = async (n: any) => {
+        await marcarNotificacionLeida(n.id);
+        setShowNotifications(false);
+        if (n.ticket_id) {
+            setActiveTab('ver');
+            loadTicketDetail(n.ticket_id);
+        }
+    };
+
+    // Conexión en tiempo real SSE
+    useEffect(() => {
+        if (!user?.id) return;
+
+        loadNotificaciones();
+
+        const token = sessionStorage.getItem('token');
+        const sseUrl = `${API_BASE_URL}/notificaciones/stream/${user.id}?token=${token}`;
+        
+        console.log('🔌 Conectando a notificaciones en tiempo real para usuario (SSE)...');
+        let eventSource: EventSource | null = null;
+        let fallbackInterval: ReturnType<typeof setInterval> | null = null;
+
+        try {
+            eventSource = new EventSource(sseUrl);
+            eventSource.onopen = () => {
+                console.log('🔌 Conexión SSE establecida para usuario.');
+            };
+
+            eventSource.onmessage = (event) => {
+                try {
+                    const newNotification = JSON.parse(event.data);
+                    console.log('🔔 Nueva notificación recibida (SSE):', newNotification);
+                    
+                    setNotificaciones(prev => {
+                        if (prev.some(n => n.id === newNotification.id)) return prev;
+
+                        // Mostrar notificación nativa del sistema
+                        if ('Notification' in window && Notification.permission === 'granted') {
+                            const nativeNotif = new Notification('🔔 Helpdesk Portal', {
+                                body: newNotification.mensaje,
+                                icon: agenciaInfo?.logo_url || '/favicon.ico'
+                            });
+                            nativeNotif.onclick = () => {
+                                window.focus();
+                                handleNotificationClick(newNotification);
+                            };
+                        }
+
+                        const updated = [newNotification, ...prev];
+                        setUnreadCount(updated.filter(n => !n.leido).length);
+                        return updated;
+                    });
+
+                    toast.success(newNotification.mensaje, {
+                        duration: 6000,
+                        icon: '🔔'
+                    });
+
+                    loadTickets();
+                } catch (err) {
+                    console.error('Error al procesar notificación en tiempo real:', err);
+                }
+            };
+
+            eventSource.onerror = (err) => {
+                console.warn('⚠️ Conexión SSE falló para usuario. Activando fallback a polling...');
+                if (eventSource) {
+                    eventSource.close();
+                    eventSource = null;
+                }
+                
+                if (!fallbackInterval) {
+                    fallbackInterval = setInterval(() => {
+                        loadNotificaciones();
+                        loadTickets();
+                    }, 10000);
+                }
+            };
+        } catch (e) {
+            console.error('Error al iniciar SSE para usuario:', e);
+        }
+
+        return () => {
+            if (eventSource) eventSource.close();
+            if (fallbackInterval) clearInterval(fallbackInterval);
+        };
+    }, [user?.id, agenciaInfo?.logo_url]);
 
     const [loading, setLoading] = useState(false);
     const [initialLoading, setInitialLoading] = useState(true);
@@ -944,6 +1119,183 @@ export const UserPortal: React.FC<UserPortalProps> = ({ agenciaParam }) => {
                     </span>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                    {/* 🔥 BOTÓN PARA ACTIVAR ALERTA DE ESCRITORIO */}
+                    {('Notification' in window && notifPermission !== 'granted') && (
+                        <button
+                            onClick={handleEnableNotifications}
+                            style={{
+                                backgroundColor: notifPermission === 'denied' ? '#ef4444' : '#10b981',
+                                color: '#ffffff',
+                                border: 'none',
+                                borderRadius: '4px',
+                                padding: '6px 12px',
+                                fontSize: '12px',
+                                fontWeight: '500',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '6px'
+                            }}
+                        >
+                            {notifPermission === 'denied' ? '⚠️ Desbloquear Alertas' : '🔔 Activar Alertas'}
+                        </button>
+                    )}
+
+                    {/* 🔥 CAMPANA DE NOTIFICACIONES */}
+                    <div style={{ position: 'relative' }}>
+                        <button
+                            onClick={() => setShowNotifications(!showNotifications)}
+                            style={{
+                                background: 'none',
+                                border: 'none',
+                                cursor: 'pointer',
+                                fontSize: '18px',
+                                padding: '6px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                color: 'white',
+                                position: 'relative',
+                                outline: 'none'
+                            }}
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                                <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                            </svg>
+                            {unreadCount > 0 && (
+                                <span style={{
+                                    position: 'absolute',
+                                    top: '0px',
+                                    right: '0px',
+                                    backgroundColor: '#ef4444',
+                                    color: 'white',
+                                    borderRadius: '50%',
+                                    padding: '1px 5px',
+                                    fontSize: '9px',
+                                    fontWeight: 'bold',
+                                    lineHeight: 1
+                                }}>
+                                    {unreadCount}
+                                </span>
+                            )}
+                        </button>
+
+                        {/* DROPDOWN DE NOTIFICACIONES */}
+                        {showNotifications && (
+                            <>
+                                <div 
+                                    onClick={() => setShowNotifications(false)}
+                                    style={{
+                                        position: 'fixed',
+                                        top: 0,
+                                        left: 0,
+                                        right: 0,
+                                        bottom: 0,
+                                        zIndex: 99,
+                                        backgroundColor: 'transparent'
+                                    }}
+                                />
+                                <div style={{
+                                    position: 'absolute',
+                                    top: '100%',
+                                    right: 0,
+                                    marginTop: '8px',
+                                    width: '320px',
+                                    backgroundColor: colores.tarjeta,
+                                    border: '1px solid ' + colores.borde,
+                                    borderRadius: '8px',
+                                    boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+                                    zIndex: 100,
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    overflow: 'hidden'
+                                }}>
+                                    <div style={{
+                                        padding: '12px 16px',
+                                        borderBottom: '1px solid ' + colores.borde,
+                                        display: 'flex',
+                                        justifyContent: 'space-between',
+                                        alignItems: 'center',
+                                        backgroundColor: isDarkMode ? '#0f172a' : '#f9fafb'
+                                    }}>
+                                        <span style={{ fontWeight: '600', fontSize: '13px', color: colores.texto }}>Notificaciones</span>
+                                        {unreadCount > 0 && (
+                                            <button 
+                                                onClick={marcarTodasComoLeidas}
+                                                style={{
+                                                    background: 'none',
+                                                    border: 'none',
+                                                    color: colores.primario,
+                                                    fontSize: '11px',
+                                                    cursor: 'pointer',
+                                                    fontWeight: '500',
+                                                    padding: 0
+                                                }}
+                                            >
+                                                Marcar todo leído
+                                            </button>
+                                        )}
+                                    </div>
+                                    <div style={{ maxHeight: '240px', overflowY: 'auto' }}>
+                                        {notificaciones.length === 0 ? (
+                                            <div style={{ padding: '20px', textAlign: 'center', color: colores.textoMuted, fontSize: '12px' }}>
+                                                No tienes notificaciones
+                                            </div>
+                                        ) : (
+                                            notificaciones.map((notif) => (
+                                                <div 
+                                                    key={notif.id}
+                                                    onClick={() => handleNotificationClick(notif)}
+                                                    style={{
+                                                        padding: '10px 16px',
+                                                        borderBottom: '1px solid ' + colores.borde,
+                                                        cursor: 'pointer',
+                                                        backgroundColor: notif.leido ? 'transparent' : (isDarkMode ? '#1e293b80' : '#3b82f608'),
+                                                        transition: 'background-color 0.2s',
+                                                        display: 'flex',
+                                                        gap: '8px',
+                                                        alignItems: 'start'
+                                                    }}
+                                                    onMouseEnter={(e) => {
+                                                        e.currentTarget.style.backgroundColor = isDarkMode ? '#33415550' : '#f3f4f650';
+                                                    }}
+                                                    onMouseLeave={(e) => {
+                                                        e.currentTarget.style.backgroundColor = notif.leido ? 'transparent' : (isDarkMode ? '#1e293b80' : '#3b82f608');
+                                                    }}
+                                                >
+                                                    <div style={{
+                                                        marginTop: '4px',
+                                                        width: '6px',
+                                                        height: '6px',
+                                                        borderRadius: '50%',
+                                                        backgroundColor: notif.leido ? 'transparent' : colores.primario,
+                                                        flexShrink: 0
+                                                    }} />
+                                                    <div style={{ flex: 1 }}>
+                                                        <p style={{ 
+                                                            margin: 0, 
+                                                            fontSize: '12px', 
+                                                            color: colores.texto,
+                                                            lineHeight: 1.4,
+                                                            fontWeight: notif.leido ? '400' : '500',
+                                                            textAlign: 'left'
+                                                        }}>
+                                                            {notif.mensaje}
+                                                        </p>
+                                                        <span style={{ fontSize: '10px', color: colores.textoMuted, marginTop: '2px', display: 'block', textAlign: 'left' }}>
+                                                            {new Date(notif.fecha_creacion).toLocaleString()}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            ))
+                                        )}
+                                    </div>
+                                </div>
+                            </>
+                        )}
+                    </div>
+
                     <span style={{ fontSize: '14px' }}>
                         {user.nombre} {user.apellido}
                     </span>
@@ -1515,7 +1867,22 @@ export const UserPortal: React.FC<UserPortalProps> = ({ agenciaParam }) => {
                                                 }}
                                             >
                                                 <div>
-                                                    <div style={{ fontWeight: '500' }}>#{ticket.numero_secuencial || ticket.id} - {ticket.asunto || 'Sin asunto'}</div>
+                                                    <div style={{ fontWeight: '500', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                        #{ticket.numero_secuencial || ticket.id} - {ticket.asunto || 'Sin asunto'}
+                                                        {(ticket.ultimo_mensaje_rol === 'admin' || ticket.ultimo_mensaje_rol === 'superadmin') && (
+                                                            <span style={{
+                                                                backgroundColor: '#10b981',
+                                                                color: '#ffffff',
+                                                                fontSize: '11px',
+                                                                padding: '2px 8px',
+                                                                borderRadius: '4px',
+                                                                fontWeight: 'bold',
+                                                                display: 'inline-block'
+                                                            }}>
+                                                                Respuesta de Soporte
+                                                            </span>
+                                                        )}
+                                                    </div>
                                                     <div style={{ fontSize: '13px', color: colores.textoMuted }}>
                                                         {ticket.tipo || 'General'} • {ticket.area || 'Sin área'} • {new Date(ticket.fecha_creacion).toLocaleDateString()}
                                                     </div>

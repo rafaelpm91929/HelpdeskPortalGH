@@ -47,6 +47,7 @@ interface ITicket {
     agente_apellido?: string;
     archivos_adjuntos?: IArchivo[] | string;
     mensajes?: IMensaje[];
+    ultimo_mensaje_rol?: string;
 }
 
 interface IUsuario {
@@ -454,9 +455,26 @@ export const AdminTickets: React.FC<AdminTicketsProps> = ({
                                             <div style={{ 
                                                 fontWeight: '500',
                                                 textDecoration: isResolvedOrClosed ? 'line-through' : 'none',
-                                                color: isResolvedOrClosed ? c.textoMuted : c.texto
+                                                color: isResolvedOrClosed ? c.textoMuted : c.texto,
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '8px',
+                                                flexWrap: 'wrap'
                                             }}>
                                                 #{ticket.numero_secuencial || ticket.id} - {ticket.asunto}
+                                                {(ticket.ultimo_mensaje_rol === 'usuario' && !isResolvedOrClosed) && (
+                                                    <span style={{
+                                                        backgroundColor: '#3b82f6',
+                                                        color: '#ffffff',
+                                                        fontSize: '10px',
+                                                        padding: '2px 8px',
+                                                        borderRadius: '4px',
+                                                        fontWeight: 'bold',
+                                                        display: 'inline-block'
+                                                    }}>
+                                                        Contestado por Cliente
+                                                    </span>
+                                                )}
                                             </div>
                                             <div style={{ fontSize: '12px', color: c.textoMuted }}>
                                                 {ticket.tipo || 'General'} • {ticket.area || 'Sin área'}
