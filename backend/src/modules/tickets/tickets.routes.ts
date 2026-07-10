@@ -12,7 +12,7 @@ const router = Router();
 // ============================================
 // HELPER PARA NOTIFICACIONES
 // ============================================
-async function crearNotificaciones(ticketId: number, agenciaId: number, mensaje: string, agenteId: number | null, excluirUsuarioId?: number) {
+export async function crearNotificaciones(ticketId: number, agenciaId: number, mensaje: string, agenteId: number | null, excluirUsuarioId?: number) {
     try {
         const pool = await getConnection();
         const adminsResult = await pool.request()
