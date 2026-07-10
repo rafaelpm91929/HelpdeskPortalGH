@@ -48,7 +48,7 @@ export const sendNotificationEmail = async (
     htmlContent: string,
     rawTitle?: string,
     rawMessage?: string,
-    logoUrl?: string,
+    agencyName?: string,
     linkPortal?: string
 ) => {
     try {
@@ -74,7 +74,7 @@ export const sendNotificationEmail = async (
                     subject: subject,
                     title: rawTitle || subject,
                     message: rawMessage || htmlContent,
-                    logo_url: logoUrl || '',
+                    agency_name: agencyName || '',
                     link_portal: linkPortal || ''
                 }
             };

@@ -31,25 +31,15 @@ export async function crearNotificaciones(ticketId: number, agenciaId: number, m
         writeLog(`[crearNotificaciones] Iniciando - ticketId: ${ticketId}, agenciaId: ${agenciaId}, mensaje: "${mensaje}", agenteId: ${agenteId}, excluirUsuarioId: ${excluirUsuarioId}`);
         const pool = await getConnection();
         
-        // Obtener logo y datos de la agencia
+        // Obtener datos de la agencia (nombre para el correo)
         const agenciaRes = await pool.request()
             .input('agencia_id', agenciaId)
-            .query("SELECT nombre, logo_url, subdominio FROM tbl_agencias WHERE id = @agencia_id");
+            .query("SELECT nombre FROM tbl_agencias WHERE id = @agencia_id");
         
-        let logoUrl = '';
-        let subdominio = '';
-        if (agenciaRes.recordset.length > 0) {
-            logoUrl = agenciaRes.recordset[0].logo_url || '';
-            subdominio = agenciaRes.recordset[0].subdominio || '';
-        }
+        const nombreAgencia = agenciaRes.recordset.length > 0 ? agenciaRes.recordset[0].nombre : 'Helpdesk';
 
-        // Construir link del portal (usando el subdominio si aplica o la IP pública del frontend)
-        const publicIp = process.env.PUBLIC_IP || 'localhost';
-        // Si hay subdominio, podemos construir una URL amigable (ej: http://subdominio.midominio.com o usar la IP/puerto por defecto)
-        const baseDomain = process.env.BASE_DOMAIN || `${publicIp}:5173`;
-        const linkPortal = subdominio 
-            ? `http://${subdominio}.${baseDomain.replace(/:\d+$/, '')}:5173/admin` 
-            : `http://${baseDomain}/admin`;
+        // Enlace del portal estático para atender la solicitud (solicitado a la IP y puerto 5173)
+        const linkPortal = 'http://201.149.60.82:5173/';
 
         // Seleccionamos tanto el ID como el email de los admins y superadmins de la agencia
         const adminsResult = await pool.request()
@@ -113,27 +103,83 @@ export async function crearNotificaciones(ticketId: number, agenciaId: number, m
             if (process.env.EMAILJS_PUBLIC_KEY || process.env.SMTP_USER || process.env.RESEND_API_KEY) {
                 writeLog(`[crearNotificaciones] Disparando envío de correo a: ${recipientEmail}`);
                 
-                const logoHtml = logoUrl ? `<div style="text-align: center; margin-bottom: 16px;"><img src="${logoUrl}" alt="Logo Agencia" style="max-height: 60px; object-fit: contain;" /></div>` : '';
+                // Diseño de tabla compatible con Outlook Classic
                 const emailHtml = `
-                    <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 8px; background-color: #ffffff; color: #1e293b;">
-                        <div style="text-align: center; border-bottom: 2px solid #3b82f6; padding-bottom: 16px; margin-bottom: 20px;">
-                            ${logoHtml}
-                            <h2 style="color: #2563eb; margin: 0; font-size: 22px;">🔔 Alerta de Helpdesk Portal</h2>
-                        </div>
-                        <p style="font-size: 16px; font-weight: bold; color: #0f172a; margin-top: 0;">${titulo}</p>
-                        <div style="background-color: #f8fafc; border-left: 4px solid #3b82f6; padding: 16px; border-radius: 4px; margin: 16px 0;">
-                            <p style="font-size: 14px; margin: 0; line-height: 1.6; color: #334155; white-space: pre-line;">${mensaje}</p>
-                        </div>
-                        <div style="text-align: center; margin: 24px 0;">
-                            <a href="${linkPortal}" style="display: inline-block; padding: 12px 24px; background-color: #2563eb; color: #ffffff; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 14px; box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);">Ir al Portal Administrativo</a>
-                        </div>
-                        <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 24px 0;" />
-                        <p style="font-size: 11px; color: #94a3b8; text-align: center; margin: 0;">Este es un mensaje automático enviado desde el portal de soporte. Favor de no responder a este correo.</p>
-                    </div>
+                    <table cellpadding="0" cellspacing="0" border="0" width="100%" bgcolor="#f3f4f6" style="background-color: #f3f4f6; width: 100%;">
+                        <tr>
+                            <td align="center" style="padding: 40px 10px;">
+                                <table cellpadding="0" cellspacing="0" border="0" width="600" bgcolor="#ffffff" style="background-color: #ffffff; width: 600px; border: 1px solid #e5e7eb;">
+                                    <tr>
+                                        <td bgcolor="#1e3a8a" align="center" style="background-color: #1e3a8a; padding: 32px 24px; text-align: center;">
+                                            <h2 style="color: #ffffff; margin: 0 0 8px 0; font-family: 'Segoe UI', Arial, sans-serif; font-size: 20px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">
+                                                ${nombreAgencia}
+                                            </h2>
+                                            <h1 style="color: #ffffff; margin: 0; font-family: 'Segoe UI', Arial, sans-serif; font-size: 24px; font-weight: bold;">
+                                                Helpdesk Portal
+                                            </h1>
+                                            <p style="color: #bfdbfe; margin: 4px 0 0 0; font-family: 'Segoe UI', Arial, sans-serif; font-size: 14px;">
+                                                Notificación de Soporte Técnico
+                                            </p>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding: 32px 24px;">
+                                            <table cellpadding="0" cellspacing="0" border="0" width="100%">
+                                                <tr>
+                                                    <td style="padding-bottom: 16px;">
+                                                        <span style="font-family: 'Segoe UI', Arial, sans-serif; font-size: 12px; font-weight: bold; color: #1d4ed8; background-color: #eff6ff; padding: 6px 12px; border-radius: 20px; text-transform: uppercase;">
+                                                            ${titulo}
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td style="padding-bottom: 12px;">
+                                                        <h2 style="color: #1f2937; margin: 0; font-family: 'Segoe UI', Arial, sans-serif; font-size: 18px; font-weight: bold;">
+                                                            Detalles de la Alerta
+                                                        </h2>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td bgcolor="#f9fafb" style="background-color: #f9fafb; border-left: 4px solid #3b82f6; padding: 20px; border-top: 1px solid #e5e7eb; border-right: 1px solid #e5e7eb; border-bottom: 1px solid #e5e7eb;">
+                                                        <p style="font-family: 'Segoe UI', Arial, sans-serif; font-size: 14px; line-height: 1.6; color: #4b5563; margin: 0; white-space: pre-line;">
+                                                            ${mensaje}
+                                                        </p>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td align="center" style="padding-top: 28px; padding-bottom: 8px;">
+                                                        <table cellpadding="0" cellspacing="0" border="0">
+                                                            <tr>
+                                                                <td bgcolor="#2563eb" align="center" style="background-color: #2563eb; border-radius: 6px;">
+                                                                    <a href="${linkPortal}" target="_blank" style="display: block; font-family: 'Segoe UI', Arial, sans-serif; font-size: 15px; font-weight: bold; color: #ffffff; text-decoration: none; padding: 14px 32px; border: 1px solid #2563eb; border-radius: 6px;">
+                                                                        Atender Solicitud
+                                                                    </a>
+                                                                </td>
+                                                            </tr>
+                                                        </table>
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td bgcolor="#f9fafb" align="center" style="background-color: #f9fafb; padding: 24px; text-align: center; border-top: 1px solid #e5e7eb;">
+                                            <p style="font-family: 'Segoe UI', Arial, sans-serif; font-size: 11px; color: #9ca3af; margin: 0 0 4px 0; line-height: 1.5;">
+                                                Este correo es de carácter informativo y automático. Por favor no respondas directamente a este mensaje.
+                                            </p>
+                                            <p style="font-family: 'Segoe UI', Arial, sans-serif; font-size: 10px; color: #d1d5db; margin: 0;">
+                                                &copy; 2026 Helpdesk Portal. Todos los derechos reservados.
+                                            </p>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+                    </table>
                 `;
                 
-                // Enviar asíncronamente sin bloquear la respuesta HTTP, incluyendo logoUrl y linkPortal
-                sendNotificationEmail(recipientEmail, `Helpdesk: ${titulo}`, emailHtml, titulo, mensaje, logoUrl, linkPortal).catch(err => {
+                // Enviar asíncronamente sin bloquear la respuesta HTTP, incluyendo nombreAgencia y linkPortal
+                sendNotificationEmail(recipientEmail, `Helpdesk: ${titulo}`, emailHtml, titulo, mensaje, nombreAgencia, linkPortal).catch(err => {
                     writeLog(`[crearNotificaciones] ❌ Error asíncrono al enviar email: ${err.message}`);
                 });
             } else {
