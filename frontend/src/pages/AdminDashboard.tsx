@@ -100,6 +100,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     // 🔥 MANEJADOR PARA SOLICITAR PERMISOS DE NOTIFICACIONES DE ESCRITORIO
     const handleEnableNotifications = () => {
         if ('Notification' in window) {
+            if (Notification.permission === 'denied') {
+                toast.error('⚠️ Las notificaciones están bloqueadas. Haz clic en el ícono del candado junto a la dirección web (URL) y activa "Notificaciones".', {
+                    duration: 8000
+                });
+                return;
+            }
+            
             Notification.requestPermission().then(permission => {
                 setNotifPermission(permission);
                 if (permission === 'granted') {
@@ -781,12 +788,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         </div>
                     </div>
                     <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                        {/* 🔥 BOTÓN PARA SOLICITAR PERMISOS SI ESTÁN EN DEFAULT */}
-                        {('Notification' in window && notifPermission === 'default') && (
+                        {/* 🔥 BOTÓN PARA SOLICITAR PERMISOS SI NO ESTÁN OTORGADOS */}
+                        {('Notification' in window && notifPermission !== 'granted') && (
                             <button
                                 onClick={handleEnableNotifications}
                                 style={{
-                                    backgroundColor: '#10b981',
+                                    backgroundColor: notifPermission === 'denied' ? '#ef4444' : '#10b981',
                                     color: '#ffffff',
                                     border: 'none',
                                     borderRadius: '6px',
@@ -797,14 +804,16 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                     display: 'flex',
                                     alignItems: 'center',
                                     gap: '6px',
-                                    boxShadow: '0 2px 4px rgba(16, 185, 129, 0.2)',
+                                    boxShadow: notifPermission === 'denied' 
+                                        ? '0 2px 4px rgba(239, 68, 68, 0.2)' 
+                                        : '0 2px 4px rgba(16, 185, 129, 0.2)',
                                     transition: 'all 0.2s',
                                     marginRight: '4px'
                                 }}
-                                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#059669'}
-                                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#10b981'}
+                                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = notifPermission === 'denied' ? '#dc2626' : '#059669'}
+                                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = notifPermission === 'denied' ? '#ef4444' : '#10b981'}
                             >
-                                🔔 Activar Alertas
+                                {notifPermission === 'denied' ? '⚠️ Desbloquear Alertas' : '🔔 Activar Alertas'}
                             </button>
                         )}
                         {/* 🔥 BOTÓN DE NOTIFICACIONES */}
