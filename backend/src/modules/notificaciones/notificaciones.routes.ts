@@ -29,11 +29,17 @@ router.get('/stream/:usuario_id', async (req: any, res: any) => {
         // Enviar un ping cada 10 segundos para mantener la conexión activa
         const pingInterval = setInterval(() => {
             res.write(': ping\n\n');
+            if (typeof res.flush === 'function') {
+                res.flush();
+            }
         }, 10000);
 
         const listener = (data: any) => {
             if (data.usuario_id == usuarioId) {
                 res.write(`data: ${JSON.stringify(data.notification)}\n\n`);
+                if (typeof res.flush === 'function') {
+                    res.flush();
+                }
             }
         };
 
