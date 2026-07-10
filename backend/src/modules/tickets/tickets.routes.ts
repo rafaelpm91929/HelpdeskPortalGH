@@ -10,10 +10,24 @@ import { notificationEvents } from '../../shared/utils/event-emitter';
 const router = Router();
 
 // ============================================
+// LOGS A ARCHIVO PARA DEPURACIÓN
+// ============================================
+export function writeLog(message: string) {
+    try {
+        const logPath = path.join(__dirname, '../../../debug.log');
+        const timestamp = new Date().toISOString();
+        fs.appendFileSync(logPath, `[${timestamp}] ${message}\n`);
+    } catch (e) {
+        console.error('Error writing log file:', e);
+    }
+}
+
+// ============================================
 // HELPER PARA NOTIFICACIONES
 // ============================================
 export async function crearNotificaciones(ticketId: number, agenciaId: number, mensaje: string, agenteId: number | null, excluirUsuarioId?: number) {
     try {
+        writeLog(`[crearNotificaciones] Iniciando - ticketId: ${ticketId}, agenciaId: ${agenciaId}, mensaje: "${mensaje}", agenteId: ${agenteId}, excluirUsuarioId: ${excluirUsuarioId}`);
         const pool = await getConnection();
         const adminsResult = await pool.request()
             .input('agencia_id', agenciaId)
@@ -29,6 +43,8 @@ export async function crearNotificaciones(ticketId: number, agenciaId: number, m
         if (excluirUsuarioId) {
             recipients.delete(excluirUsuarioId);
         }
+
+        writeLog(`[crearNotificaciones] Destinatarios finales calculados: ${Array.from(recipients).join(', ')}`);
         
         // Determinar el título dinámicamente según el mensaje para cumplir con la restricción de NOT NULL en BD
         let titulo = 'Notificación';
@@ -41,6 +57,7 @@ export async function crearNotificaciones(ticketId: number, agenciaId: number, m
         }
 
         for (const recipientId of recipients) {
+            writeLog(`[crearNotificaciones] Intentando insertar en tbl_notificaciones para usuario: ${recipientId}`);
             const insertResult = await pool.request()
                 .input('usuario_id', recipientId)
                 .input('ticket_id', ticketId)
@@ -55,9 +72,11 @@ export async function crearNotificaciones(ticketId: number, agenciaId: number, m
                     WHERE id = SCOPE_IDENTITY();
                 `);
             const newNotif = insertResult.recordset[0];
+            writeLog(`[crearNotificaciones] ✅ Inserción exitosa para usuario: ${recipientId} - Notif ID: ${newNotif?.id}`);
             notificationEvents.emit('new-notification', { usuario_id: recipientId, notification: newNotif });
         }
-    } catch (error) {
+    } catch (error: any) {
+        writeLog(`[crearNotificaciones] ❌ Error al crear notificaciones: ${error.message}`);
         console.error('❌ Error al crear notificaciones:', error);
     }
 }
@@ -438,10 +457,12 @@ router.post('/', authMiddleware, upload.array('archivos', 5), async (req: any, r
             agencia_id 
         } = req.body;
 
+        writeLog(`[POST /tickets] Iniciando creación de ticket - asunto: "${asunto}", usuario_id: ${usuario_id}, agencia_id: ${agencia_id}`);
         console.log('📝 POST /tickets - Crear ticket');
         console.log('📝 Datos:', req.body);
 
         if (!asunto || !descripcion || !usuario_id || !agencia_id) {
+            writeLog(`[POST /tickets] ❌ Error: Faltan campos requeridos`);
             return res.status(400).json({
                 success: false,
                 error: 'Faltan campos requeridos'
@@ -478,6 +499,7 @@ router.post('/', authMiddleware, upload.array('archivos', 5), async (req: any, r
 
         const ticketId = result.recordset[0].id;
         const numeroSecuencial = result.recordset[0].numero_secuencial;
+        writeLog(`[POST /tickets] Ticket insertado exitosamente en tbl_tickets - ID: ${ticketId}, Secuencial: #${numeroSecuencial}`);
 
         // Obtener nombre del usuario creador para la notificación
         const userRes = await pool.request()
@@ -488,6 +510,7 @@ router.post('/', authMiddleware, upload.array('archivos', 5), async (req: any, r
             ? `${userRes.recordset[0].nombre} ${userRes.recordset[0].apellido || ''}`.trim()
             : 'Usuario';
 
+        writeLog(`[POST /tickets] Llamando a crearNotificaciones para ticketId: ${ticketId}, agencia_id: ${agencia_id}, creador: ${creadorNombre}`);
         // Crear notificación para admins de la agencia
         await crearNotificaciones(
             ticketId,
@@ -771,6 +794,7 @@ router.post('/:id/responder', authMiddleware, async (req: any, res: any) => {
 
         // Si el remitente es un cliente/usuario, notificar a los admins/agente
         if (currentUser.rol === 'usuario') {
+            writeLog(`[POST /responder] El remitente es usuario. Consultando info del ticket ID: ${id}`);
             const ticketInfo = await pool.request()
                 .input('id', parseInt(id))
                 .input('usuario_id_notif', currentUser.id)
@@ -784,6 +808,7 @@ router.post('/:id/responder', authMiddleware, async (req: any, res: any) => {
             if (ticketInfo.recordset.length > 0) {
                 const { numero_secuencial, agente_id, agencia_id, nombre, apellido } = ticketInfo.recordset[0];
                 const remitenteNombre = nombre ? `${nombre} ${apellido || ''}`.trim() : 'Usuario';
+                writeLog(`[POST /responder] Info ticket obtenida: secuencial #${numero_secuencial}, agente_id: ${agente_id}, agencia_id: ${agencia_id}, remitente: ${remitenteNombre}. Llamando a crearNotificaciones.`);
                 await crearNotificaciones(
                     parseInt(id),
                     agencia_id,
@@ -791,7 +816,11 @@ router.post('/:id/responder', authMiddleware, async (req: any, res: any) => {
                     agente_id,
                     currentUser.id
                 );
+            } else {
+                writeLog(`[POST /responder] ⚠️ No se encontró info del ticket o usuario en base de datos.`);
             }
+        } else {
+            writeLog(`[POST /responder] El remitente no es rol 'usuario' (rol actual: ${currentUser.rol}). No se genera notificación.`);
         }
 
         res.json({
