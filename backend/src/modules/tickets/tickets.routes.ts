@@ -17,7 +17,7 @@ async function crearNotificaciones(ticketId: number, agenciaId: number, mensaje:
         const pool = await getConnection();
         const adminsResult = await pool.request()
             .input('agencia_id', agenciaId)
-            .query("SELECT id FROM tbl_usuarios WHERE agencia_id = @agencia_id AND rol = 'admin'");
+            .query("SELECT id FROM tbl_usuarios WHERE agencia_id = @agencia_id AND rol IN ('admin', 'superadmin')");
             
         const recipients = new Set<number>();
         adminsResult.recordset.forEach((r: any) => recipients.add(r.id));
