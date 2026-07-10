@@ -95,15 +95,25 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     });
     const [agenciaInfo, setAgenciaInfo] = useState<IAgenciaInfo | null>(null);
     const [temaUsuario, setTemaUsuario] = useState<string>(() => localStorage.getItem(`theme_admin_${user?.id}`) || 'agencia');
+    const [notifPermission, setNotifPermission] = useState<string>(() => 'Notification' in window ? Notification.permission : 'default');
 
-    // 🔥 SOLICITAR PERMISOS PARA NOTIFICACIONES DE ESCRITORIO
-    useEffect(() => {
+    // 🔥 MANEJADOR PARA SOLICITAR PERMISOS DE NOTIFICACIONES DE ESCRITORIO
+    const handleEnableNotifications = () => {
         if ('Notification' in window) {
-            if (Notification.permission === 'default') {
-                Notification.requestPermission();
-            }
+            Notification.requestPermission().then(permission => {
+                setNotifPermission(permission);
+                if (permission === 'granted') {
+                    toast.success('🔔 ¡Notificaciones de escritorio activadas!');
+                    new Notification('Helpdesk Portal', {
+                        body: '¡Las notificaciones de escritorio están activas para este equipo!',
+                        icon: agenciaInfo?.logo_url || '/favicon.ico'
+                    });
+                } else if (permission === 'denied') {
+                    toast.error('❌ Permiso de notificaciones denegado. Habilítalo en tu navegador.');
+                }
+            });
         }
-    }, []);
+    };
 
     // 🔥 CARGAR NOTIFICACIONES desde API
     const loadNotificaciones = async () => {
@@ -771,6 +781,32 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         </div>
                     </div>
                     <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                        {/* 🔥 BOTÓN PARA SOLICITAR PERMISOS SI ESTÁN EN DEFAULT */}
+                        {('Notification' in window && notifPermission === 'default') && (
+                            <button
+                                onClick={handleEnableNotifications}
+                                style={{
+                                    backgroundColor: '#10b981',
+                                    color: '#ffffff',
+                                    border: 'none',
+                                    borderRadius: '6px',
+                                    padding: '6px 12px',
+                                    fontSize: '13px',
+                                    fontWeight: '500',
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '6px',
+                                    boxShadow: '0 2px 4px rgba(16, 185, 129, 0.2)',
+                                    transition: 'all 0.2s',
+                                    marginRight: '4px'
+                                }}
+                                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#059669'}
+                                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#10b981'}
+                            >
+                                🔔 Activar Alertas
+                            </button>
+                        )}
                         {/* 🔥 BOTÓN DE NOTIFICACIONES */}
                         <div style={{ position: 'relative' }}>
                             <button
