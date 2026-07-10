@@ -96,6 +96,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     const [agenciaInfo, setAgenciaInfo] = useState<IAgenciaInfo | null>(null);
     const [temaUsuario, setTemaUsuario] = useState<string>(() => localStorage.getItem(`theme_admin_${user?.id}`) || 'agencia');
 
+    // 🔥 SOLICITAR PERMISOS PARA NOTIFICACIONES DE ESCRITORIO
+    useEffect(() => {
+        if ('Notification' in window) {
+            if (Notification.permission === 'default') {
+                Notification.requestPermission();
+            }
+        }
+    }, []);
+
     // 🔥 CARGAR NOTIFICACIONES desde API
     const loadNotificaciones = async () => {
         if (!user?.id) return;
@@ -103,8 +112,30 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             const response = await api.get(`/notificaciones/usuario/${user.id}`);
             if (response.data.success) {
                 const data = response.data.data;
-                setNotificaciones(data);
-                setUnreadCount(data.filter((n: any) => !n.leido).length);
+                
+                setNotificaciones(prev => {
+                    // Si ya había notificaciones cargadas en el estado (no es la carga inicial de la página),
+                    // disparamos alertas nativas de escritorio para las nuevas que vayan llegando
+                    if (prev.length > 0) {
+                        data.forEach((n: any) => {
+                            if (!prev.some(p => p.id === n.id)) {
+                                if ('Notification' in window && Notification.permission === 'granted') {
+                                    const nativeNotif = new Notification('🔔 Helpdesk Portal', {
+                                        body: n.mensaje,
+                                        icon: agenciaInfo?.logo_url || '/favicon.ico'
+                                    });
+                                    nativeNotif.onclick = () => {
+                                        window.focus();
+                                        setSelectedTicketIdForNotification(n.ticket_id);
+                                        setActiveTab('tickets');
+                                    };
+                                }
+                            }
+                        });
+                    }
+                    setUnreadCount(data.filter((n: any) => !n.leido).length);
+                    return data;
+                });
             }
         } catch (error) {
             console.error('Error al cargar notificaciones:', error);
@@ -137,6 +168,20 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     
                     setNotificaciones(prev => {
                         if (prev.some(n => n.id === newNotification.id)) return prev;
+
+                        // Mostrar notificación nativa del sistema (escritorio)
+                        if ('Notification' in window && Notification.permission === 'granted') {
+                            const nativeNotif = new Notification('🔔 Helpdesk Portal', {
+                                body: newNotification.mensaje,
+                                icon: agenciaInfo?.logo_url || '/favicon.ico'
+                            });
+                            nativeNotif.onclick = () => {
+                                window.focus();
+                                setSelectedTicketIdForNotification(newNotification.ticket_id);
+                                setActiveTab('tickets');
+                            };
+                        }
+
                         const updated = [newNotification, ...prev];
                         setUnreadCount(updated.filter(n => !n.leido).length);
                         return updated;
