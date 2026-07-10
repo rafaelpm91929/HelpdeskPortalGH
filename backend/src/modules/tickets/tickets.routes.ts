@@ -30,14 +30,25 @@ async function crearNotificaciones(ticketId: number, agenciaId: number, mensaje:
             recipients.delete(excluirUsuarioId);
         }
         
+        // Determinar el título dinámicamente según el mensaje para cumplir con la restricción de NOT NULL en BD
+        let titulo = 'Notificación';
+        if (mensaje.includes('creado')) {
+            titulo = 'Nuevo Ticket';
+        } else if (mensaje.includes('reabierto')) {
+            titulo = 'Ticket Reabierto';
+        } else if (mensaje.includes('mensaje')) {
+            titulo = 'Nuevo Mensaje';
+        }
+
         for (const recipientId of recipients) {
             const insertResult = await pool.request()
                 .input('usuario_id', recipientId)
                 .input('ticket_id', ticketId)
+                .input('titulo', titulo)
                 .input('mensaje', mensaje)
                 .query(`
-                    INSERT INTO tbl_notificaciones (usuario_id, ticket_id, mensaje)
-                    VALUES (@usuario_id, @ticket_id, @mensaje);
+                    INSERT INTO tbl_notificaciones (usuario_id, ticket_id, titulo, mensaje)
+                    VALUES (@usuario_id, @ticket_id, @titulo, @mensaje);
                     
                     SELECT id, ticket_id, mensaje, leido, fecha_creacion
                     FROM tbl_notificaciones
