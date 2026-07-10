@@ -42,6 +42,8 @@ interface IAgenciaInfo {
     colores_fondo: string;
     colores_texto: string;
     logo_url: string | null;
+    bloqueada?: boolean;
+    mensaje_bloqueo?: string;
 }
 
 interface INotificacion {
@@ -505,6 +507,74 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         <div className="dot dot2" />
                         <div className="dot" />
                     </div>
+                </div>
+            </div>
+        );
+    }
+
+    if (agenciaInfo?.bloqueada) {
+        return (
+            <div style={{
+                minHeight: '100vh',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: 'radial-gradient(circle at center, #1e3a8a 0%, #090d16 100%)',
+                fontFamily: 'system-ui, -apple-system, sans-serif',
+                color: 'white',
+                padding: '20px'
+            }}>
+                <div style={{
+                    maxWidth: '500px',
+                    width: '90%',
+                    padding: '40px 32px',
+                    backgroundColor: 'rgba(15, 23, 42, 0.75)',
+                    backdropFilter: 'blur(12px)',
+                    WebkitBackdropFilter: 'blur(12px)',
+                    borderRadius: '16px',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+                    textAlign: 'center'
+                }}>
+                    <div style={{ fontSize: '50px', marginBottom: '20px' }}>⚠️</div>
+                    <h2 style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '16px', color: '#fca5a5' }}>
+                        Portal Suspendido
+                    </h2>
+                    <p style={{ color: '#e2e8f0', fontSize: '15px', lineHeight: '1.6', marginBottom: '24px' }}>
+                        Tu portal de administración ha sido bloqueado temporalmente por el Administrador General.
+                    </p>
+                    {agenciaInfo.mensaje_bloqueo && (
+                        <div style={{
+                            backgroundColor: 'rgba(239, 68, 68, 0.15)',
+                            border: '1px solid rgba(239, 68, 68, 0.3)',
+                            borderRadius: '8px',
+                            padding: '16px',
+                            marginBottom: '28px',
+                            textAlign: 'left'
+                        }}>
+                            <strong style={{ color: '#fca5a5', fontSize: '13px', display: 'block', marginBottom: '4px' }}>Razón:</strong>
+                            <p style={{ margin: 0, color: '#f8fafc', fontSize: '13px', whiteSpace: 'pre-wrap' }}>
+                                {agenciaInfo.mensaje_bloqueo}
+                            </p>
+                        </div>
+                    )}
+                    <button
+                        onClick={() => logout()}
+                        style={{
+                            width: '100%',
+                            padding: '12px',
+                            background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '8px',
+                            fontWeight: '600',
+                            cursor: 'pointer',
+                            boxShadow: '0 4px 12px rgba(239, 68, 68, 0.25)',
+                            transition: 'all 0.2s'
+                        }}
+                    >
+                        Cerrar sesión
+                    </button>
                 </div>
             </div>
         );

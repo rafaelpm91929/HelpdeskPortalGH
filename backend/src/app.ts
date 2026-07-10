@@ -10,6 +10,7 @@ import ticketsRoutes from './modules/tickets/tickets.routes';
 import uploadRoutes from './modules/upload/upload.routes';
 import areasRoutes from './modules/areas/areas.routes';
 import notificacionesRoutes from './modules/notificaciones/notificaciones.routes';
+import manualesRoutes from './modules/manuales/manuales.routes';
 
 dotenv.config();
 
@@ -87,6 +88,7 @@ app.use('/api/tickets', ticketsRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/areas', areasRoutes);
 app.use('/api/notificaciones', notificacionesRoutes);
+app.use('/api/manuales', manualesRoutes);
 
 // Health Check
 app.get('/api/health', (req, res) => {

@@ -18,7 +18,8 @@ router.get('/subdominio/:subdominio', async (req, res) => {
             .query(`
                 SELECT id, nombre, subdominio, logo_url, 
                        colores_primario, colores_secundario, 
-                       colores_fondo, colores_texto, activo
+                       colores_fondo, colores_texto, activo,
+                       bloqueada, mensaje_bloqueo
                 FROM tbl_agencias 
                 WHERE subdominio = @subdominio AND activo = 1
             `);
@@ -56,7 +57,8 @@ router.get('/:id', async (req, res) => {
             .query(`
                 SELECT id, nombre, subdominio, logo_url, 
                        colores_primario, colores_secundario, 
-                       colores_fondo, colores_texto, activo
+                       colores_fondo, colores_texto, activo,
+                       bloqueada, mensaje_bloqueo
                 FROM tbl_agencias 
                 WHERE id = @id AND activo = 1
             `);
@@ -94,7 +96,7 @@ router.get('/', async (req, res) => {
             SELECT id, nombre, subdominio, logo_url, 
                    colores_primario, colores_secundario, 
                    colores_fondo, colores_texto,
-                   activo, fecha_creacion
+                   activo, fecha_creacion, bloqueada, mensaje_bloqueo
             FROM tbl_agencias 
             ORDER BY fecha_creacion DESC
         `);
@@ -302,6 +304,47 @@ router.put('/:id', async (req: any, res: any) => {
         });
     } catch (error: any) {
         console.error('❌ Error al actualizar agencia:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// ============================================
+// PUT /api/agencias/:id/bloquear - Bloquear/Desbloquear agencia (Solo Superadmin)
+// ============================================
+router.put('/:id/bloquear', async (req: any, res: any) => {
+    try {
+        const { id } = req.params;
+        const { bloqueada, mensaje_bloqueo } = req.body;
+        const currentUser = req.user;
+
+        // Solo superadmin puede bloquear/desbloquear agencias
+        if (!currentUser || currentUser.rol !== 'superadmin') {
+            return res.status(403).json({
+                success: false,
+                error: 'No tienes permiso para realizar esta acción'
+            });
+        }
+
+        const pool = await getConnection();
+        await pool.request()
+            .input('id', parseInt(id))
+            .input('bloqueada', bloqueada ? 1 : 0)
+            .input('mensaje_bloqueo', mensaje_bloqueo || null)
+            .query(`
+                UPDATE tbl_agencias
+                SET bloqueada = @bloqueada, mensaje_bloqueo = @mensaje_bloqueo
+                WHERE id = @id
+            `);
+
+        res.json({
+            success: true,
+            message: bloqueada ? 'Agencia bloqueada correctamente' : 'Agencia desbloqueada correctamente'
+        });
+    } catch (error: any) {
+        console.error('Error al bloquear/desbloquear agencia:', error);
         res.status(500).json({
             success: false,
             error: error.message

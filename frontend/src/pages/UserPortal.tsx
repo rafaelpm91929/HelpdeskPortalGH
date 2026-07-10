@@ -714,6 +714,70 @@ export const UserPortal: React.FC<UserPortalProps> = ({ agenciaParam }) => {
         );
     }
 
+    if (agenciaInfo?.bloqueada) {
+        return (
+            <div style={{
+                minHeight: '100vh',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: colores.fondo || '#f3f4f6',
+                fontFamily: 'system-ui, -apple-system, sans-serif',
+                color: colores.texto || '#1f2937',
+                padding: '20px'
+            }}>
+                <div style={{
+                    maxWidth: '500px',
+                    width: '90%',
+                    padding: '40px 32px',
+                    backgroundColor: colores.tarjeta || 'white',
+                    borderRadius: '16px',
+                    border: `1px solid ${colores.borde || '#e5e7eb'}`,
+                    boxShadow: '0 10px 25px rgba(0, 0, 0, 0.05)',
+                    textAlign: 'center'
+                }}>
+                    {agenciaInfo.logo_url ? (
+                        <div style={{
+                            width: '150px',
+                            height: '60px',
+                            margin: '0 auto 20px auto',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                        }}>
+                            <img src={agenciaInfo.logo_url} alt="Logo" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
+                        </div>
+                    ) : (
+                        <div style={{ fontSize: '50px', marginBottom: '20px' }}>🔧</div>
+                    )}
+                    <h2 style={{ fontSize: '22px', fontWeight: 'bold', marginBottom: '16px', color: colores.primario || '#2563eb' }}>
+                        Portal en revisión
+                    </h2>
+                    <p style={{ color: colores.textoMuted || '#6b7280', fontSize: '15px', lineHeight: '1.6', marginBottom: '28px' }}>
+                        Este portal de ayuda se encuentra actualmente en revisión o mantenimiento técnico. Por favor, intenta acceder más tarde.
+                    </p>
+                    <button
+                        onClick={() => logout()}
+                        style={{
+                            width: '100%',
+                            padding: '12px',
+                            backgroundColor: colores.primario || '#2563eb',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '8px',
+                            fontWeight: '600',
+                            cursor: 'pointer',
+                            boxShadow: `0 4px 12px rgba(37, 99, 235, 0.15)`,
+                            transition: 'all 0.2s'
+                        }}
+                    >
+                        Cerrar sesión
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
     const userArea = user?.area || 'Sin área asignada';
     const areaLabel = areas.find(a => a.nombre === userArea)?.nombre || userArea;
 

@@ -17,6 +17,8 @@ interface IAgencia {
     colores_secundario: string;
     activo: boolean;
     fecha_creacion: string;
+    bloqueada?: boolean;
+    mensaje_bloqueo?: string;
 }
 
 interface IUsuario {
@@ -35,7 +37,7 @@ interface IUsuario {
 // ============================================
 export const SuperAdminDashboard: React.FC = () => {
     const { user, logout: authLogout } = useAuth();
-    const [activeTab, setActiveTab] = useState<'menu' | 'agencias' | 'admins'>(() => {
+    const [activeTab, setActiveTab] = useState<'menu' | 'agencias' | 'admins' | 'manuales'>(() => {
         return (localStorage.getItem(`active_tab_superadmin_${user?.id}`) as any) || 'menu';
     });
 
@@ -70,6 +72,17 @@ export const SuperAdminDashboard: React.FC = () => {
         agencia_id: 1
     });
 
+    // Estados para Bloqueo y Manuales
+    const [showBlockModal, setShowBlockModal] = useState(false);
+    const [blockingAgencia, setBlockingAgencia] = useState<IAgencia | null>(null);
+    const [blockMessage, setBlockMessage] = useState('');
+
+    const [manuales, setManuales] = useState<any[]>([]);
+    const [loadingManuales, setLoadingManuales] = useState(false);
+    const [showManualModal, setShowManualModal] = useState(false);
+    const [manualForm, setManualForm] = useState({ nombre: '', archivo: null as File | null });
+    const [subiendoManual, setSubiendoManual] = useState(false);
+
     // ============================================
     // VERIFICAR PERMISOS
     // ============================================
@@ -81,6 +94,104 @@ export const SuperAdminDashboard: React.FC = () => {
             </div>
         );
     }
+
+    // ============================================
+    // MÉTODOS PARA BLOQUEAR Y MANUALES
+    // ============================================
+    const toggleLockAgencia = async (agencia: IAgencia) => {
+        if (agencia.bloqueada) {
+            try {
+                const response = await api.put(`/agencias/${agencia.id}/bloquear`, { bloqueada: false });
+                if (response.data.success) {
+                    toast.success('Agencia desbloqueada correctamente');
+                    loadAgencias();
+                }
+            } catch (e: any) {
+                toast.error(e.response?.data?.error || 'Error al desbloquear agencia');
+            }
+        } else {
+            setBlockingAgencia(agencia);
+            setBlockMessage('');
+            setShowBlockModal(true);
+        }
+    };
+
+    const submitBlockAgencia = async () => {
+        if (!blockingAgencia) return;
+        try {
+            const response = await api.put(`/agencias/${blockingAgencia.id}/bloquear`, {
+                bloqueada: true,
+                mensaje_bloqueo: blockMessage
+            });
+            if (response.data.success) {
+                toast.success('Agencia bloqueada correctamente');
+                setShowBlockModal(false);
+                setBlockingAgencia(null);
+                loadAgencias();
+            }
+        } catch (e: any) {
+            toast.error(e.response?.data?.error || 'Error al bloquear agencia');
+        }
+    };
+
+    const loadManuales = async () => {
+        try {
+            setLoadingManuales(true);
+            const response = await api.get('/manuales');
+            if (response.data.success) {
+                setManuales(response.data.data);
+            }
+        } catch (error) {
+            console.error('Error al cargar manuales:', error);
+            toast.error('Error al cargar manuales');
+        } finally {
+            setLoadingManuales(false);
+        }
+    };
+
+    const submitManual = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!manualForm.archivo) {
+            toast.error('Por favor, selecciona un archivo PDF');
+            return;
+        }
+
+        try {
+            setSubiendoManual(true);
+            const formData = new FormData();
+            formData.append('nombre', manualForm.nombre);
+            formData.append('manual', manualForm.archivo);
+
+            const response = await api.post('/manuales/subir', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+
+            if (response.data.success) {
+                toast.success('Manual subido correctamente');
+                setShowManualModal(false);
+                setManualForm({ nombre: '', archivo: null });
+                loadManuales();
+            }
+        } catch (error: any) {
+            console.error(error);
+            toast.error(error.response?.data?.error || 'Error al subir manual');
+        } finally {
+            setSubiendoManual(false);
+        }
+    };
+
+    const deleteManual = async (id: number) => {
+        if (!window.confirm('¿Estás seguro de que deseas eliminar este manual?')) return;
+        try {
+            const response = await api.delete(`/manuales/${id}`);
+            if (response.data.success) {
+                toast.success('Manual eliminado correctamente');
+                loadManuales();
+            }
+        } catch (error: any) {
+            toast.error(error.response?.data?.error || 'Error al eliminar manual');
+        }
+    };
 
     // ============================================
     // CRUD AGENCIAS
@@ -353,6 +464,21 @@ export const SuperAdminDashboard: React.FC = () => {
                         >
                             👥 Administradores
                         </button>
+                        <button
+                            onClick={() => setActiveTab('manuales')}
+                            style={{
+                                flex: 1,
+                                padding: '10px',
+                                backgroundColor: activeTab === 'manuales' ? '#2563eb' : 'transparent',
+                                color: activeTab === 'manuales' ? 'white' : '#374151',
+                                border: 'none',
+                                borderRadius: '6px',
+                                cursor: 'pointer',
+                                fontWeight: '500'
+                            }}
+                        >
+                            📄 Manuales
+                        </button>
                     </div>
                 )}
 
@@ -470,46 +596,55 @@ export const SuperAdminDashboard: React.FC = () => {
                             </button>
                         </div>
 
-                        {/* Card Estadísticas (Placeholder) */}
+                        {/* Card Manuales */}
                         <div 
+                            onClick={() => setActiveTab('manuales')}
                             style={{
-                                backgroundColor: '#f8fafc',
+                                backgroundColor: 'white',
                                 borderRadius: '12px',
                                 padding: '32px 24px',
                                 textAlign: 'center',
-                                border: '1px dashed #cbd5e1',
+                                cursor: 'pointer',
+                                boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03)',
+                                border: '1px solid #e2e8f0',
+                                transition: 'all 0.2s ease-in-out',
                                 display: 'flex',
                                 flexDirection: 'column',
                                 alignItems: 'center',
-                                gap: '16px',
-                                opacity: 0.8
+                                gap: '16px'
+                            }}
+                            onMouseEnter={(e) => {
+                                e.currentTarget.style.transform = 'translateY(-4px)';
+                                e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05)';
+                                e.currentTarget.style.borderColor = '#3b82f6';
+                            }}
+                            onMouseLeave={(e) => {
+                                e.currentTarget.style.transform = 'translateY(0)';
+                                e.currentTarget.style.boxShadow = '0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03)';
+                                e.currentTarget.style.borderColor = '#e2e8f0';
                             }}
                         >
-                            <div style={{ fontSize: '48px', filter: 'grayscale(100%)' }}>📊</div>
+                            <div style={{ fontSize: '48px' }}>📄</div>
                             <div>
-                                <h3 style={{ fontSize: '20px', fontWeight: 'bold', color: '#64748b', marginBottom: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-                                    Estadísticas 
-                                    <span style={{ fontSize: '11px', backgroundColor: '#e2e8f0', color: '#475569', padding: '2px 8px', borderRadius: '12px', fontWeight: 'normal' }}>Próximamente</span>
+                                <h3 style={{ fontSize: '20px', fontWeight: 'bold', color: '#0f172a', marginBottom: '8px' }}>
+                                    Manuales
                                 </h3>
-                                <p style={{ fontSize: '14px', color: '#94a3b8', lineHeight: '1.5' }}>
-                                    Métricas de tickets resueltos, tiempos de respuesta y rendimiento general de las agencias.
+                                <p style={{ fontSize: '14px', color: '#64748b', lineHeight: '1.5' }}>
+                                    Sube, descarga y administra los manuales de usuario y guías técnicas en formato PDF.
                                 </p>
                             </div>
-                            <button 
-                                disabled
-                                style={{
-                                    marginTop: 'auto',
-                                    padding: '10px 20px',
-                                    backgroundColor: '#cbd5e1',
-                                    color: '#94a3b8',
-                                    border: 'none',
-                                    borderRadius: '6px',
-                                    fontWeight: '600',
-                                    cursor: 'not-allowed',
-                                    width: '100%'
-                                }}
-                            >
-                                No disponible
+                            <button style={{
+                                marginTop: 'auto',
+                                padding: '10px 20px',
+                                backgroundColor: '#3b82f6',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '6px',
+                                fontWeight: '600',
+                                cursor: 'pointer',
+                                width: '100%'
+                            }}>
+                                Ingresar
                             </button>
                         </div>
                     </div>
@@ -609,8 +744,28 @@ export const SuperAdminDashboard: React.FC = () => {
                                                     )}
                                                 </div>
                                                 <div>
-                                                    <h3 style={{ fontWeight: 'bold', color: '#0f172a', fontSize: '18px', margin: 0 }}>
+                                                    <h3 style={{ 
+                                                        fontWeight: 'bold', 
+                                                        color: '#0f172a', 
+                                                        fontSize: '18px', 
+                                                        margin: 0,
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        gap: '8px'
+                                                    }}>
                                                         {agencia.nombre}
+                                                        {agencia.bloqueada && (
+                                                            <span style={{
+                                                                fontSize: '11px',
+                                                                backgroundColor: '#fee2e2',
+                                                                color: '#b91c1c',
+                                                                padding: '2px 8px',
+                                                                borderRadius: '12px',
+                                                                fontWeight: 'bold'
+                                                            }}>
+                                                                🚫 Bloqueada
+                                                            </span>
+                                                        )}
                                                     </h3>
                                                     <p style={{ fontSize: '14px', color: '#64748b', margin: '2px 0 0 0' }}>
                                                         Subdominio: <strong style={{ color: '#0f172a' }}>{agencia.subdominio}</strong>
@@ -654,6 +809,25 @@ export const SuperAdminDashboard: React.FC = () => {
                                                 title="Entrar como Administrador de esta agencia"
                                             >
                                                 👑 Entrar como Admin
+                                            </button>
+
+                                            <button
+                                                onClick={() => toggleLockAgencia(agencia)}
+                                                style={{
+                                                    padding: '8px 16px',
+                                                    background: agencia.bloqueada 
+                                                        ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
+                                                        : 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+                                                    color: 'white',
+                                                    border: 'none',
+                                                    borderRadius: '6px',
+                                                    cursor: 'pointer',
+                                                    fontSize: '13px',
+                                                    fontWeight: '600',
+                                                    transition: 'all 0.2s'
+                                                }}
+                                            >
+                                                {agencia.bloqueada ? '🔓 Desbloquear' : '🔒 Bloquear'}
                                             </button>
 
                                             <button
@@ -852,6 +1026,124 @@ export const SuperAdminDashboard: React.FC = () => {
                                         })}
                                     </tbody>
                                 </table>
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {/* ============================================
+                TAB MANUALES
+                ============================================ */}
+                {activeTab === 'manuales' && (
+                    <div>
+                        <div style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            marginBottom: '16px'
+                        }}>
+                            <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: '#f8fafc' }}>
+                                Manuales de Usuario y Guías
+                            </h2>
+                            <button
+                                onClick={() => {
+                                    setManualForm({ nombre: '', archivo: null });
+                                    setShowManualModal(true);
+                                }}
+                                style={{
+                                    padding: '10px 20px',
+                                    backgroundColor: '#2563eb',
+                                    color: 'white',
+                                    border: 'none',
+                                    borderRadius: '6px',
+                                    cursor: 'pointer'
+                                }}
+                            >
+                                + Subir Manual (PDF)
+                            </button>
+                        </div>
+
+                        {loadingManuales ? (
+                            <p style={{ color: '#f8fafc' }}>Cargando manuales...</p>
+                        ) : (
+                            <div style={{
+                                display: 'grid',
+                                gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+                                gap: '16px'
+                            }}>
+                                {manuales.length === 0 ? (
+                                    <div style={{
+                                        gridColumn: '1 / -1',
+                                        backgroundColor: 'rgba(255,255,255,0.1)',
+                                        padding: '40px',
+                                        borderRadius: '8px',
+                                        textAlign: 'center',
+                                        color: '#cbd5e1'
+                                    }}>
+                                        No hay manuales subidos actualmente.
+                                    </div>
+                                ) : (
+                                    manuales.map((m) => (
+                                        <div key={m.id} style={{
+                                            backgroundColor: 'white',
+                                            padding: '20px',
+                                            borderRadius: '12px',
+                                            boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)',
+                                            border: '1px solid #e2e8f0',
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            justifyContent: 'space-between'
+                                        }}>
+                                            <div>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+                                                    <span style={{ fontSize: '32px' }}>📕</span>
+                                                    <h3 style={{ fontWeight: 'bold', color: '#0f172a', fontSize: '16px', margin: 0 }}>
+                                                        {m.nombre}
+                                                    </h3>
+                                                </div>
+                                                <p style={{ fontSize: '12px', color: '#64748b', margin: '0 0 16px 0' }}>
+                                                    Subido el {new Date(m.fecha_creacion).toLocaleDateString()}
+                                                </p>
+                                            </div>
+                                            <div style={{ display: 'flex', gap: '8px', borderTop: '1px solid #f1f5f9', paddingTop: '12px' }}>
+                                                <a
+                                                    href={`http://${PUBLIC_IP}:4000${m.ruta}`}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    style={{
+                                                        flex: 1,
+                                                        padding: '8px',
+                                                        backgroundColor: '#eff6ff',
+                                                        color: '#2563eb',
+                                                        textAlign: 'center',
+                                                        textDecoration: 'none',
+                                                        borderRadius: '6px',
+                                                        fontSize: '13px',
+                                                        fontWeight: '600',
+                                                        display: 'inline-block'
+                                                    }}
+                                                >
+                                                    ⬇️ Descargar PDF
+                                                </a>
+                                                <button
+                                                    onClick={() => deleteManual(m.id)}
+                                                    style={{
+                                                        padding: '8px 12px',
+                                                        backgroundColor: '#fee2e2',
+                                                        color: '#b91c1c',
+                                                        border: 'none',
+                                                        borderRadius: '6px',
+                                                        cursor: 'pointer',
+                                                        fontSize: '13px',
+                                                        fontWeight: '600'
+                                                    }}
+                                                >
+                                                    🗑️ Borrar
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))
+                                )}
                             </div>
                         )}
                     </div>
@@ -1155,6 +1447,195 @@ export const SuperAdminDashboard: React.FC = () => {
                                     }}
                                 >
                                     {editingAdmin ? 'Actualizar' : 'Crear Admin'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* ============================================
+            MODAL PARA BLOQUEAR AGENCIA
+            ============================================ */}
+            {showBlockModal && blockingAgencia && (
+                <div style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    backgroundColor: 'rgba(0,0,0,0.5)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    zIndex: 1000
+                }}>
+                    <div style={{
+                        backgroundColor: 'white',
+                        padding: '24px',
+                        borderRadius: '12px',
+                        width: '90%',
+                        maxWidth: '450px',
+                        boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)'
+                    }}>
+                        <h3 style={{ fontSize: '18px', fontWeight: 'bold', color: '#0f172a', marginBottom: '12px' }}>
+                            🔒 Bloquear Agencia: {blockingAgencia.nombre}
+                        </h3>
+                        <p style={{ fontSize: '13px', color: '#64748b', marginBottom: '16px', lineHeight: '1.4' }}>
+                            Ingresa el motivo de la suspensión. Este mensaje será visible para los administradores de la agencia al intentar ingresar.
+                        </p>
+                        <div style={{ marginBottom: '20px' }}>
+                            <label style={{ display: 'block', fontSize: '13px', fontWeight: '500', marginBottom: '6px', color: '#374151' }}>
+                                Razón del Bloqueo
+                            </label>
+                            <textarea
+                                value={blockMessage}
+                                onChange={(e) => setBlockMessage(e.target.value)}
+                                style={{
+                                    width: '100%',
+                                    height: '100px',
+                                    padding: '8px 12px',
+                                    border: '1px solid #d1d5db',
+                                    borderRadius: '6px',
+                                    resize: 'none',
+                                    outline: 'none',
+                                    fontFamily: 'inherit'
+                                }}
+                                placeholder="Ej: Pago pendiente, mantenimiento programado, etc."
+                            />
+                        </div>
+                        <div style={{ display: 'flex', gap: '12px' }}>
+                            <button
+                                onClick={() => {
+                                    setShowBlockModal(false);
+                                    setBlockingAgencia(null);
+                                }}
+                                style={{
+                                    flex: 1,
+                                    padding: '10px',
+                                    backgroundColor: '#e5e7eb',
+                                    border: 'none',
+                                    borderRadius: '6px',
+                                    cursor: 'pointer',
+                                    fontWeight: '500'
+                                }}
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                onClick={submitBlockAgencia}
+                                style={{
+                                    flex: 2,
+                                    padding: '10px',
+                                    backgroundColor: '#d97706',
+                                    color: 'white',
+                                    border: 'none',
+                                    borderRadius: '6px',
+                                    cursor: 'pointer',
+                                    fontWeight: '600'
+                                }}
+                            >
+                                Confirmar Bloqueo
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* ============================================
+            MODAL PARA SUBIR MANUAL
+            ============================================ */}
+            {showManualModal && (
+                <div style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    backgroundColor: 'rgba(0,0,0,0.5)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    zIndex: 1000
+                }}>
+                    <div style={{
+                        backgroundColor: 'white',
+                        padding: '24px',
+                        borderRadius: '12px',
+                        width: '90%',
+                        maxWidth: '450px',
+                        boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)'
+                    }}>
+                        <h3 style={{ fontSize: '18px', fontWeight: 'bold', color: '#0f172a', marginBottom: '16px' }}>
+                            📕 Subir Manual de Usuario
+                        </h3>
+                        <form onSubmit={submitManual}>
+                            <div style={{ marginBottom: '16px' }}>
+                                <label style={{ display: 'block', fontSize: '13px', fontWeight: '500', marginBottom: '6px', color: '#374151' }}>
+                                    Nombre del Manual
+                                </label>
+                                <input
+                                    type="text"
+                                    required
+                                    value={manualForm.nombre}
+                                    onChange={(e) => setManualForm(prev => ({ ...prev, nombre: e.target.value }))}
+                                    style={{
+                                        width: '100%',
+                                        padding: '8px 12px',
+                                        border: '1px solid #d1d5db',
+                                        borderRadius: '6px',
+                                        outline: 'none'
+                                    }}
+                                    placeholder="Ej: Manual de Administrador de Soporte"
+                                />
+                            </div>
+                            <div style={{ marginBottom: '24px' }}>
+                                <label style={{ display: 'block', fontSize: '13px', fontWeight: '500', marginBottom: '6px', color: '#374151' }}>
+                                    Archivo PDF (.pdf)
+                                </label>
+                                <input
+                                    type="file"
+                                    required
+                                    accept=".pdf,application/pdf"
+                                    onChange={(e) => setManualForm(prev => ({ ...prev, archivo: e.target.files?.[0] || null }))}
+                                    style={{
+                                        width: '100%',
+                                        padding: '6px',
+                                        fontSize: '13px'
+                                    }}
+                                />
+                            </div>
+                            <div style={{ display: 'flex', gap: '12px' }}>
+                                <button
+                                    type="button"
+                                    onClick={() => setShowManualModal(false)}
+                                    style={{
+                                        flex: 1,
+                                        padding: '10px',
+                                        backgroundColor: '#e5e7eb',
+                                        border: 'none',
+                                        borderRadius: '6px',
+                                        cursor: 'pointer',
+                                        fontWeight: '500'
+                                    }}
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={subiendoManual}
+                                    style={{
+                                        flex: 2,
+                                        padding: '10px',
+                                        backgroundColor: '#2563eb',
+                                        color: 'white',
+                                        border: 'none',
+                                        borderRadius: '6px',
+                                        cursor: 'pointer',
+                                        fontWeight: '600'
+                                    }}
+                                >
+                                    {subiendoManual ? 'Subiendo...' : 'Subir Archivo'}
                                 </button>
                             </div>
                         </form>
