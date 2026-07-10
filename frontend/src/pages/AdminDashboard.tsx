@@ -79,6 +79,23 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     const [showNotifications, setShowNotifications] = useState(false);
     const [selectedTicketIdForNotification, setSelectedTicketIdForNotification] = useState<number | null>(null);
 
+    const [estadisticas, setEstadisticas] = useState<IEstadisticas>({
+        total: 0,
+        pendientes: 0,
+        en_progreso: 0,
+        abiertos: 0,
+        espera: 0,
+        resueltos: 0,
+        cerrados: 0
+    });
+    const [loading, setLoading] = useState(true);
+    const [initialLoading, setInitialLoading] = useState(true);
+    const [activeTab, setActiveTab] = useState<'dashboard' | 'tickets' | 'usuarios' | 'estadisticas' | 'configuracion'>(() => {
+        return (localStorage.getItem(`active_tab_admin_${user?.id}`) as any) || 'dashboard';
+    });
+    const [agenciaInfo, setAgenciaInfo] = useState<IAgenciaInfo | null>(null);
+    const [temaUsuario, setTemaUsuario] = useState<string>(() => localStorage.getItem(`theme_admin_${user?.id}`) || 'agencia');
+
     // 🔥 CARGAR NOTIFICACIONES desde API
     const loadNotificaciones = async () => {
         if (!user?.id) return;
@@ -174,28 +191,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             toast.error('Error al marcar notificaciones');
         }
     };
-    const [estadisticas, setEstadisticas] = useState<IEstadisticas>({
-        total: 0,
-        pendientes: 0,
-        en_progreso: 0,
-        abiertos: 0,
-        espera: 0,
-        resueltos: 0,
-        cerrados: 0
-    });
-    const [loading, setLoading] = useState(true);
-    const [initialLoading, setInitialLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState<'dashboard' | 'tickets' | 'usuarios' | 'estadisticas' | 'configuracion'>(() => {
-        return (localStorage.getItem(`active_tab_admin_${user?.id}`) as any) || 'dashboard';
-    });
-
     useEffect(() => {
         if (user?.id) {
             localStorage.setItem(`active_tab_admin_${user.id}`, activeTab);
         }
     }, [activeTab, user]);
-    const [agenciaInfo, setAgenciaInfo] = useState<IAgenciaInfo | null>(null);
-    const [temaUsuario, setTemaUsuario] = useState<string>(() => localStorage.getItem(`theme_admin_${user?.id}`) || 'agencia');
 
     const defaultTema = (agenciaInfo?.colores_fondo || '').split('|')[1] || 'claro';
     const temaActivo = temaUsuario === 'agencia' ? defaultTema : temaUsuario;
