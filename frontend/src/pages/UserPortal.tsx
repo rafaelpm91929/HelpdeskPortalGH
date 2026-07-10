@@ -86,6 +86,23 @@ export const UserPortal: React.FC<UserPortalProps> = ({ agenciaParam }) => {
     }, [activeTab, user]);
 
     // ============================================
+    // ESTADOS PRINCIPALES (Declarados al inicio para evitar errores de TDZ / inicialización)
+    // ============================================
+    const [loading, setLoading] = useState(false);
+    const [initialLoading, setInitialLoading] = useState(true);
+    const [tickets, setTickets] = useState<ITicket[]>([]);
+    const [areas, setAreas] = useState<IArea[]>([]);
+    const [agenciaInfo, setAgenciaInfo] = useState<IAgenciaInfo | null>(null);
+    const [selectedTicket, setSelectedTicket] = useState<ITicket | null>(null);
+    const [showTicketDetail, setShowTicketDetail] = useState(false);
+    const [replyMessage, setReplyMessage] = useState('');
+    const [enviando, setEnviando] = useState(false);
+    const [archivoSeleccionado, setArchivoSeleccionado] = useState<IArchivo | null>(null);
+    const [temaUsuario, setTemaUsuario] = useState<string>(() => localStorage.getItem(`theme_usuario_${user?.id}`) || 'agencia');
+    const [filtroTexto, setFiltroTexto] = useState('');
+    const [filtroEstado, setFiltroEstado] = useState('todos');
+
+    // ============================================
     // NOTIFICACIONES EN TIEMPO REAL PARA USUARIO
     // ============================================
     const [notificaciones, setNotificaciones] = useState<any[]>([]);
@@ -258,20 +275,6 @@ export const UserPortal: React.FC<UserPortalProps> = ({ agenciaParam }) => {
             if (fallbackInterval) clearInterval(fallbackInterval);
         };
     }, [user?.id, agenciaInfo?.logo_url]);
-
-    const [loading, setLoading] = useState(false);
-    const [initialLoading, setInitialLoading] = useState(true);
-    const [tickets, setTickets] = useState<ITicket[]>([]);
-    const [areas, setAreas] = useState<IArea[]>([]);
-    const [agenciaInfo, setAgenciaInfo] = useState<IAgenciaInfo | null>(null);
-    const [selectedTicket, setSelectedTicket] = useState<ITicket | null>(null);
-    const [showTicketDetail, setShowTicketDetail] = useState(false);
-    const [replyMessage, setReplyMessage] = useState('');
-    const [enviando, setEnviando] = useState(false);
-    const [archivoSeleccionado, setArchivoSeleccionado] = useState<IArchivo | null>(null);
-    const [temaUsuario, setTemaUsuario] = useState<string>(() => localStorage.getItem(`theme_usuario_${user?.id}`) || 'agencia');
-    const [filtroTexto, setFiltroTexto] = useState('');
-    const [filtroEstado, setFiltroEstado] = useState('todos');
 
     const defaultTema = (agenciaInfo?.colores_fondo || '').split('|')[1] || 'claro';
     const temaActivo = temaUsuario === 'agencia' ? defaultTema : temaUsuario;
