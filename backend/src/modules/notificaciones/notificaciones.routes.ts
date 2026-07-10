@@ -11,20 +11,31 @@ router.use(authMiddleware);
 // GET /api/notificaciones/stream/:usuario_id (SSE)
 // ============================================
 router.get('/stream/:usuario_id', async (req: any, res: any) => {
+    const usuarioId = parseInt(req.params.usuario_id);
+    console.log(`🔌 Intento de conexión SSE para usuario ID: ${usuarioId}`);
+
     try {
-        const usuarioId = parseInt(req.params.usuario_id);
-        
         // Verificar que el usuario solo escuche sus propias notificaciones
         if (req.user.id != usuarioId) {
+            console.warn(`⚠️ Intento de acceso denegado a SSE: req.user.id (${req.user.id}) != usuarioId (${usuarioId})`);
             return res.status(403).json({ success: false, error: 'Acceso denegado' });
         }
 
-        // Configurar cabeceras de SSE
-        res.setHeader('Content-Type', 'text/event-stream');
-        res.setHeader('Cache-Control', 'no-cache');
-        res.setHeader('Connection', 'keep-alive');
-        res.setHeader('X-Accel-Buffering', 'no'); // Desactivar almacenamiento en búfer de Nginx/proxies
+        // Configurar cabeceras de SSE de forma robusta
+        res.writeHead(200, {
+            'Content-Type': 'text/event-stream',
+            'Cache-Control': 'no-cache, no-transform',
+            'Connection': 'keep-alive',
+            'X-Accel-Buffering': 'no' // Desactivar almacenamiento en búfer de Nginx/proxies
+        });
         res.flushHeaders();
+
+        // Enviar un comentario inicial para establecer la conexión inmediatamente en el cliente
+        res.write(': connected\n\n');
+        if (typeof res.flush === 'function') {
+            res.flush();
+        }
+        console.log(`✅ Conexión SSE establecida con éxito para usuario ID: ${usuarioId}`);
 
         // Enviar un ping cada 10 segundos para mantener la conexión activa
         const pingInterval = setInterval(() => {
@@ -36,6 +47,7 @@ router.get('/stream/:usuario_id', async (req: any, res: any) => {
 
         const listener = (data: any) => {
             if (data.usuario_id == usuarioId) {
+                console.log(`🔔 Enviando notificación en tiempo real a usuario ID: ${usuarioId}`, data.notification);
                 res.write(`data: ${JSON.stringify(data.notification)}\n\n`);
                 if (typeof res.flush === 'function') {
                     res.flush();
@@ -46,12 +58,13 @@ router.get('/stream/:usuario_id', async (req: any, res: any) => {
         notificationEvents.on('new-notification', listener);
 
         req.on('close', () => {
+            console.log(`🔌 Conexión SSE cerrada para usuario ID: ${usuarioId}`);
             clearInterval(pingInterval);
             notificationEvents.off('new-notification', listener);
             res.end();
         });
     } catch (error: any) {
-        console.error('❌ Error en SSE stream:', error);
+        console.error(`❌ Error en SSE stream para usuario ID: ${usuarioId}:`, error);
     }
 });
 

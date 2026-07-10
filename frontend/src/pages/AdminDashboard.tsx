@@ -120,11 +120,20 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         const token = sessionStorage.getItem('token');
         const sseUrl = `${API_BASE_URL}/notificaciones/stream/${user.id}?token=${token}`;
         
-        console.log('🔌 Conectando a notificaciones en tiempo real (SSE)...');
-        const eventSource = new EventSource(sseUrl);
+        console.log('🔌 Conectando a notificaciones en tiempo real (SSE)...', sseUrl);
+        const eventSource = new EventSource(sseUrl, { withCredentials: true });
+
+        eventSource.onopen = () => {
+            console.log('🔌 Conexión SSE establecida y escuchando eventos en tiempo real.');
+        };
 
         eventSource.onmessage = (event) => {
             try {
+                // El primer mensaje enviado inmediatamente por el backend es ": connected\n\n",
+                // el cual no dispara onmessage porque es un comentario, pero si por alguna razón
+                // llega datos vacíos o comentarios como mensaje, los controlamos.
+                if (!event.data) return;
+
                 const newNotification = JSON.parse(event.data);
                 console.log('🔔 Nueva notificación recibida:', newNotification);
                 
@@ -146,12 +155,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                      loadTickets(currentAgenciaId);
                 }
             } catch (err) {
-                console.error('Error al procesar notificación en tiempo real:', err);
+                console.error('Error al procesar notificación en tiempo real:', err, event.data);
             }
         };
 
         eventSource.onerror = (err) => {
-            console.error('❌ Error en conexión EventSource:', err);
+            console.error('❌ Error o desconexión en EventSource SSE:', err);
         };
 
         return () => {

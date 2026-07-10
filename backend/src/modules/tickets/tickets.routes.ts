@@ -468,11 +468,20 @@ router.post('/', authMiddleware, upload.array('archivos', 5), async (req: any, r
         const ticketId = result.recordset[0].id;
         const numeroSecuencial = result.recordset[0].numero_secuencial;
 
+        // Obtener nombre del usuario creador para la notificación
+        const userRes = await pool.request()
+            .input('usuario_id_notif', parseInt(usuario_id))
+            .query('SELECT nombre, apellido FROM tbl_usuarios WHERE id = @usuario_id_notif');
+        
+        const creadorNombre = userRes.recordset.length > 0
+            ? `${userRes.recordset[0].nombre} ${userRes.recordset[0].apellido || ''}`.trim()
+            : 'Usuario';
+
         // Crear notificación para admins de la agencia
         await crearNotificaciones(
             ticketId,
             parseInt(agencia_id),
-            `Se ha creado un nuevo ticket: #${numeroSecuencial} - ${asunto}`,
+            `Nuevo ticket #${numeroSecuencial} creado por ${creadorNombre}: ${asunto}`,
             null,
             parseInt(usuario_id)
         );
@@ -582,10 +591,18 @@ router.put('/:id/estado', authMiddleware, async (req: any, res: any) => {
 
         // Si el usuario reabre el ticket (pasa de resuelto/cerrado a abierto)
         if (currentUser.rol === 'usuario' && estado === 'abierto' && (prevEstado === 'resuelto' || prevEstado === 'cerrado')) {
+            const userRes = await pool.request()
+                .input('usuario_id_notif', currentUser.id)
+                .query('SELECT nombre, apellido FROM tbl_usuarios WHERE id = @usuario_id_notif');
+            
+            const reabridorNombre = userRes.recordset.length > 0
+                ? `${userRes.recordset[0].nombre} ${userRes.recordset[0].apellido || ''}`.trim()
+                : 'Usuario';
+
             await crearNotificaciones(
                 parseInt(id),
                 currentAgenciaId,
-                `El ticket #${numeroSecuencial} ha sido reabierto por el usuario: ${asunto}`,
+                `El ticket #${numeroSecuencial} ha sido reabierto por ${reabridorNombre}: ${asunto}`,
                 currentAgenteId,
                 currentUser.id
             );
@@ -745,14 +762,21 @@ router.post('/:id/responder', authMiddleware, async (req: any, res: any) => {
         if (currentUser.rol === 'usuario') {
             const ticketInfo = await pool.request()
                 .input('id', parseInt(id))
-                .query('SELECT numero_secuencial, agente_id, agencia_id FROM tbl_tickets WHERE id = @id');
+                .input('usuario_id_notif', currentUser.id)
+                .query(`
+                    SELECT t.numero_secuencial, t.agente_id, t.agencia_id, u.nombre, u.apellido
+                    FROM tbl_tickets t
+                    INNER JOIN tbl_usuarios u ON u.id = @usuario_id_notif
+                    WHERE t.id = @id
+                `);
             
             if (ticketInfo.recordset.length > 0) {
-                const { numero_secuencial, agente_id, agencia_id } = ticketInfo.recordset[0];
+                const { numero_secuencial, agente_id, agencia_id, nombre, apellido } = ticketInfo.recordset[0];
+                const remitenteNombre = nombre ? `${nombre} ${apellido || ''}`.trim() : 'Usuario';
                 await crearNotificaciones(
                     parseInt(id),
                     agencia_id,
-                    `Nuevo mensaje en ticket #${numero_secuencial} de ${currentUser.nombre || 'Usuario'}`,
+                    `Nuevo mensaje en ticket #${numero_secuencial} de ${remitenteNombre}`,
                     agente_id,
                     currentUser.id
                 );
