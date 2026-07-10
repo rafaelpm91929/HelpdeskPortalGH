@@ -37,8 +37,11 @@ async function crearNotificaciones(ticketId: number, agenciaId: number, mensaje:
                 .input('mensaje', mensaje)
                 .query(`
                     INSERT INTO tbl_notificaciones (usuario_id, ticket_id, mensaje)
-                    OUTPUT INSERTED.id, INSERTED.ticket_id, INSERTED.mensaje, INSERTED.leido, INSERTED.fecha_creacion
-                    VALUES (@usuario_id, @ticket_id, @mensaje)
+                    VALUES (@usuario_id, @ticket_id, @mensaje);
+                    
+                    SELECT id, ticket_id, mensaje, leido, fecha_creacion
+                    FROM tbl_notificaciones
+                    WHERE id = SCOPE_IDENTITY();
                 `);
             const newNotif = insertResult.recordset[0];
             notificationEvents.emit('new-notification', { usuario_id: recipientId, notification: newNotif });
