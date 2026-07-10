@@ -13,11 +13,21 @@ function writeEmailLog(message: string) {
     }
 }
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-const senderEmail = process.env.SENDER_EMAIL || 'onboarding@resend.dev';
+let resendInstance: Resend | null = null;
+const getResendClient = () => {
+    if (!resendInstance) {
+        const apiKey = process.env.RESEND_API_KEY;
+        if (!apiKey) {
+            throw new Error('Missing RESEND_API_KEY in environment variables');
+        }
+        resendInstance = new Resend(apiKey);
+    }
+    return resendInstance;
+};
 
 export const sendNotificationEmail = async (to: string, subject: string, htmlContent: string) => {
     try {
+        const senderEmail = process.env.SENDER_EMAIL || 'onboarding@resend.dev';
         writeEmailLog(`[email.service] Intentando enviar email a: ${to}, asunto: "${subject}"`);
         
         // Sandbox de Resend: si no hay dominio verificado, forzamos enviar al correo registrado del admin
@@ -27,7 +37,8 @@ export const sendNotificationEmail = async (to: string, subject: string, htmlCon
             writeEmailLog(`[email.service] Redireccionando email de ${to} a ${targetEmail} por estar en modo sandbox.`);
         }
 
-        const data = await resend.emails.send({
+        const client = getResendClient();
+        const data = await client.emails.send({
             from: `Helpdesk Portal <${senderEmail}>`,
             to: [targetEmail],
             subject: subject,
