@@ -23,7 +23,7 @@ export const LoginPage: React.FC = () => {
             await login(email, password);
             toast.success('✅ Inicio de sesión exitoso');
 
-            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            const user = JSON.parse(sessionStorage.getItem('user') || '{}');
             console.log('👤 Usuario logueado:', user);
 
             if (user.rol === 'superadmin') {

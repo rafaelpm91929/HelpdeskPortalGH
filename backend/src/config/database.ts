@@ -21,9 +21,9 @@ const dbConfig = {
         useUTC: false
     },
     pool: {
-        max: 10,
-        min: 0,
-        idleTimeoutMillis: 30000
+        max: parseInt(process.env.DB_POOL_MAX || '50', 10),
+        min: parseInt(process.env.DB_POOL_MIN || '0', 10),
+        idleTimeoutMillis: parseInt(process.env.DB_POOL_IDLE_TIMEOUT || '30000', 10)
     }
 };
 

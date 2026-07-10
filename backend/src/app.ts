@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import dotenv from 'dotenv';
+import rateLimit from 'express-rate-limit';
 import { testConnection, getConnection } from './config/database';
 import authRoutes from './modules/auth/auth.routes';
 import agenciasRoutes from './modules/agencias/agencias.routes';
@@ -45,6 +46,21 @@ app.use(helmet({
     crossOriginEmbedderPolicy: false,
     crossOriginOpenerPolicy: { policy: "unsafe-none" }
 }));
+
+// ============================================
+// CONFIGURACIÓN DE RATE LIMIT (Límite de peticiones)
+// ============================================
+const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutos
+    limit: 1000, // Limita cada IP a un máximo de 1000 solicitudes por ventana
+    standardHeaders: 'draft-7', // Retorna información de rate limit en cabeceras estándar
+    legacyHeaders: false, // Deshabilita cabeceras antiguas X-RateLimit-*
+    message: {
+        success: false,
+        error: 'Demasiadas solicitudes desde esta dirección IP. Por favor, intente de nuevo en 15 minutos.'
+    }
+});
+app.use(limiter);
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));

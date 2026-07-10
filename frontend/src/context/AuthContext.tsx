@@ -1,5 +1,4 @@
- 
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, { createContext, useState, useContext, useEffect, useRef } from 'react';
 import { IUsuario } from '../types';
 import { authApi } from '../api/auth.api';
 
@@ -18,10 +17,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [user, setUser] = useState<IUsuario | null>(null);
     const [token, setToken] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+    // Cargar sesión guardada desde sessionStorage al iniciar
     useEffect(() => {
-        const storedToken = localStorage.getItem('token');
-        const storedUser = localStorage.getItem('user');
+        const storedToken = sessionStorage.getItem('token');
+        const storedUser = sessionStorage.getItem('user');
         
         if (storedToken && storedUser) {
             setToken(storedToken);
@@ -30,45 +31,95 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setIsLoading(false);
     }, []);
 
-    const login = async (email: string, password: string) => {
-    try {
-        const response = await authApi.login({ email, password });
-        console.log('📡 Respuesta login:', response);
-        
-        if (response.success) {
-            const { token, user } = response.data;
-            console.log('🔑 Token recibido:', token ? 'Sí' : 'No');
-            console.log('👤 Usuario recibido:', user);
-            
-            setToken(token);
-            setUser(user);
-            localStorage.setItem('token', token);
-            localStorage.setItem('user', JSON.stringify(user));
-            
-            console.log('✅ Token guardado en localStorage');
-        } else {
-            console.error('❌ Login falló:', response);
+    const logout = () => {
+        authApi.logout();
+        setToken(null);
+        setUser(null);
+        if (timeoutRef.current) {
+            clearTimeout(timeoutRef.current);
         }
-    } catch (error) {
-        console.error('❌ Error en login:', error);
-        throw error;
-    }
-};
+    };
+
+    const resetTimer = () => {
+        if (timeoutRef.current) {
+            clearTimeout(timeoutRef.current);
+        }
+        if (token) {
+            timeoutRef.current = setTimeout(() => {
+                console.log('⏰ Sesión expirada por inactividad');
+                logout();
+            }, 10 * 60 * 1000); // 10 minutos
+        }
+    };
+
+    // Efecto para escuchar la inactividad del usuario
+    useEffect(() => {
+        if (!token) {
+            if (timeoutRef.current) {
+                clearTimeout(timeoutRef.current);
+            }
+            return;
+        }
+
+        const events = ['mousemove', 'mousedown', 'keypress', 'scroll', 'touchstart'];
+        
+        const handleActivity = () => {
+            resetTimer();
+        };
+
+        // Iniciar temporizador
+        resetTimer();
+
+        // Agregar listeners
+        events.forEach(event => {
+            window.addEventListener(event, handleActivity);
+        });
+
+        // Limpieza de eventos
+        return () => {
+            if (timeoutRef.current) {
+                clearTimeout(timeoutRef.current);
+            }
+            events.forEach(event => {
+                window.removeEventListener(event, handleActivity);
+            });
+        };
+    }, [token]);
+
+    const login = async (email: string, password: string) => {
+        try {
+            const response = await authApi.login({ email, password });
+            console.log('📡 Respuesta login:', response);
+            
+            if (response.success) {
+                const { token, user } = response.data;
+                console.log('🔑 Token recibido:', token ? 'Sí' : 'No');
+                console.log('👤 Usuario recibido:', user);
+                
+                setToken(token);
+                setUser(user);
+                sessionStorage.setItem('token', token);
+                sessionStorage.setItem('user', JSON.stringify(user));
+                
+                console.log('✅ Token guardado en sessionStorage');
+            } else {
+                console.error('❌ Login falló:', response);
+            }
+        } catch (error) {
+            console.error('❌ Error en login:', error);
+            throw error;
+        }
+    };
+
     const register = async (data: any) => {
         const response = await authApi.register(data);
         if (response.success) {
             const { token, user } = response.data;
             setToken(token);
             setUser(user);
-            localStorage.setItem('token', token);
-            localStorage.setItem('user', JSON.stringify(user));
+            sessionStorage.setItem('token', token);
+            sessionStorage.setItem('user', JSON.stringify(user));
         }
-    };
-
-    const logout = () => {
-        authApi.logout();
-        setToken(null);
-        setUser(null);
     };
 
     return (

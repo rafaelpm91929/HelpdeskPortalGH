@@ -3,9 +3,9 @@ import { FRONTEND_BASE_URL } from '../config';
 export const logout = () => {
     console.log('🚪 Cerrando sesión...');
     
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    localStorage.removeItem('auth');
+    sessionStorage.removeItem('token');
+    sessionStorage.removeItem('user');
+    sessionStorage.removeItem('auth');
     
     sessionStorage.clear();
     
