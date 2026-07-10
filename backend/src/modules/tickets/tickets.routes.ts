@@ -31,6 +31,26 @@ export async function crearNotificaciones(ticketId: number, agenciaId: number, m
         writeLog(`[crearNotificaciones] Iniciando - ticketId: ${ticketId}, agenciaId: ${agenciaId}, mensaje: "${mensaje}", agenteId: ${agenteId}, excluirUsuarioId: ${excluirUsuarioId}`);
         const pool = await getConnection();
         
+        // Obtener logo y datos de la agencia
+        const agenciaRes = await pool.request()
+            .input('agencia_id', agenciaId)
+            .query("SELECT nombre, logo_url, subdominio FROM tbl_agencias WHERE id = @agencia_id");
+        
+        let logoUrl = '';
+        let subdominio = '';
+        if (agenciaRes.recordset.length > 0) {
+            logoUrl = agenciaRes.recordset[0].logo_url || '';
+            subdominio = agenciaRes.recordset[0].subdominio || '';
+        }
+
+        // Construir link del portal (usando el subdominio si aplica o la IP pública del frontend)
+        const publicIp = process.env.PUBLIC_IP || 'localhost';
+        // Si hay subdominio, podemos construir una URL amigable (ej: http://subdominio.midominio.com o usar la IP/puerto por defecto)
+        const baseDomain = process.env.BASE_DOMAIN || `${publicIp}:5173`;
+        const linkPortal = subdominio 
+            ? `http://${subdominio}.${baseDomain.replace(/:\d+$/, '')}:5173/admin` 
+            : `http://${baseDomain}/admin`;
+
         // Seleccionamos tanto el ID como el email de los admins y superadmins de la agencia
         const adminsResult = await pool.request()
             .input('agencia_id', agenciaId)
@@ -93,23 +113,27 @@ export async function crearNotificaciones(ticketId: number, agenciaId: number, m
             if (process.env.EMAILJS_PUBLIC_KEY || process.env.SMTP_USER || process.env.RESEND_API_KEY) {
                 writeLog(`[crearNotificaciones] Disparando envío de correo a: ${recipientEmail}`);
                 
+                const logoHtml = logoUrl ? `<div style="text-align: center; margin-bottom: 16px;"><img src="${logoUrl}" alt="Logo Agencia" style="max-height: 60px; object-fit: contain;" /></div>` : '';
                 const emailHtml = `
                     <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 8px; background-color: #ffffff; color: #1e293b;">
                         <div style="text-align: center; border-bottom: 2px solid #3b82f6; padding-bottom: 16px; margin-bottom: 20px;">
+                            ${logoHtml}
                             <h2 style="color: #2563eb; margin: 0; font-size: 22px;">🔔 Alerta de Helpdesk Portal</h2>
                         </div>
                         <p style="font-size: 16px; font-weight: bold; color: #0f172a; margin-top: 0;">${titulo}</p>
                         <div style="background-color: #f8fafc; border-left: 4px solid #3b82f6; padding: 16px; border-radius: 4px; margin: 16px 0;">
                             <p style="font-size: 14px; margin: 0; line-height: 1.6; color: #334155; white-space: pre-line;">${mensaje}</p>
                         </div>
-                        <p style="font-size: 14px; color: #64748b;">Por favor, ingresa al panel administrativo para atender esta solicitud.</p>
+                        <div style="text-align: center; margin: 24px 0;">
+                            <a href="${linkPortal}" style="display: inline-block; padding: 12px 24px; background-color: #2563eb; color: #ffffff; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 14px; box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);">Ir al Portal Administrativo</a>
+                        </div>
                         <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 24px 0;" />
                         <p style="font-size: 11px; color: #94a3b8; text-align: center; margin: 0;">Este es un mensaje automático enviado desde el portal de soporte. Favor de no responder a este correo.</p>
                     </div>
                 `;
                 
-                // Enviar asíncronamente sin bloquear la respuesta HTTP
-                sendNotificationEmail(recipientEmail, `Helpdesk: ${titulo}`, emailHtml, titulo, mensaje).catch(err => {
+                // Enviar asíncronamente sin bloquear la respuesta HTTP, incluyendo logoUrl y linkPortal
+                sendNotificationEmail(recipientEmail, `Helpdesk: ${titulo}`, emailHtml, titulo, mensaje, logoUrl, linkPortal).catch(err => {
                     writeLog(`[crearNotificaciones] ❌ Error asíncrono al enviar email: ${err.message}`);
                 });
             } else {

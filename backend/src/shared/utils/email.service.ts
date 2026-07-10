@@ -47,7 +47,9 @@ export const sendNotificationEmail = async (
     subject: string, 
     htmlContent: string,
     rawTitle?: string,
-    rawMessage?: string
+    rawMessage?: string,
+    logoUrl?: string,
+    linkPortal?: string
 ) => {
     try {
         // Opción A: EmailJS (Prioridad 1)
@@ -71,7 +73,9 @@ export const sendNotificationEmail = async (
                     to_email: to,
                     subject: subject,
                     title: rawTitle || subject,
-                    message: rawMessage || htmlContent
+                    message: rawMessage || htmlContent,
+                    logo_url: logoUrl || '',
+                    link_portal: linkPortal || ''
                 }
             };
 
