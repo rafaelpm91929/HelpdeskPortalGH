@@ -120,52 +120,76 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         const token = sessionStorage.getItem('token');
         const sseUrl = `${API_BASE_URL}/notificaciones/stream/${user.id}?token=${token}`;
         
-        console.log('🔌 Conectando a notificaciones en tiempo real (SSE)...', sseUrl);
-        const eventSource = new EventSource(sseUrl, { withCredentials: true });
+        console.log('🔌 Conectando a notificaciones en tiempo real (SSE)...');
+        let eventSource: EventSource | null = null;
+        let fallbackInterval: ReturnType<typeof setInterval> | null = null;
 
-        eventSource.onopen = () => {
-            console.log('🔌 Conexión SSE establecida y escuchando eventos en tiempo real.');
-        };
+        try {
+            eventSource = new EventSource(sseUrl);
+            eventSource.onopen = () => {
+                console.log('🔌 Conexión SSE establecida y escuchando eventos en tiempo real.');
+            };
 
-        eventSource.onmessage = (event) => {
-            try {
-                // El primer mensaje enviado inmediatamente por el backend es ": connected\n\n",
-                // el cual no dispara onmessage porque es un comentario, pero si por alguna razón
-                // llega datos vacíos o comentarios como mensaje, los controlamos.
-                if (!event.data) return;
+            eventSource.onmessage = (event) => {
+                try {
+                    const newNotification = JSON.parse(event.data);
+                    console.log('🔔 Nueva notificación recibida (SSE):', newNotification);
+                    
+                    setNotificaciones(prev => {
+                        if (prev.some(n => n.id === newNotification.id)) return prev;
+                        const updated = [newNotification, ...prev];
+                        setUnreadCount(updated.filter(n => !n.leido).length);
+                        return updated;
+                    });
 
-                const newNotification = JSON.parse(event.data);
-                console.log('🔔 Nueva notificación recibida:', newNotification);
-                
-                setNotificaciones(prev => {
-                    if (prev.some(n => n.id === newNotification.id)) return prev;
-                    const updated = [newNotification, ...prev];
-                    setUnreadCount(updated.filter(n => !n.leido).length);
-                    return updated;
-                });
+                    toast.success(newNotification.mensaje, {
+                        duration: 6000,
+                        icon: '🔔'
+                    });
 
-                toast.success(newNotification.mensaje, {
-                    duration: 6000,
-                    icon: '🔔'
-                });
-
-                // Recargar tickets y estadísticas en tiempo real
-                const currentAgenciaId = agenciaId || agenciaInfo?.id || (!isSuperAdminMode ? user?.agencia_id : undefined);
-                if (currentAgenciaId) {
-                     loadTickets(currentAgenciaId);
+                    // Recargar tickets y estadísticas en tiempo real
+                    const currentAgenciaId = agenciaId || agenciaInfo?.id || (!isSuperAdminMode ? user?.agencia_id : undefined);
+                    if (currentAgenciaId) {
+                         loadTickets(currentAgenciaId);
+                    }
+                } catch (err) {
+                    console.error('Error al procesar notificación en tiempo real:', err);
                 }
-            } catch (err) {
-                console.error('Error al procesar notificación en tiempo real:', err, event.data);
-            }
-        };
+            };
 
-        eventSource.onerror = (err) => {
-            console.error('❌ Error o desconexión en EventSource SSE:', err);
-        };
+            eventSource.onerror = (err) => {
+                console.warn('⚠️ Conexión SSE falló o fue bloqueada por CORS/404. Activando fallback a polling...');
+                if (eventSource) {
+                    eventSource.close();
+                    eventSource = null;
+                }
+                
+                // Activar polling si no está ya activo
+                if (!fallbackInterval) {
+                    const currentAgenciaId = agenciaId || agenciaInfo?.id || (!isSuperAdminMode ? user?.agencia_id : undefined);
+                    
+                    // Intervalo de polling cada 10 segundos
+                    fallbackInterval = setInterval(() => {
+                        loadNotificaciones();
+                        if (currentAgenciaId) {
+                            loadTickets(currentAgenciaId);
+                        }
+                    }, 10000);
+                }
+            };
+        } catch (e) {
+            console.error('Error al iniciar EventSource:', e);
+        }
 
         return () => {
-            console.log('🔌 Desconectando notificaciones en tiempo real (SSE)...');
-            eventSource.close();
+            if (eventSource) {
+                console.log('🔌 Desconectando notificaciones en tiempo real (SSE)...');
+                eventSource.close();
+            }
+            if (fallbackInterval) {
+                console.log('🔌 Deteniendo fallback de polling...');
+                clearInterval(fallbackInterval);
+            }
         };
     }, [user, agenciaId, agenciaInfo?.id, isSuperAdminMode]);
 
