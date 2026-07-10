@@ -89,9 +89,9 @@ export async function crearNotificaciones(ticketId: number, agenciaId: number, m
             writeLog(`[crearNotificaciones] ✅ Inserción exitosa para usuario: ${recipientId} - Notif ID: ${newNotif?.id}`);
             notificationEvents.emit('new-notification', { usuario_id: recipientId, notification: newNotif });
 
-            // 🔥 ENVIAR NOTIFICACIÓN POR EMAIL VÍA RESEND (SI LA CLAVE EXISTE EN .ENV)
-            if (process.env.RESEND_API_KEY) {
-                writeLog(`[crearNotificaciones] Disparando envío de correo vía Resend a: ${recipientEmail}`);
+            // 🔥 ENVIAR NOTIFICACIÓN POR EMAIL VÍA EMAILJS, SMTP O RESEND (SEGÚN LA CLAVE QUE EXISTA EN .ENV)
+            if (process.env.EMAILJS_PUBLIC_KEY || process.env.SMTP_USER || process.env.RESEND_API_KEY) {
+                writeLog(`[crearNotificaciones] Disparando envío de correo a: ${recipientEmail}`);
                 
                 const emailHtml = `
                     <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 8px; background-color: #ffffff; color: #1e293b;">
@@ -109,11 +109,11 @@ export async function crearNotificaciones(ticketId: number, agenciaId: number, m
                 `;
                 
                 // Enviar asíncronamente sin bloquear la respuesta HTTP
-                sendNotificationEmail(recipientEmail, `Helpdesk: ${titulo}`, emailHtml).catch(err => {
+                sendNotificationEmail(recipientEmail, `Helpdesk: ${titulo}`, emailHtml, titulo, mensaje).catch(err => {
                     writeLog(`[crearNotificaciones] ❌ Error asíncrono al enviar email: ${err.message}`);
                 });
             } else {
-                writeLog(`[crearNotificaciones] Envío de correo omitido (RESEND_API_KEY no configurado en .env)`);
+                writeLog(`[crearNotificaciones] Envío de correo omitido (No hay variables de configuración de email en .env)`);
             }
         }
     } catch (error: any) {
