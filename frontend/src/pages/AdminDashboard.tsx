@@ -56,6 +56,7 @@ interface INotificacion {
 // PROPS
 // ============================================
 interface AdminDashboardProps {
+    subdominio?: string;
     agenciaId?: number;
     isSuperAdminMode?: boolean;
 }
@@ -64,6 +65,7 @@ interface AdminDashboardProps {
 // COMPONENTE PRINCIPAL
 // ============================================
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({ 
+    subdominio,
     agenciaId, 
     isSuperAdminMode = false 
 }) => {
@@ -139,7 +141,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             console.log('🔌 Desconectando notificaciones en tiempo real (SSE)...');
             eventSource.close();
         };
-    }, [user, agenciaId, isSuperAdminMode, tickets.length]);
+    }, [user, agenciaId, agenciaInfo?.id, isSuperAdminMode]);
 
     // 🔥 MARCAR COMO LEÍDA Y ABRIR TICKET
     const handleNotificationClick = async (notif: INotificacion) => {
