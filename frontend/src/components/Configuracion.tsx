@@ -51,6 +51,29 @@ export const Configuracion: React.FC<ConfiguracionProps> = ({ agenciaId, subdomi
 
     const [nuevoTipo, setNuevoTipo] = useState('');
 
+    const [manuales, setManuales] = useState<any[]>([]);
+    const [loadingManuales, setLoadingManuales] = useState(false);
+
+    const loadManuales = async () => {
+        try {
+            setLoadingManuales(true);
+            const response = await api.get('/manuales');
+            if (response.data.success) {
+                setManuales(response.data.data);
+            }
+        } catch (error) {
+            console.error('Error al cargar manuales:', error);
+        } finally {
+            setLoadingManuales(false);
+        }
+    };
+
+    useEffect(() => {
+        if (activeSection === 'cuenta') {
+            loadManuales();
+        }
+    }, [activeSection]);
+
     const isDarkMode = temaUsuario === 'oscuro' || (temaUsuario === 'agencia' && configPortal.tema_defecto === 'oscuro');
     const colores = {
         primario: configPortal.colores_primario || '#2563eb',
@@ -608,6 +631,87 @@ export const Configuracion: React.FC<ConfiguracionProps> = ({ agenciaId, subdomi
                                     <option value="claro">☀️ Claro</option>
                                     <option value="oscuro">🌙 Oscuro</option>
                                 </select>
+                            </div>
+
+                            {/* SECCIÓN DE SOPORTE Y MANUALES PARA ADMINS */}
+                            <div style={{ marginTop: '24px', borderTop: '1px solid ' + colores.borde, paddingTop: '16px', color: colores.texto }}>
+                                <h4 style={{ fontWeight: 'bold', marginBottom: '8px', fontSize: '15px' }}>📞 Soporte Técnico y Renovaciones</h4>
+                                <p style={{ fontSize: '13px', color: colores.textoMuted, lineHeight: '1.4' }}>
+                                    Para dudas, soporte técnico, renovaciones de licencia o aclaraciones del portal corporativo, contacte al administrador general en:
+                                </p>
+                                <div style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '8px',
+                                    marginTop: '8px',
+                                    marginBottom: '16px',
+                                    padding: '10px 14px',
+                                    backgroundColor: colores.tarjeta,
+                                    borderRadius: '6px',
+                                    border: '1px solid ' + colores.borde,
+                                    width: 'fit-content'
+                                }}>
+                                    <span style={{ fontSize: '18px' }}>✉️</span>
+                                    <a 
+                                        href="mailto:helpdesk@grupohuerta.mx" 
+                                        style={{ 
+                                            color: colores.primario, 
+                                            fontWeight: 'bold', 
+                                            textDecoration: 'none',
+                                            fontSize: '14px'
+                                        }}
+                                    >
+                                        helpdesk@grupohuerta.mx
+                                    </a>
+                                </div>
+
+                                <h4 style={{ fontWeight: 'bold', marginBottom: '8px', fontSize: '15px', borderTop: '1px solid ' + colores.borde, paddingTop: '16px' }}>
+                                    📕 Manuales y Guías
+                                </h4>
+                                {loadingManuales ? (
+                                    <p style={{ fontSize: '13px', color: colores.textoMuted }}>Cargando manuales...</p>
+                                ) : manuales.length === 0 ? (
+                                    <p style={{ fontSize: '13px', color: colores.textoMuted }}>No hay manuales cargados actualmente.</p>
+                                ) : (
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '8px' }}>
+                                        {manuales.map((m) => (
+                                            <div key={m.id} style={{
+                                                display: 'flex',
+                                                justifyContent: 'space-between',
+                                                alignItems: 'center',
+                                                padding: '10px 12px',
+                                                backgroundColor: colores.tarjeta,
+                                                borderRadius: '6px',
+                                                border: '1px solid ' + colores.borde
+                                            }}>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                    <span style={{ fontSize: '20px' }}>📄</span>
+                                                    <div>
+                                                        <div style={{ fontSize: '13px', fontWeight: '500', color: colores.texto }}>{m.nombre}</div>
+                                                        <div style={{ fontSize: '11px', color: colores.textoMuted }}>{new Date(m.fecha_creacion).toLocaleDateString()}</div>
+                                                    </div>
+                                                </div>
+                                                <a
+                                                    href={m.ruta.startsWith('http') ? m.ruta : `${IMAGE_BASE_URL.replace('/uploads', '')}${m.ruta}`}
+                                                    download
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    style={{
+                                                        padding: '4px 10px',
+                                                        backgroundColor: colores.primario,
+                                                        color: 'white',
+                                                        borderRadius: '4px',
+                                                        fontSize: '12px',
+                                                        textDecoration: 'none',
+                                                        fontWeight: '600'
+                                                    }}
+                                                >
+                                                    Descargar
+                                                </a>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
                         </div>
 

@@ -75,7 +75,7 @@ interface UserPortalProps {
 // ============================================
 export const UserPortal: React.FC<UserPortalProps> = ({ agenciaParam }) => {
     const { user } = useAuth();
-    const [activeTab, setActiveTab] = useState<'bienvenida' | 'crear' | 'ver' | 'perfil'>(() => {
+    const [activeTab, setActiveTab] = useState<'bienvenida' | 'crear' | 'ver' | 'perfil' | 'manuales'>(() => {
         return (localStorage.getItem(`active_tab_user_${user?.id}`) as any) || 'bienvenida';
     });
 
@@ -101,6 +101,32 @@ export const UserPortal: React.FC<UserPortalProps> = ({ agenciaParam }) => {
     const [temaUsuario, setTemaUsuario] = useState<string>(() => localStorage.getItem(`theme_usuario_${user?.id}`) || 'agencia');
     const [filtroTexto, setFiltroTexto] = useState('');
     const [filtroEstado, setFiltroEstado] = useState('todos');
+
+    // ============================================
+    // MANUALES Y GUÍAS PDF
+    // ============================================
+    const [manuales, setManuales] = useState<any[]>([]);
+    const [loadingManuales, setLoadingManuales] = useState(false);
+
+    const loadManuales = async () => {
+        try {
+            setLoadingManuales(true);
+            const response = await api.get('/manuales');
+            if (response.data.success) {
+                setManuales(response.data.data);
+            }
+        } catch (error) {
+            console.error('Error al cargar manuales:', error);
+        } finally {
+            setLoadingManuales(false);
+        }
+    };
+
+    useEffect(() => {
+        if (activeTab === 'manuales') {
+            loadManuales();
+        }
+    }, [activeTab]);
 
     // ============================================
     // NOTIFICACIONES EN TIEMPO REAL PARA USUARIO
@@ -1398,7 +1424,8 @@ export const UserPortal: React.FC<UserPortalProps> = ({ agenciaParam }) => {
                     { id: 'bienvenida', icon: '🏠', label: 'Inicio' },
                     { id: 'crear', icon: '📝', label: 'Nuevo Ticket' },
                     { id: 'ver', icon: '📋', label: 'Mis Tickets' },
-                    { id: 'perfil', icon: '👤', label: 'Mi Perfil' }
+                    { id: 'perfil', icon: '👤', label: 'Mi Perfil' },
+                    { id: 'manuales', icon: '📕', label: 'Manuales' }
                 ].map((tab) => (
                     <button
                         key={tab.id}
@@ -2084,6 +2111,89 @@ export const UserPortal: React.FC<UserPortalProps> = ({ agenciaParam }) => {
                                 </select>
                             </div>
                         </div>
+                    </div>
+                )}
+
+                {/* TAB: MANUALES */}
+                {activeTab === 'manuales' && (
+                    <div style={{
+                        backgroundColor: colores.tarjeta,
+                        borderRadius: '8px',
+                        padding: '24px',
+                        boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+                        border: '1px solid ' + colores.borde
+                    }}>
+                        <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: colores.texto, marginBottom: '4px' }}>
+                            📕 Manuales de Usuario
+                        </h2>
+                        <p style={{ color: colores.textoMuted, marginBottom: '20px' }}>
+                            Descarga guías y manuales de ayuda para resolver tus dudas sobre el uso del portal.
+                        </p>
+
+                        {loadingManuales ? (
+                            <p style={{ color: colores.texto }}>Cargando manuales...</p>
+                        ) : manuales.length === 0 ? (
+                            <div style={{
+                                backgroundColor: colores.hoverBg,
+                                padding: '40px',
+                                borderRadius: '8px',
+                                textAlign: 'center',
+                                color: colores.textoMuted,
+                                border: '1px solid ' + colores.borde
+                            }}>
+                                No hay manuales disponibles actualmente.
+                            </div>
+                        ) : (
+                            <div style={{
+                                display: 'grid',
+                                gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+                                gap: '16px'
+                            }}>
+                                {manuales.map((m) => (
+                                    <div key={m.id} style={{
+                                        backgroundColor: colores.hoverBg,
+                                        padding: '20px',
+                                        borderRadius: '8px',
+                                        border: '1px solid ' + colores.borde,
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        justifyContent: 'space-between'
+                                    }}>
+                                        <div>
+                                            <span style={{ fontSize: '32px', display: 'block', marginBottom: '8px' }}>📄</span>
+                                            <h4 style={{ fontWeight: 'bold', color: colores.texto, fontSize: '15px', marginBottom: '4px' }}>
+                                                {m.nombre}
+                                            </h4>
+                                            <span style={{ fontSize: '11px', color: colores.textoMuted }}>
+                                                Publicado el {new Date(m.fecha_creacion).toLocaleDateString()}
+                                            </span>
+                                        </div>
+                                        <a
+                                            href={m.ruta.startsWith('http') ? m.ruta : `${IMAGE_BASE_URL.replace('/uploads', '')}${m.ruta}`}
+                                            download
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            style={{
+                                                marginTop: '16px',
+                                                display: 'block',
+                                                width: '100%',
+                                                padding: '10px',
+                                                backgroundColor: colores.primario,
+                                                color: 'white',
+                                                borderRadius: '6px',
+                                                textAlign: 'center',
+                                                fontWeight: '600',
+                                                fontSize: '13px',
+                                                textDecoration: 'none',
+                                                boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
+                                            }}
+                                        >
+                                            📥 Descargar Manual
+                                        </a>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
                 )}
             </div>

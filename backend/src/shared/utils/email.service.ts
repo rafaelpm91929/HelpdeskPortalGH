@@ -148,3 +148,87 @@ export const sendNotificationEmail = async (
         return { success: false, error: error.message };
     }
 };
+
+export const sendCredentialsEmail = async (
+    to: string,
+    agencyName: string,
+    subdomain: string,
+    adminEmail: string,
+    adminPass: string,
+    linkPortal: string
+) => {
+    try {
+        if (process.env.EMAILJS_PUBLIC_KEY) {
+            const serviceId = process.env.EMAILJS_SERVICE_ID || 'default_service';
+            const templateId = process.env.EMAILJS_CREDS_TEMPLATE_ID || process.env.EMAILJS_TEMPLATE_ID;
+            const publicKey = process.env.EMAILJS_PUBLIC_KEY;
+            const privateKey = process.env.EMAILJS_PRIVATE_KEY;
+
+            if (!templateId) {
+                throw new Error('Missing template ID in environment variables');
+            }
+
+            const payload: any = {
+                service_id: serviceId,
+                template_id: templateId,
+                user_id: publicKey,
+                template_params: {
+                    to_email: to,
+                    agency_name: agencyName,
+                    subdomain: subdomain,
+                    admin_email: adminEmail,
+                    admin_password: adminPass,
+                    link_portal: linkPortal
+                }
+            };
+
+            if (privateKey) {
+                payload.accessToken = privateKey;
+            }
+
+            const response = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                const responseText = await response.text();
+                throw new Error(`EmailJS API error: ${response.status} - ${responseText}`);
+            }
+
+            return { success: true };
+        }
+        
+        // SMTP Fallback
+        if (process.env.SMTP_USER && process.env.SMTP_PASS) {
+            const transporter = getSmtpTransporter();
+            await transporter.sendMail({
+                from: `"Helpdesk Portal" <${process.env.SMTP_USER}>`,
+                to: to,
+                subject: `Accesos para tu portal de soporte - ${agencyName}`,
+                html: `
+                    <div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
+                        <h2 style="color: #2563eb;">¡Bienvenido a Helpdesk Portal!</h2>
+                        <p>Se ha configurado tu acceso como Administrador para la agencia <strong>${agencyName}</strong>.</p>
+                        <p><strong>Detalles de tu cuenta:</strong></p>
+                        <table style="border-collapse: collapse; width: 100%; max-width: 400px; margin-bottom: 20px;">
+                            <tr style="border-bottom: 1px solid #ddd;"><td style="padding: 8px 0; font-weight: bold;">Portal:</td><td style="padding: 8px 0;"><a href="${linkPortal}">${linkPortal}</a></td></tr>
+                            <tr style="border-bottom: 1px solid #ddd;"><td style="padding: 8px 0; font-weight: bold;">Email:</td><td style="padding: 8px 0;">${adminEmail}</td></tr>
+                            <tr style="border-bottom: 1px solid #ddd;"><td style="padding: 8px 0; font-weight: bold;">Contraseña:</td><td style="padding: 8px 0; font-family: monospace; font-size: 14px;">${adminPass}</td></tr>
+                        </table>
+                        <p>Por seguridad, te recomendamos cambiar tu contraseña al ingresar al portal.</p>
+                    </div>
+                `
+            });
+            return { success: true };
+        }
+
+        throw new Error('No email provider configured (missing EMAILJS_PUBLIC_KEY or SMTP credentials)');
+    } catch (error: any) {
+        console.error('Error enviando email de credenciales:', error);
+        throw error;
+    }
+};

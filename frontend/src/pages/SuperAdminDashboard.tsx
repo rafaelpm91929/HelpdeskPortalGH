@@ -88,6 +88,12 @@ export const SuperAdminDashboard: React.FC = () => {
     const [licensingAgencia, setLicensingAgencia] = useState<IAgencia | null>(null);
     const [licenseDate, setLicenseDate] = useState('');
 
+    // Estados para Enviar Claves
+    const [showSendKeysModal, setShowSendKeysModal] = useState(false);
+    const [sendKeysAdmin, setSendKeysAdmin] = useState<IUsuario | null>(null);
+    const [sendKeysPassword, setSendKeysPassword] = useState('');
+    const [sendingKeys, setSendingKeys] = useState(false);
+
     // ============================================
     // VERIFICAR PERMISOS
     // ============================================
@@ -125,6 +131,33 @@ export const SuperAdminDashboard: React.FC = () => {
             toast.error(e.response?.data?.error || 'Error al actualizar licencia');
         }
     };
+
+    const openSendKeysModal = (admin: IUsuario) => {
+        setSendKeysAdmin(admin);
+        setSendKeysPassword('');
+        setShowSendKeysModal(true);
+    };
+
+    const submitSendKeys = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!sendKeysAdmin || !sendKeysPassword) return;
+        try {
+            setSendingKeys(true);
+            const response = await api.post(`/auth/users/${sendKeysAdmin.id}/enviar-claves`, {
+                password: sendKeysPassword
+            });
+            if (response.data.success) {
+                toast.success('🔑 Claves enviadas correctamente por correo');
+                setShowSendKeysModal(false);
+                setSendKeysAdmin(null);
+            }
+        } catch (error: any) {
+            toast.error(error.response?.data?.error || 'Error al enviar claves');
+        } finally {
+            setSendingKeys(false);
+        }
+    };
+
     const toggleLockAgencia = async (agencia: IAgencia) => {
         if (agencia.bloqueada) {
             try {
@@ -848,7 +881,7 @@ export const SuperAdminDashboard: React.FC = () => {
                                                         gap: '8px'
                                                     }}>
                                                         {agencia.nombre}
-                                                        {agencia.bloqueada && (
+                                                        {!!agencia.bloqueada && (
                                                             <span style={{
                                                                 fontSize: '11px',
                                                                 backgroundColor: '#fee2e2',
@@ -1076,6 +1109,22 @@ export const SuperAdminDashboard: React.FC = () => {
                                                         </span>
                                                     </td>
                                                     <td style={{ padding: '12px 16px', textAlign: 'center' }}>
+                                                        <button
+                                                            onClick={() => openSendKeysModal(admin)}
+                                                            style={{
+                                                                padding: '4px 12px',
+                                                                backgroundColor: '#eff6ff',
+                                                                border: 'none',
+                                                                borderRadius: '4px',
+                                                                cursor: 'pointer',
+                                                                marginRight: '4px',
+                                                                color: '#2563eb',
+                                                                fontWeight: 'bold'
+                                                            }}
+                                                            title="Enviar Claves por Correo"
+                                                        >
+                                                            🔑 Claves
+                                                        </button>
                                                         <button
                                                             onClick={() => {
                                                                 setEditingAdmin(admin);
