@@ -19,7 +19,9 @@ router.get('/subdominio/:subdominio', async (req, res) => {
                 SELECT id, nombre, subdominio, logo_url, 
                        colores_primario, colores_secundario, 
                        colores_fondo, colores_texto, activo,
-                       bloqueada, mensaje_bloqueo
+                       CASE WHEN bloqueada = 1 OR (fecha_licencia IS NOT NULL AND fecha_licencia < GETDATE()) THEN 1 ELSE 0 END AS bloqueada,
+                       CASE WHEN fecha_licencia IS NOT NULL AND fecha_licencia < GETDATE() THEN 'Licencia expirada' ELSE mensaje_bloqueo END AS mensaje_bloqueo,
+                       fecha_licencia
                 FROM tbl_agencias 
                 WHERE subdominio = @subdominio AND activo = 1
             `);
@@ -58,7 +60,9 @@ router.get('/:id', async (req, res) => {
                 SELECT id, nombre, subdominio, logo_url, 
                        colores_primario, colores_secundario, 
                        colores_fondo, colores_texto, activo,
-                       bloqueada, mensaje_bloqueo
+                       CASE WHEN bloqueada = 1 OR (fecha_licencia IS NOT NULL AND fecha_licencia < GETDATE()) THEN 1 ELSE 0 END AS bloqueada,
+                       CASE WHEN fecha_licencia IS NOT NULL AND fecha_licencia < GETDATE() THEN 'Licencia expirada' ELSE mensaje_bloqueo END AS mensaje_bloqueo,
+                       fecha_licencia
                 FROM tbl_agencias 
                 WHERE id = @id AND activo = 1
             `);
@@ -96,7 +100,10 @@ router.get('/', async (req, res) => {
             SELECT id, nombre, subdominio, logo_url, 
                    colores_primario, colores_secundario, 
                    colores_fondo, colores_texto,
-                   activo, fecha_creacion, bloqueada, mensaje_bloqueo
+                   activo, fecha_creacion, 
+                   CASE WHEN bloqueada = 1 OR (fecha_licencia IS NOT NULL AND fecha_licencia < GETDATE()) THEN 1 ELSE 0 END AS bloqueada,
+                   CASE WHEN fecha_licencia IS NOT NULL AND fecha_licencia < GETDATE() THEN 'Licencia expirada' ELSE mensaje_bloqueo END AS mensaje_bloqueo,
+                   fecha_licencia
             FROM tbl_agencias 
             ORDER BY fecha_creacion DESC
         `);
@@ -345,6 +352,46 @@ router.put('/:id/bloquear', async (req: any, res: any) => {
         });
     } catch (error: any) {
         console.error('Error al bloquear/desbloquear agencia:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// ============================================
+// PUT /api/agencias/:id/licencia - Cambiar fecha de licencia (Solo Superadmin)
+// ============================================
+router.put('/:id/licencia', async (req: any, res: any) => {
+    try {
+        const { id } = req.params;
+        const { fecha_licencia } = req.body;
+        const currentUser = req.user;
+
+        // Solo superadmin puede cambiar fechas de licencia
+        if (!currentUser || currentUser.rol !== 'superadmin') {
+            return res.status(403).json({
+                success: false,
+                error: 'No tienes permiso para realizar esta acción'
+            });
+        }
+
+        const pool = await getConnection();
+        await pool.request()
+            .input('id', parseInt(id))
+            .input('fecha_licencia', fecha_licencia ? new Date(fecha_licencia) : null)
+            .query(`
+                UPDATE tbl_agencias
+                SET fecha_licencia = @fecha_licencia
+                WHERE id = @id
+            `);
+
+        res.json({
+            success: true,
+            message: 'Fecha de licencia actualizada correctamente'
+        });
+    } catch (error: any) {
+        console.error('Error al actualizar licencia:', error);
         res.status(500).json({
             success: false,
             error: error.message

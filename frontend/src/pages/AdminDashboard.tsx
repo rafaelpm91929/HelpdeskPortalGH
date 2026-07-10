@@ -580,6 +580,18 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         );
     }
 
+    const getLicenseDaysLeft = () => {
+        if (!agenciaInfo?.fecha_licencia) return null;
+        const exp = new Date(agenciaInfo.fecha_licencia);
+        const today = new Date();
+        exp.setHours(0,0,0,0);
+        today.setHours(0,0,0,0);
+        const diff = exp.getTime() - today.getTime();
+        return Math.ceil(diff / (1000 * 60 * 60 * 24));
+    };
+
+    const daysLeft = getLicenseDaysLeft();
+
     const nombreAgencia = agenciaInfo?.nombre || `Agencia ${user?.agencia_id}`;
     const subdominioAgencia = agenciaInfo?.subdominio || subdominio || 'sin-subdominio';
 
@@ -814,6 +826,32 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 padding: '24px',
                 minHeight: '100vh'
             }}>
+                {/* Banner de Licencia */}
+                {daysLeft !== null && daysLeft <= 5 && daysLeft > 0 && (
+                    <div style={{
+                        backgroundColor: daysLeft <= 2 ? 'rgba(239, 68, 68, 0.15)' : 'rgba(245, 158, 11, 0.15)',
+                        border: daysLeft <= 2 ? '1px solid rgba(239, 68, 68, 0.4)' : '1px solid rgba(245, 158, 11, 0.4)',
+                        color: daysLeft <= 2 ? '#ef4444' : '#f59e0b',
+                        padding: '12px 16px',
+                        borderRadius: '8px',
+                        marginBottom: '16px',
+                        fontSize: '14px',
+                        fontWeight: '600',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '10px',
+                        fontFamily: 'system-ui, -apple-system, sans-serif'
+                    }}>
+                        <span>⚠️</span>
+                        <div>
+                            {daysLeft <= 2 
+                                ? `¡Atención Crítica! La licencia de tu portal expira en ${daysLeft} día(s). Por favor contacta al administrador general para evitar la suspensión.`
+                                : `Advertencia de Licencia: Tu licencia expira en ${daysLeft} días. Asegúrate de renovarla a tiempo.`
+                            }
+                        </div>
+                    </div>
+                )}
+
                 {/* Header con LOGO */}
                 <div style={{
                     backgroundColor: colores.tarjeta,

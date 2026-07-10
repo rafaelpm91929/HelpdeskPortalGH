@@ -3,6 +3,7 @@ import { api } from '../api/axios.config';
 import toast from 'react-hot-toast';
 import { AreasManager } from './AreasManager';
 import { IMAGE_BASE_URL } from '../config';
+import { useAuth } from '../context/AuthContext';
 
 interface ConfiguracionProps {
     agenciaId: number;
@@ -13,6 +14,7 @@ interface ConfiguracionProps {
 }
 
 export const Configuracion: React.FC<ConfiguracionProps> = ({ agenciaId, subdominio, temaUsuario, setTemaUsuario, onSave }) => {
+    const { user } = useAuth();
     const [loading, setLoading] = useState(false);
     const [activeSection, setActiveSection] = useState<'portal' | 'ticket' | 'cuenta' | 'areas'>(() => {
         return (localStorage.getItem(`config_section_${agenciaId}`) as any) || 'portal';
@@ -553,19 +555,34 @@ export const Configuracion: React.FC<ConfiguracionProps> = ({ agenciaId, subdomi
                             marginBottom: '16px',
                             color: colores.texto
                         }}>
-                            <h4 style={{ fontWeight: 'bold', marginBottom: '8px', color: colores.texto }}>Datos personales</h4>
+                            <h4 style={{ fontWeight: 'bold', marginBottom: '8px', color: colores.texto }}>Datos de la Agencia y Cuenta</h4>
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                                 <div>
-                                    <label style={{ fontSize: '14px', color: colores.textoMuted }}>Nombre</label>
-                                    <p style={{ fontWeight: '500', color: colores.texto }}>{agenciaData?.nombre || 'Admin'}</p>
+                                    <label style={{ fontSize: '14px', color: colores.textoMuted }}>Agencia</label>
+                                    <p style={{ fontWeight: '500', color: colores.texto }}>{agenciaData?.nombre || '-'}</p>
                                 </div>
                                 <div>
-                                    <label style={{ fontSize: '14px', color: colores.textoMuted }}>Apellido</label>
-                                    <p style={{ fontWeight: '500', color: colores.texto }}>{agenciaData?.subdominio || 'Suzuki'}</p>
+                                    <label style={{ fontSize: '14px', color: colores.textoMuted }}>Subdominio</label>
+                                    <p style={{ fontWeight: '500', color: colores.texto }}>{agenciaData?.subdominio || '-'}</p>
+                                </div>
+                                <div>
+                                    <label style={{ fontSize: '14px', color: colores.textoMuted }}>Administrador</label>
+                                    <p style={{ fontWeight: '500', color: colores.texto }}>{user?.nombre} {user?.apellido}</p>
+                                </div>
+                                <div>
+                                    <label style={{ fontSize: '14px', color: colores.textoMuted }}>Email de Admin</label>
+                                    <p style={{ fontWeight: '500', color: colores.texto }}>{user?.email || '-'}</p>
                                 </div>
                                 <div style={{ gridColumn: 'span 2' }}>
-                                    <label style={{ fontSize: '14px', color: colores.textoMuted }}>Email</label>
-                                    <p style={{ fontWeight: '500', color: colores.texto }}>admin@{agenciaData?.subdominio || 'suzukimontevideo'}.com</p>
+                                    <label style={{ fontSize: '14px', color: colores.textoMuted }}>Vencimiento de Licencia</label>
+                                    <p style={{ 
+                                        fontWeight: 'bold', 
+                                        color: agenciaData?.fecha_licencia && new Date(agenciaData.fecha_licencia).getTime() < Date.now() ? '#ef4444' : '#10b981'
+                                    }}>
+                                        {agenciaData?.fecha_licencia 
+                                            ? new Date(agenciaData.fecha_licencia).toLocaleDateString() 
+                                            : 'Licencia Permanente o Sin Asignar'}
+                                    </p>
                                 </div>
                             </div>
 

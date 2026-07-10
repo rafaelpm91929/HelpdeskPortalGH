@@ -37,7 +37,7 @@ interface IUsuario {
 // ============================================
 export const SuperAdminDashboard: React.FC = () => {
     const { user, logout: authLogout } = useAuth();
-    const [activeTab, setActiveTab] = useState<'menu' | 'agencias' | 'admins' | 'manuales'>(() => {
+    const [activeTab, setActiveTab] = useState<'menu' | 'agencias' | 'admins' | 'manuales' | 'licencias'>(() => {
         return (localStorage.getItem(`active_tab_superadmin_${user?.id}`) as any) || 'menu';
     });
 
@@ -83,6 +83,11 @@ export const SuperAdminDashboard: React.FC = () => {
     const [manualForm, setManualForm] = useState({ nombre: '', archivo: null as File | null });
     const [subiendoManual, setSubiendoManual] = useState(false);
 
+    // Estados para Licencias
+    const [showLicenseModal, setShowLicenseModal] = useState(false);
+    const [licensingAgencia, setLicensingAgencia] = useState<IAgencia | null>(null);
+    const [licenseDate, setLicenseDate] = useState('');
+
     // ============================================
     // VERIFICAR PERMISOS
     // ============================================
@@ -96,8 +101,30 @@ export const SuperAdminDashboard: React.FC = () => {
     }
 
     // ============================================
-    // MÉTODOS PARA BLOQUEAR Y MANUALES
+    // MÉTODOS PARA BLOQUEAR, MANUALES Y LICENCIAS
     // ============================================
+    const openLicenseModal = (agencia: IAgencia) => {
+        setLicensingAgencia(agencia);
+        setLicenseDate(agencia.fecha_licencia ? new Date(agencia.fecha_licencia).toISOString().split('T')[0] : '');
+        setShowLicenseModal(true);
+    };
+
+    const submitLicenseDate = async () => {
+        if (!licensingAgencia) return;
+        try {
+            const response = await api.put(`/agencias/${licensingAgencia.id}/licencia`, {
+                fecha_licencia: licenseDate ? new Date(licenseDate).toISOString() : null
+            });
+            if (response.data.success) {
+                toast.success('Licencia actualizada correctamente');
+                setShowLicenseModal(false);
+                setLicensingAgencia(null);
+                loadAgencias();
+            }
+        } catch (e: any) {
+            toast.error(e.response?.data?.error || 'Error al actualizar licencia');
+        }
+    };
     const toggleLockAgencia = async (agencia: IAgencia) => {
         if (agencia.bloqueada) {
             try {
@@ -479,6 +506,21 @@ export const SuperAdminDashboard: React.FC = () => {
                         >
                             📄 Manuales
                         </button>
+                        <button
+                            onClick={() => setActiveTab('licencias')}
+                            style={{
+                                flex: 1,
+                                padding: '10px',
+                                backgroundColor: activeTab === 'licencias' ? '#2563eb' : 'transparent',
+                                color: activeTab === 'licencias' ? 'white' : '#374151',
+                                border: 'none',
+                                borderRadius: '6px',
+                                cursor: 'pointer',
+                                fontWeight: '500'
+                            }}
+                        >
+                            📅 Licencias
+                        </button>
                     </div>
                 )}
 
@@ -631,6 +673,58 @@ export const SuperAdminDashboard: React.FC = () => {
                                 </h3>
                                 <p style={{ fontSize: '14px', color: '#64748b', lineHeight: '1.5' }}>
                                     Sube, descarga y administra los manuales de usuario y guías técnicas en formato PDF.
+                                </p>
+                            </div>
+                            <button style={{
+                                marginTop: 'auto',
+                                padding: '10px 20px',
+                                backgroundColor: '#3b82f6',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '6px',
+                                fontWeight: '600',
+                                cursor: 'pointer',
+                                width: '100%'
+                            }}>
+                                Ingresar
+                            </button>
+                        </div>
+
+                        {/* Card Licencias */}
+                        <div 
+                            onClick={() => setActiveTab('licencias')}
+                            style={{
+                                backgroundColor: 'white',
+                                borderRadius: '12px',
+                                padding: '32px 24px',
+                                textAlign: 'center',
+                                cursor: 'pointer',
+                                boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03)',
+                                border: '1px solid #e2e8f0',
+                                transition: 'all 0.2s ease-in-out',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                                gap: '16px'
+                            }}
+                            onMouseEnter={(e) => {
+                                e.currentTarget.style.transform = 'translateY(-4px)';
+                                e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05)';
+                                e.currentTarget.style.borderColor = '#3b82f6';
+                            }}
+                            onMouseLeave={(e) => {
+                                e.currentTarget.style.transform = 'translateY(0)';
+                                e.currentTarget.style.boxShadow = '0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03)';
+                                e.currentTarget.style.borderColor = '#e2e8f0';
+                            }}
+                        >
+                            <div style={{ fontSize: '48px' }}>📅</div>
+                            <div>
+                                <h3 style={{ fontSize: '20px', fontWeight: 'bold', color: '#0f172a', marginBottom: '8px' }}>
+                                    Licencias
+                                </h3>
+                                <p style={{ fontSize: '14px', color: '#64748b', lineHeight: '1.5' }}>
+                                    Administra el vencimiento de licencias de cada portal de ayuda y suspende accesos vencidos.
                                 </p>
                             </div>
                             <button style={{
@@ -1148,6 +1242,108 @@ export const SuperAdminDashboard: React.FC = () => {
                         )}
                     </div>
                 )}
+
+                {/* ============================================
+                TAB LICENCIAS
+                ============================================ */}
+                {activeTab === 'licencias' && (
+                    <div>
+                        <div style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            marginBottom: '16px'
+                        }}>
+                            <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: '#f8fafc' }}>
+                                Control de Licencias por Agencia
+                            </h2>
+                        </div>
+
+                        <div style={{
+                            backgroundColor: 'white',
+                            borderRadius: '12px',
+                            boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)',
+                            border: '1px solid #e2e8f0',
+                            overflow: 'hidden'
+                        }}>
+                            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                                <thead>
+                                    <tr style={{ backgroundColor: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
+                                        <th style={{ padding: '16px', color: '#475569', fontWeight: '600' }}>Agencia</th>
+                                        <th style={{ padding: '16px', color: '#475569', fontWeight: '600' }}>Subdominio</th>
+                                        <th style={{ padding: '16px', color: '#475569', fontWeight: '600' }}>Expiración de Licencia</th>
+                                        <th style={{ padding: '16px', color: '#475569', fontWeight: '600' }}>Estado</th>
+                                        <th style={{ padding: '16px', color: '#475569', fontWeight: '600', textAlign: 'center' }}>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {agencias.map((agencia) => {
+                                        const dateStr = agencia.fecha_licencia;
+                                        let statusBadge = { bg: '#e2e8f0', text: '#475569', label: 'Sin Asignar' };
+                                        
+                                        if (dateStr) {
+                                            const exp = new Date(dateStr);
+                                            const today = new Date();
+                                            exp.setHours(0,0,0,0);
+                                            today.setHours(0,0,0,0);
+                                            const diff = exp.getTime() - today.getTime();
+                                            const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
+                                            
+                                            if (days <= 0) {
+                                                statusBadge = { bg: '#fee2e2', text: '#b91c1c', label: 'Expirada 🚫' };
+                                            } else if (days <= 2) {
+                                                statusBadge = { bg: '#ffedd5', text: '#ea580c', label: `Crítico (Vence en ${days}d) ⚠️` };
+                                            } else if (days <= 5) {
+                                                statusBadge = { bg: '#fef9c3', text: '#ca8a04', label: `Pronto a Vencer (${days}d) ⚠️` };
+                                            } else {
+                                                statusBadge = { bg: '#dcfce7', text: '#15803d', label: 'Activa ✅' };
+                                            }
+                                        }
+
+                                        return (
+                                            <tr key={agencia.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                                                <td style={{ padding: '16px', fontWeight: '600', color: '#0f172a' }}>{agencia.nombre}</td>
+                                                <td style={{ padding: '16px', color: '#64748b' }}>{agencia.subdominio}</td>
+                                                <td style={{ padding: '16px', color: '#334155' }}>
+                                                    {dateStr ? new Date(dateStr).toLocaleDateString() : 'Licencia Permanente'}
+                                                </td>
+                                                <td style={{ padding: '16px' }}>
+                                                    <span style={{
+                                                        backgroundColor: statusBadge.bg,
+                                                        color: statusBadge.text,
+                                                        padding: '4px 10px',
+                                                        borderRadius: '12px',
+                                                        fontSize: '12px',
+                                                        fontWeight: 'bold'
+                                                    }}>
+                                                        {statusBadge.label}
+                                                    </span>
+                                                </td>
+                                                <td style={{ padding: '16px', textAlign: 'center' }}>
+                                                    <button
+                                                        onClick={() => openLicenseModal(agencia)}
+                                                        style={{
+                                                            padding: '6px 12px',
+                                                            backgroundColor: '#2563eb',
+                                                            color: 'white',
+                                                            border: 'none',
+                                                            borderRadius: '6px',
+                                                            cursor: 'pointer',
+                                                            fontSize: '13px',
+                                                            fontWeight: '600'
+                                                        }}
+                                                    >
+                                                        📅 Modificar
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                )}
             </div>
 
             {/* ============================================
@@ -1639,6 +1835,94 @@ export const SuperAdminDashboard: React.FC = () => {
                                 </button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {/* ============================================
+            MODAL PARA EDITAR LICENCIA
+            ============================================ */}
+            {showLicenseModal && licensingAgencia && (
+                <div style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    backgroundColor: 'rgba(0,0,0,0.5)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    zIndex: 1000
+                }}>
+                    <div style={{
+                        backgroundColor: 'white',
+                        padding: '24px',
+                        borderRadius: '12px',
+                        width: '90%',
+                        maxWidth: '450px',
+                        boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)'
+                    }}>
+                        <h3 style={{ fontSize: '18px', fontWeight: 'bold', color: '#0f172a', marginBottom: '12px' }}>
+                            📅 Modificar Licencia: {licensingAgencia.nombre}
+                        </h3>
+                        <p style={{ fontSize: '13px', color: '#64748b', marginBottom: '16px', lineHeight: '1.4' }}>
+                            Define la fecha de vencimiento de la licencia para esta agencia. Una vez llegada la fecha, el acceso al portal se bloqueará automáticamente. Deja la fecha vacía para habilitar acceso permanente.
+                        </p>
+                        
+                        <div style={{ marginBottom: '20px' }}>
+                            <label style={{ display: 'block', fontSize: '13px', fontWeight: '500', marginBottom: '6px', color: '#374151' }}>
+                                Fecha de Vencimiento
+                            </label>
+                            <input
+                                type="date"
+                                value={licenseDate}
+                                onChange={(e) => setLicenseDate(e.target.value)}
+                                style={{
+                                    width: '100%',
+                                    padding: '10px 12px',
+                                    border: '1px solid #d1d5db',
+                                    borderRadius: '6px',
+                                    outline: 'none',
+                                    fontSize: '14px'
+                                }}
+                            />
+                        </div>
+
+                        <div style={{ display: 'flex', gap: '12px' }}>
+                            <button
+                                onClick={() => {
+                                    setShowLicenseModal(false);
+                                    setLicensingAgencia(null);
+                                }}
+                                style={{
+                                    flex: 1,
+                                    padding: '10px',
+                                    backgroundColor: '#e5e7eb',
+                                    border: 'none',
+                                    borderRadius: '6px',
+                                    cursor: 'pointer',
+                                    fontWeight: '500'
+                                }}
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                onClick={submitLicenseDate}
+                                style={{
+                                    flex: 2,
+                                    padding: '10px',
+                                    backgroundColor: '#2563eb',
+                                    color: 'white',
+                                    border: 'none',
+                                    borderRadius: '6px',
+                                    cursor: 'pointer',
+                                    fontWeight: '600'
+                                }}
+                            >
+                                Guardar Licencia
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}
