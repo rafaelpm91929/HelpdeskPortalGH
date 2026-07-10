@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { LoginPage } from './pages/LoginPage';
@@ -15,9 +15,10 @@ const PUBLIC_IP = '201.149.60.82';
 const AppRouter: React.FC = () => {
     const { user, isLoading } = useAuth();
     
+    const location = useLocation();
     const hostname = window.location.hostname;
-    const pathname = window.location.pathname;
-    const search = window.location.search;
+    const pathname = location.pathname;
+    const search = location.search;
     
     console.log('========================================');
     console.log('📍 URL:', window.location.href);
