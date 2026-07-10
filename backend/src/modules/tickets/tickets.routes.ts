@@ -6,6 +6,7 @@ import path from 'path';
 import fs from 'fs';
 import { v4 as uuidv4 } from 'uuid';
 import { notificationEvents } from '../../shared/utils/event-emitter';
+import { sendNotificationEmail } from '../../shared/utils/email.service';
 
 const router = Router();
 
@@ -29,22 +30,35 @@ export async function crearNotificaciones(ticketId: number, agenciaId: number, m
     try {
         writeLog(`[crearNotificaciones] Iniciando - ticketId: ${ticketId}, agenciaId: ${agenciaId}, mensaje: "${mensaje}", agenteId: ${agenteId}, excluirUsuarioId: ${excluirUsuarioId}`);
         const pool = await getConnection();
+        
+        // Seleccionamos tanto el ID como el email de los admins y superadmins de la agencia
         const adminsResult = await pool.request()
             .input('agencia_id', agenciaId)
-            .query("SELECT id FROM tbl_usuarios WHERE agencia_id = @agencia_id AND rol IN ('admin', 'superadmin')");
+            .query("SELECT id, email FROM tbl_usuarios WHERE agencia_id = @agencia_id AND rol IN ('admin', 'superadmin')");
             
-        const recipients = new Set<number>();
-        adminsResult.recordset.forEach((r: any) => recipients.add(r.id));
+        // Mapa de destinatarios: id -> email
+        const recipientMap = new Map<number, string>();
+        adminsResult.recordset.forEach((r: any) => {
+            if (r.email) {
+                recipientMap.set(r.id, r.email);
+            }
+        });
         
         if (agenteId) {
-            recipients.add(agenteId);
+            // Obtener el email del agente asignado
+            const agenteRes = await pool.request()
+                .input('agente_id', agenteId)
+                .query("SELECT email FROM tbl_usuarios WHERE id = @agente_id");
+            if (agenteRes.recordset.length > 0 && agenteRes.recordset[0].email) {
+                recipientMap.set(agenteId, agenteRes.recordset[0].email);
+            }
         }
         
         if (excluirUsuarioId) {
-            recipients.delete(excluirUsuarioId);
+            recipientMap.delete(excluirUsuarioId);
         }
 
-        writeLog(`[crearNotificaciones] Destinatarios finales calculados: ${Array.from(recipients).join(', ')}`);
+        writeLog(`[crearNotificaciones] Destinatarios finales calculados (IDs): ${Array.from(recipientMap.keys()).join(', ')}`);
         
         // Determinar el título dinámicamente según el mensaje para cumplir con la restricción de NOT NULL en BD
         let titulo = 'Notificación';
@@ -56,7 +70,7 @@ export async function crearNotificaciones(ticketId: number, agenciaId: number, m
             titulo = 'Nuevo Mensaje';
         }
 
-        for (const recipientId of recipients) {
+        for (const [recipientId, recipientEmail] of recipientMap.entries()) {
             writeLog(`[crearNotificaciones] Intentando insertar en tbl_notificaciones para usuario: ${recipientId}`);
             const insertResult = await pool.request()
                 .input('usuario_id', recipientId)
@@ -74,6 +88,33 @@ export async function crearNotificaciones(ticketId: number, agenciaId: number, m
             const newNotif = insertResult.recordset[0];
             writeLog(`[crearNotificaciones] ✅ Inserción exitosa para usuario: ${recipientId} - Notif ID: ${newNotif?.id}`);
             notificationEvents.emit('new-notification', { usuario_id: recipientId, notification: newNotif });
+
+            // 🔥 ENVIAR NOTIFICACIÓN POR EMAIL VÍA RESEND (SI LA CLAVE EXISTE EN .ENV)
+            if (process.env.RESEND_API_KEY) {
+                writeLog(`[crearNotificaciones] Disparando envío de correo vía Resend a: ${recipientEmail}`);
+                
+                const emailHtml = `
+                    <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 8px; background-color: #ffffff; color: #1e293b;">
+                        <div style="text-align: center; border-bottom: 2px solid #3b82f6; padding-bottom: 16px; margin-bottom: 20px;">
+                            <h2 style="color: #2563eb; margin: 0; font-size: 22px;">🔔 Alerta de Helpdesk Portal</h2>
+                        </div>
+                        <p style="font-size: 16px; font-weight: bold; color: #0f172a; margin-top: 0;">${titulo}</p>
+                        <div style="background-color: #f8fafc; border-left: 4px solid #3b82f6; padding: 16px; border-radius: 4px; margin: 16px 0;">
+                            <p style="font-size: 14px; margin: 0; line-height: 1.6; color: #334155; white-space: pre-line;">${mensaje}</p>
+                        </div>
+                        <p style="font-size: 14px; color: #64748b;">Por favor, ingresa al panel administrativo para atender esta solicitud.</p>
+                        <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 24px 0;" />
+                        <p style="font-size: 11px; color: #94a3b8; text-align: center; margin: 0;">Este es un mensaje automático enviado desde el portal de soporte. Favor de no responder a este correo.</p>
+                    </div>
+                `;
+                
+                // Enviar asíncronamente sin bloquear la respuesta HTTP
+                sendNotificationEmail(recipientEmail, `Helpdesk: ${titulo}`, emailHtml).catch(err => {
+                    writeLog(`[crearNotificaciones] ❌ Error asíncrono al enviar email: ${err.message}`);
+                });
+            } else {
+                writeLog(`[crearNotificaciones] Envío de correo omitido (RESEND_API_KEY no configurado en .env)`);
+            }
         }
     } catch (error: any) {
         writeLog(`[crearNotificaciones] ❌ Error al crear notificaciones: ${error.message}`);
