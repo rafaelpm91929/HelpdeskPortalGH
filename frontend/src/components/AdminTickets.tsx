@@ -63,6 +63,7 @@ interface AdminTicketsProps {
     isDarkMode?: boolean;
     initialSelectedTicketId?: number | null;
     onClearInitialTicketId?: () => void;
+    initialStatusFilter?: string;
 }
 
 // ============================================
@@ -73,7 +74,8 @@ export const AdminTickets: React.FC<AdminTicketsProps> = ({
     colores, 
     isDarkMode,
     initialSelectedTicketId,
-    onClearInitialTicketId
+    onClearInitialTicketId,
+    initialStatusFilter
 }) => {
     const { user } = useAuth();
     
@@ -219,7 +221,7 @@ export const AdminTickets: React.FC<AdminTicketsProps> = ({
         }
     };
 
-    // 🔥 ABRIR TICKET DETALLE CUANDO VIENE DE UNA NOTIFICACIÓN
+    // 🔥 ABRIR TICKET DETALLE CUANDO VIENE DE UNA NOTIFICACIÓN O CLICK EN EL DASHBOARD
     useEffect(() => {
         if (initialSelectedTicketId) {
             loadTicketDetail(initialSelectedTicketId);
@@ -228,6 +230,15 @@ export const AdminTickets: React.FC<AdminTicketsProps> = ({
             }
         }
     }, [initialSelectedTicketId]);
+
+    useEffect(() => {
+        if (initialStatusFilter) {
+            setFiltros(prev => ({
+                ...prev,
+                estado: initialStatusFilter
+            }));
+        }
+    }, [initialStatusFilter]);
 
     // ============================================
     // ENVIAR RESPUESTA
@@ -523,14 +534,16 @@ export const AdminTickets: React.FC<AdminTicketsProps> = ({
                     zIndex: 1000
                 }}>
                     <div style={{
-                        backgroundColor: 'white',
+                        backgroundColor: c.tarjeta,
+                        color: c.texto,
                         padding: '32px',
                         borderRadius: '12px',
                         maxWidth: '900px',
                         width: '95%',
                         maxHeight: '90vh',
                         overflow: 'auto',
-                        position: 'relative'
+                        position: 'relative',
+                        border: '1px solid ' + c.borde
                     }}>
                         <button
                             onClick={() => {
@@ -547,7 +560,7 @@ export const AdminTickets: React.FC<AdminTicketsProps> = ({
                                 border: 'none',
                                 fontSize: '24px',
                                 cursor: 'pointer',
-                                color: '#6b7280',
+                                color: c.textoMuted,
                                 zIndex: 10
                             }}
                         >
@@ -557,7 +570,7 @@ export const AdminTickets: React.FC<AdminTicketsProps> = ({
                         <h2 style={{ 
                             fontSize: '22px', 
                             fontWeight: 'bold', 
-                            color: '#111827',
+                            color: c.texto,
                             marginBottom: '16px',
                             paddingRight: '30px'
                         }}>
@@ -573,7 +586,8 @@ export const AdminTickets: React.FC<AdminTicketsProps> = ({
                             <div>
                                 {/* Mensaje inicial */}
                                 <div style={{
-                                    backgroundColor: '#f3f4f6',
+                                    backgroundColor: isDarkMode ? '#334155' : '#f3f4f6',
+                                    color: c.texto,
                                     padding: '12px 16px',
                                     borderRadius: '8px',
                                     marginBottom: '12px'
@@ -582,7 +596,7 @@ export const AdminTickets: React.FC<AdminTicketsProps> = ({
                                         <strong style={{ fontSize: '14px' }}>
                                             {selectedTicket.usuario_nombre} {selectedTicket.usuario_apellido}
                                         </strong>
-                                        <span style={{ fontSize: '11px', color: '#6b7280' }}>
+                                        <span style={{ fontSize: '11px', color: c.textoMuted }}>
                                             {new Date(selectedTicket.fecha_creacion).toLocaleString()}
                                         </span>
                                     </div>
@@ -684,11 +698,12 @@ export const AdminTickets: React.FC<AdminTicketsProps> = ({
                                                     borderRadius: '8px',
                                                     marginBottom: '8px',
                                                     backgroundColor: mensaje.usuario_rol === 'admin' || mensaje.usuario_rol === 'superadmin'
-                                                        ? '#eff6ff'
-                                                        : '#f3f4f6',
+                                                        ? (isDarkMode ? 'rgba(37, 99, 235, 0.15)' : '#eff6ff')
+                                                        : (isDarkMode ? '#334155' : '#f3f4f6'),
+                                                    color: c.texto,
                                                     borderLeft: mensaje.usuario_rol === 'admin' || mensaje.usuario_rol === 'superadmin'
                                                         ? '4px solid #2563eb'
-                                                        : '4px solid #9ca3af'
+                                                        : `4px solid ${c.textoMuted}`
                                                 }}
                                             >
                                                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
@@ -707,7 +722,7 @@ export const AdminTickets: React.FC<AdminTicketsProps> = ({
                                                             </span>
                                                         )}
                                                     </strong>
-                                                    <span style={{ fontSize: '11px', color: '#6b7280' }}>
+                                                    <span style={{ fontSize: '11px', color: c.textoMuted }}>
                                                         {new Date(mensaje.fecha_creacion).toLocaleString()}
                                                     </span>
                                                 </div>
@@ -721,9 +736,10 @@ export const AdminTickets: React.FC<AdminTicketsProps> = ({
 
                                 {/* Campo de respuesta */}
                                 <div style={{
-                                    backgroundColor: '#f9fafb',
+                                    backgroundColor: isDarkMode ? '#1e293b' : '#f9fafb',
                                     padding: '16px',
-                                    borderRadius: '8px'
+                                    borderRadius: '8px',
+                                    border: '1px solid ' + c.borde
                                 }}>
                                     <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', marginBottom: '8px' }}>
                                         💬 Responder
@@ -734,13 +750,15 @@ export const AdminTickets: React.FC<AdminTicketsProps> = ({
                                         style={{
                                             width: '100%',
                                             padding: '10px 12px',
-                                            border: '1px solid #d1d5db',
+                                            border: '1px solid ' + c.borde,
                                             borderRadius: '6px',
                                             outline: 'none',
                                             minHeight: '80px',
                                             resize: 'vertical',
                                             fontSize: '14px',
-                                            marginBottom: '10px'
+                                            marginBottom: '10px',
+                                            backgroundColor: c.inputBg,
+                                            color: c.inputText
                                         }}
                                         placeholder="Escribe tu respuesta aquí..."
                                     />
@@ -768,15 +786,16 @@ export const AdminTickets: React.FC<AdminTicketsProps> = ({
                             <div>
                                 {/* Resumen */}
                                 <div style={{
-                                    backgroundColor: '#f9fafb',
+                                    backgroundColor: isDarkMode ? '#1e293b' : '#f9fafb',
                                     padding: '16px',
                                     borderRadius: '8px',
-                                    marginBottom: '16px'
+                                    marginBottom: '16px',
+                                    border: '1px solid ' + c.borde
                                 }}>
                                     <h4 style={{ 
                                         fontSize: '13px', 
                                         fontWeight: 'bold', 
-                                        color: '#6b7280',
+                                        color: c.textoMuted,
                                         textTransform: 'uppercase',
                                         letterSpacing: '0.5px',
                                         marginBottom: '8px'
@@ -804,15 +823,16 @@ export const AdminTickets: React.FC<AdminTicketsProps> = ({
 
                                 {/* Propiedades */}
                                 <div style={{
-                                    backgroundColor: '#f9fafb',
+                                    backgroundColor: isDarkMode ? '#1e293b' : '#f9fafb',
                                     padding: '16px',
                                     borderRadius: '8px',
-                                    marginBottom: '16px'
+                                    marginBottom: '16px',
+                                    border: '1px solid ' + c.borde
                                 }}>
                                     <h4 style={{ 
                                         fontSize: '13px', 
                                         fontWeight: 'bold', 
-                                        color: '#6b7280',
+                                        color: c.textoMuted,
                                         textTransform: 'uppercase',
                                         letterSpacing: '0.5px',
                                         marginBottom: '8px'
@@ -830,15 +850,16 @@ export const AdminTickets: React.FC<AdminTicketsProps> = ({
 
                                 {/* Selectores de gestión */}
                                 <div style={{
-                                    backgroundColor: '#f9fafb',
+                                    backgroundColor: isDarkMode ? '#1e293b' : '#f9fafb',
                                     padding: '16px',
                                     borderRadius: '8px',
-                                    marginBottom: '16px'
+                                    marginBottom: '16px',
+                                    border: '1px solid ' + c.borde
                                 }}>
                                     <h4 style={{ 
                                         fontSize: '13px', 
                                         fontWeight: 'bold', 
-                                        color: '#6b7280',
+                                        color: c.textoMuted,
                                         textTransform: 'uppercase',
                                         letterSpacing: '0.5px',
                                         marginBottom: '8px'
@@ -851,10 +872,11 @@ export const AdminTickets: React.FC<AdminTicketsProps> = ({
                                             onChange={(e) => cambiarEstado(e.target.value)}
                                             style={{
                                                 padding: '6px 12px',
-                                                border: '1px solid #d1d5db',
+                                                border: '1px solid ' + c.borde,
                                                 borderRadius: '6px',
                                                 outline: 'none',
-                                                backgroundColor: 'white',
+                                                backgroundColor: c.inputBg,
+                                                color: c.inputText,
                                                 fontSize: '13px',
                                                 width: '100%'
                                             }}
@@ -872,10 +894,11 @@ export const AdminTickets: React.FC<AdminTicketsProps> = ({
                                             onChange={(e) => cambiarPrioridad(e.target.value)}
                                             style={{
                                                 padding: '6px 12px',
-                                                border: '1px solid #d1d5db',
+                                                border: '1px solid ' + c.borde,
                                                 borderRadius: '6px',
                                                 outline: 'none',
-                                                backgroundColor: 'white',
+                                                backgroundColor: c.inputBg,
+                                                color: c.inputText,
                                                 fontSize: '13px',
                                                 width: '100%'
                                             }}
@@ -902,10 +925,11 @@ export const AdminTickets: React.FC<AdminTicketsProps> = ({
                                             }}
                                             style={{
                                                 padding: '6px 12px',
-                                                border: '1px solid #d1d5db',
+                                                border: '1px solid ' + c.borde,
                                                 borderRadius: '6px',
                                                 outline: 'none',
-                                                backgroundColor: 'white',
+                                                backgroundColor: c.inputBg,
+                                                color: c.inputText,
                                                 fontSize: '13px',
                                                 width: '100%'
                                             }}

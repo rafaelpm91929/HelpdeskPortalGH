@@ -5,7 +5,7 @@ import toast from 'react-hot-toast';
 import { Configuracion } from '../components/Configuracion';
 import { Usuarios } from '../components/Usuarios';
 import { logout } from '../utils/logout';
-import { PUBLIC_IP, IMAGE_BASE_URL, FRONTEND_BASE_URL } from '../config';
+import { PUBLIC_IP, IMAGE_BASE_URL, FRONTEND_BASE_URL, API_BASE_URL } from '../config';
 import { AdminTickets } from '../components/AdminTickets';
 
 // ============================================
@@ -17,7 +17,7 @@ interface ITicket {
     asunto: string;
     descripcion: string;
     prioridad: 'baja' | 'media' | 'alta' | 'critica';
-    estado: 'pendiente' | 'en_progreso' | 'espera' | 'resuelto' | 'cerrado';
+    estado: 'pendiente' | 'en_progreso' | 'espera' | 'resuelto' | 'cerrado' | 'abierto';
     fecha_creacion: string;
     usuario_nombre: string;
     usuario_apellido: string;
@@ -27,6 +27,7 @@ interface IEstadisticas {
     total: number;
     pendientes: number;
     en_progreso: number;
+    abiertos: number;
     espera: number;
     resueltos: number;
     cerrados: number;
@@ -55,7 +56,6 @@ interface INotificacion {
 // PROPS
 // ============================================
 interface AdminDashboardProps {
-    subdominio?: string;
     agenciaId?: number;
     isSuperAdminMode?: boolean;
 }
@@ -64,12 +64,12 @@ interface AdminDashboardProps {
 // COMPONENTE PRINCIPAL
 // ============================================
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({ 
-    subdominio, 
-    agenciaId,
+    agenciaId, 
     isSuperAdminMode = false 
 }) => {
     const { user } = useAuth();
     const [tickets, setTickets] = useState<ITicket[]>([]);
+    const [selectedStatusFilter, setSelectedStatusFilter] = useState<string>('todos');
 
     // 🔥 ESTADOS PARA NOTIFICACIONES
     const [notificaciones, setNotificaciones] = useState<INotificacion[]>([]);
@@ -92,14 +92,54 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         }
     };
 
-    // 🔥 POLLING DE NOTIFICACIONES
+    // 🔥 NOTIFICACIONES EN TIEMPO REAL VÍA SSE
     useEffect(() => {
-        if (user?.id) {
-            loadNotificaciones();
-            const interval = setInterval(loadNotificaciones, 30000); // cada 30 segundos
-            return () => clearInterval(interval);
-        }
-    }, [user]);
+        if (!user?.id) return;
+
+        loadNotificaciones();
+
+        const token = sessionStorage.getItem('token');
+        const sseUrl = `${API_BASE_URL}/notificaciones/stream/${user.id}?token=${token}`;
+        
+        console.log('🔌 Conectando a notificaciones en tiempo real (SSE)...');
+        const eventSource = new EventSource(sseUrl);
+
+        eventSource.onmessage = (event) => {
+            try {
+                const newNotification = JSON.parse(event.data);
+                console.log('🔔 Nueva notificación recibida:', newNotification);
+                
+                setNotificaciones(prev => {
+                    if (prev.some(n => n.id === newNotification.id)) return prev;
+                    const updated = [newNotification, ...prev];
+                    setUnreadCount(updated.filter(n => !n.leido).length);
+                    return updated;
+                });
+
+                toast.success(newNotification.mensaje, {
+                    duration: 6000,
+                    icon: '🔔'
+                });
+
+                // Recargar tickets y estadísticas en tiempo real
+                const currentAgenciaId = agenciaId || agenciaInfo?.id || (!isSuperAdminMode ? user?.agencia_id : undefined);
+                if (currentAgenciaId) {
+                     loadTickets(currentAgenciaId);
+                }
+            } catch (err) {
+                console.error('Error al procesar notificación en tiempo real:', err);
+            }
+        };
+
+        eventSource.onerror = (err) => {
+            console.error('❌ Error en conexión EventSource:', err);
+        };
+
+        return () => {
+            console.log('🔌 Desconectando notificaciones en tiempo real (SSE)...');
+            eventSource.close();
+        };
+    }, [user, agenciaId, isSuperAdminMode, tickets.length]);
 
     // 🔥 MARCAR COMO LEÍDA Y ABRIR TICKET
     const handleNotificationClick = async (notif: INotificacion) => {
@@ -136,6 +176,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         total: 0,
         pendientes: 0,
         en_progreso: 0,
+        abiertos: 0,
         espera: 0,
         resueltos: 0,
         cerrados: 0
@@ -231,6 +272,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     total: ticketsData.length,
                     pendientes: ticketsData.filter((t: ITicket) => t.estado === 'pendiente').length,
                     en_progreso: ticketsData.filter((t: ITicket) => t.estado === 'en_progreso').length,
+                    abiertos: ticketsData.filter((t: ITicket) => t.estado === 'abierto').length,
                     espera: ticketsData.filter((t: ITicket) => t.estado === 'espera').length,
                     resueltos: ticketsData.filter((t: ITicket) => t.estado === 'resuelto').length,
                     cerrados: ticketsData.filter((t: ITicket) => t.estado === 'cerrado').length
@@ -850,53 +892,93 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                             gap: '16px',
                             marginBottom: '24px'
                         }}>
-                            <div style={{
-                                backgroundColor: colores.tarjeta,
-                                padding: '20px',
-                                borderRadius: '8px',
-                                boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
-                                border: '1px solid ' + colores.borde,
-                                borderTop: `4px solid ${colores.primario}`
-                            }}>
+                            <div 
+                                onClick={() => {
+                                    setSelectedStatusFilter('todos');
+                                    setActiveTab('tickets');
+                                }}
+                                style={{
+                                    backgroundColor: colores.tarjeta,
+                                    padding: '20px',
+                                    borderRadius: '8px',
+                                    boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+                                    border: '1px solid ' + colores.borde,
+                                    borderTop: `4px solid ${colores.primario}`,
+                                    cursor: 'pointer',
+                                    transition: 'transform 0.2s'
+                                }}
+                                onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
+                                onMouseLeave={(e) => e.currentTarget.style.transform = 'none'}
+                            >
                                 <p style={{ fontSize: '14px', color: colores.textoMuted }}>Total</p>
                                 <p style={{ fontSize: '32px', fontWeight: 'bold', color: colores.texto }}>
                                     {estadisticas.total}
                                 </p>
                             </div>
-                            <div style={{
-                                backgroundColor: colores.tarjeta,
-                                padding: '20px',
-                                borderRadius: '8px',
-                                boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
-                                border: '1px solid ' + colores.borde,
-                                borderTop: `4px solid #f59e0b`
-                            }}>
+                            <div 
+                                onClick={() => {
+                                    setSelectedStatusFilter('pendiente');
+                                    setActiveTab('tickets');
+                                }}
+                                style={{
+                                    backgroundColor: colores.tarjeta,
+                                    padding: '20px',
+                                    borderRadius: '8px',
+                                    boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+                                    border: '1px solid ' + colores.borde,
+                                    borderTop: `4px solid #f59e0b`,
+                                    cursor: 'pointer',
+                                    transition: 'transform 0.2s'
+                                }}
+                                onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
+                                onMouseLeave={(e) => e.currentTarget.style.transform = 'none'}
+                            >
                                 <p style={{ fontSize: '14px', color: colores.textoMuted }}>Pendientes</p>
                                 <p style={{ fontSize: '32px', fontWeight: 'bold', color: '#f59e0b' }}>
                                     {estadisticas.pendientes}
                                 </p>
                             </div>
-                            <div style={{
-                                backgroundColor: colores.tarjeta,
-                                padding: '20px',
-                                borderRadius: '8px',
-                                boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
-                                border: '1px solid ' + colores.borde,
-                                borderTop: `4px solid #3b82f6`
-                            }}>
-                                <p style={{ fontSize: '14px', color: colores.textoMuted }}>En Progreso</p>
+                            <div 
+                                onClick={() => {
+                                    setSelectedStatusFilter('abierto');
+                                    setActiveTab('tickets');
+                                }}
+                                style={{
+                                    backgroundColor: colores.tarjeta,
+                                    padding: '20px',
+                                    borderRadius: '8px',
+                                    boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+                                    border: '1px solid ' + colores.borde,
+                                    borderTop: `4px solid #3b82f6`,
+                                    cursor: 'pointer',
+                                    transition: 'transform 0.2s'
+                                }}
+                                onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
+                                onMouseLeave={(e) => e.currentTarget.style.transform = 'none'}
+                            >
+                                <p style={{ fontSize: '14px', color: colores.textoMuted }}>Abiertos</p>
                                 <p style={{ fontSize: '32px', fontWeight: 'bold', color: '#3b82f6' }}>
-                                    {estadisticas.en_progreso}
+                                    {estadisticas.abiertos}
                                 </p>
                             </div>
-                            <div style={{
-                                backgroundColor: colores.tarjeta,
-                                padding: '20px',
-                                borderRadius: '8px',
-                                boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
-                                border: '1px solid ' + colores.borde,
-                                borderTop: `4px solid #10b981`
-                            }}>
+                            <div 
+                                onClick={() => {
+                                    setSelectedStatusFilter('resuelto');
+                                    setActiveTab('tickets');
+                                }}
+                                style={{
+                                    backgroundColor: colores.tarjeta,
+                                    padding: '20px',
+                                    borderRadius: '8px',
+                                    boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+                                    border: '1px solid ' + colores.borde,
+                                    borderTop: `4px solid #10b981`,
+                                    cursor: 'pointer',
+                                    transition: 'transform 0.2s'
+                                }}
+                                onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
+                                onMouseLeave={(e) => e.currentTarget.style.transform = 'none'}
+                            >
                                 <p style={{ fontSize: '14px', color: colores.textoMuted }}>Resueltos</p>
                                 <p style={{ fontSize: '32px', fontWeight: 'bold', color: '#10b981' }}>
                                     {estadisticas.resueltos}
@@ -921,16 +1003,31 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                             ) : (
                                 <div>
                                     {tickets.slice(0, 5).map((ticket) => (
-                                        <div key={ticket.id} style={{
-                                            padding: '12px',
-                                            borderBottom: '1px solid ' + colores.borde,
-                                            display: 'flex',
-                                            justifyContent: 'space-between',
-                                            alignItems: 'center'
-                                        }}>
+                                        <div 
+                                            key={ticket.id} 
+                                            onClick={() => {
+                                                setSelectedTicketIdForNotification(ticket.id);
+                                                setActiveTab('tickets');
+                                            }}
+                                            style={{
+                                                padding: '12px',
+                                                borderBottom: '1px solid ' + colores.borde,
+                                                display: 'flex',
+                                                justifyContent: 'space-between',
+                                                alignItems: 'center',
+                                                cursor: 'pointer',
+                                                transition: 'background-color 0.2s'
+                                            }}
+                                            onMouseEnter={(e) => {
+                                                e.currentTarget.style.backgroundColor = colores.hoverBg;
+                                            }}
+                                            onMouseLeave={(e) => {
+                                                e.currentTarget.style.backgroundColor = 'transparent';
+                                            }}
+                                        >
                                             <div>
                                                 <p style={{ fontWeight: '500' }}>#{ticket.numero_secuencial || ticket.id} - {ticket.asunto}</p>
-                                                <p style={{ fontSize: '12px', color: '#6b7280' }}>
+                                                <p style={{ fontSize: '12px', color: colores.textoMuted }}>
                                                     {ticket.usuario_nombre} {ticket.usuario_apellido} • {new Date(ticket.fecha_creacion).toLocaleDateString()}
                                                 </p>
                                             </div>
@@ -970,6 +1067,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         isDarkMode={isDarkMode}
                         initialSelectedTicketId={selectedTicketIdForNotification}
                         onClearInitialTicketId={() => setSelectedTicketIdForNotification(null)}
+                        initialStatusFilter={selectedStatusFilter}
                     />
                 )}
 
@@ -1036,9 +1134,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                 textAlign: 'center'
                             }}>
                                 <p style={{ fontSize: '24px', fontWeight: 'bold', color: '#3b82f6' }}>
-                                    {estadisticas.en_progreso}
+                                    {estadisticas.abiertos}
                                 </p>
-                                <p style={{ fontSize: '13px', color: colores.textoMuted }}>En Progreso</p>
+                                <p style={{ fontSize: '13px', color: colores.textoMuted }}>Abiertos</p>
                             </div>
                             <div style={{
                                 backgroundColor: colores.hoverBg,

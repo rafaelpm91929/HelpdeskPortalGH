@@ -5,6 +5,7 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 import { v4 as uuidv4 } from 'uuid';
+import { notificationEvents } from '../../shared/utils/event-emitter';
 
 const router = Router();
 
@@ -30,14 +31,17 @@ async function crearNotificaciones(ticketId: number, agenciaId: number, mensaje:
         }
         
         for (const recipientId of recipients) {
-            await pool.request()
+            const insertResult = await pool.request()
                 .input('usuario_id', recipientId)
                 .input('ticket_id', ticketId)
                 .input('mensaje', mensaje)
                 .query(`
                     INSERT INTO tbl_notificaciones (usuario_id, ticket_id, mensaje)
+                    OUTPUT INSERTED.id, INSERTED.ticket_id, INSERTED.mensaje, INSERTED.leido, INSERTED.fecha_creacion
                     VALUES (@usuario_id, @ticket_id, @mensaje)
                 `);
+            const newNotif = insertResult.recordset[0];
+            notificationEvents.emit('new-notification', { usuario_id: recipientId, notification: newNotif });
         }
     } catch (error) {
         console.error('❌ Error al crear notificaciones:', error);

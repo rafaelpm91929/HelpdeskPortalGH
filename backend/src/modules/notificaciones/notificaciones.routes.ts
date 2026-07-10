@@ -1,10 +1,52 @@
 import { Router } from 'express';
 import { authMiddleware } from '../../shared/middlewares/auth.middleware';
 import { getConnection } from '../../config/database';
+import { notificationEvents } from '../../shared/utils/event-emitter';
 
 const router = Router();
 
 router.use(authMiddleware);
+
+// ============================================
+// GET /api/notificaciones/stream/:usuario_id (SSE)
+// ============================================
+router.get('/stream/:usuario_id', async (req: any, res: any) => {
+    try {
+        const usuarioId = parseInt(req.params.usuario_id);
+        
+        // Verificar que el usuario solo escuche sus propias notificaciones
+        if (req.user.id !== usuarioId) {
+            return res.status(403).json({ success: false, error: 'Acceso denegado' });
+        }
+
+        // Configurar cabeceras de SSE
+        res.setHeader('Content-Type', 'text/event-stream');
+        res.setHeader('Cache-Control', 'no-cache');
+        res.setHeader('Connection', 'keep-alive');
+        res.flushHeaders();
+
+        // Enviar un ping cada 10 segundos para mantener la conexión activa
+        const pingInterval = setInterval(() => {
+            res.write(': ping\n\n');
+        }, 10000);
+
+        const listener = (data: any) => {
+            if (data.usuario_id === usuarioId) {
+                res.write(`data: ${JSON.stringify(data.notification)}\n\n`);
+            }
+        };
+
+        notificationEvents.on('new-notification', listener);
+
+        req.on('close', () => {
+            clearInterval(pingInterval);
+            notificationEvents.off('new-notification', listener);
+            res.end();
+        });
+    } catch (error: any) {
+        console.error('❌ Error en SSE stream:', error);
+    }
+});
 
 // ============================================
 // GET /api/notificaciones/usuario/:usuario_id

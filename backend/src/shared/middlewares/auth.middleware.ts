@@ -11,9 +11,16 @@ declare global {
 
 export const authMiddleware = (req: Request, res: Response, next: NextFunction) => {
     try {
+        let token = '';
         const authHeader = req.headers.authorization;
         
-        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        if (authHeader && authHeader.startsWith('Bearer ')) {
+            token = authHeader.split(' ')[1];
+        } else if (req.query.token) {
+            token = req.query.token as string;
+        }
+
+        if (!token) {
             console.warn('⚠️ Token no proporcionado');
             return res.status(401).json({
                 success: false,
@@ -21,7 +28,6 @@ export const authMiddleware = (req: Request, res: Response, next: NextFunction) 
             });
         }
 
-        const token = authHeader.split(' ')[1];
         const decoded = verifyToken(token);
 
         if (!decoded) {
