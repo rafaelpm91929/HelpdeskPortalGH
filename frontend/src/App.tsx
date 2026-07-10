@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { LoginPage } from './pages/LoginPage';
+import { LandingPage } from './pages/LandingPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { SuperAdminDashboard } from './pages/SuperAdminDashboard';
 import { AdminDashboard } from './pages/AdminDashboard';
@@ -138,9 +139,15 @@ if (user.rol === 'usuario') {
         return <LoginPage />;
     }
 
-    // 🔥 5d. Si no hay usuario y no es login, redirigir a login
-    console.log('🔓 Usuario no autenticado, redirigiendo a /login');
-    return <Navigate to="/login" replace />;
+    // 🔥 5d. Si está en la raíz, mostrar la página de bienvenida (LandingPage)
+    if (pathname === '/' || pathname === '') {
+        console.log('✨ Mostrando LandingPage de bienvenida');
+        return <LandingPage />;
+    }
+
+    // 🔥 5e. Si no hay coincidencia, redirigir a la raíz
+    console.log('🔓 Ruta no encontrada, redirigiendo a la raíz (/)');
+    return <Navigate to="/" replace />;
 };
 
 function App() {
