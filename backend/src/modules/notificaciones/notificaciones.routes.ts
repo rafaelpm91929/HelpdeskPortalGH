@@ -15,7 +15,7 @@ router.get('/stream/:usuario_id', async (req: any, res: any) => {
         const usuarioId = parseInt(req.params.usuario_id);
         
         // Verificar que el usuario solo escuche sus propias notificaciones
-        if (req.user.id !== usuarioId) {
+        if (req.user.id != usuarioId) {
             return res.status(403).json({ success: false, error: 'Acceso denegado' });
         }
 
@@ -23,6 +23,7 @@ router.get('/stream/:usuario_id', async (req: any, res: any) => {
         res.setHeader('Content-Type', 'text/event-stream');
         res.setHeader('Cache-Control', 'no-cache');
         res.setHeader('Connection', 'keep-alive');
+        res.setHeader('X-Accel-Buffering', 'no'); // Desactivar almacenamiento en búfer de Nginx/proxies
         res.flushHeaders();
 
         // Enviar un ping cada 10 segundos para mantener la conexión activa
@@ -31,7 +32,7 @@ router.get('/stream/:usuario_id', async (req: any, res: any) => {
         }, 10000);
 
         const listener = (data: any) => {
-            if (data.usuario_id === usuarioId) {
+            if (data.usuario_id == usuarioId) {
                 res.write(`data: ${JSON.stringify(data.notification)}\n\n`);
             }
         };

@@ -21,7 +21,7 @@ const PUBLIC_IP = process.env.PUBLIC_IP || '192.168.26.97';
 // CONFIGURACIÓN CORS
 // ============================================
 app.use(cors({
-    origin: '*',
+    origin: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
     credentials: true,
@@ -31,7 +31,12 @@ app.use(cors({
 }));
 
 app.use((req, res, next) => {
-    res.header('Access-Control-Allow-Origin', '*');
+    const origin = req.headers.origin;
+    if (origin) {
+        res.header('Access-Control-Allow-Origin', origin);
+    } else {
+        res.header('Access-Control-Allow-Origin', '*');
+    }
     res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
     res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
     res.header('Access-Control-Allow-Credentials', 'true');
