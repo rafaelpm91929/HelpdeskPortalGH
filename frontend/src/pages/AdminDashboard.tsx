@@ -44,6 +44,7 @@ interface IAgenciaInfo {
     logo_url: string | null;
     bloqueada?: boolean;
     mensaje_bloqueo?: string;
+    fecha_licencia?: string | null;
 }
 
 interface INotificacion {

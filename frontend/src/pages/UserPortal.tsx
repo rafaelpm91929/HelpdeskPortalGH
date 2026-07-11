@@ -61,6 +61,9 @@ interface IAgenciaInfo {
     colores_fondo: string;
     colores_texto: string;
     logo_url: string | null;
+    bloqueada?: boolean;
+    mensaje_bloqueo?: string;
+    fecha_licencia?: string | null;
 }
 
 // ============================================
