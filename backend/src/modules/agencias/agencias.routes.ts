@@ -152,15 +152,16 @@ router.post('/', async (req, res) => {
             .input('colores_secundario', colores_secundario || '#3b82f6')
             .input('colores_fondo', '#f3f4f6')
             .input('colores_texto', '#1f2937')
+            .input('logo_url', '/logos/logo_gh.jpg')
             .query(`
                 INSERT INTO tbl_agencias (
                     nombre, subdominio, colores_primario, colores_secundario,
-                    colores_fondo, colores_texto
+                    colores_fondo, colores_texto, logo_url
                 )
                 OUTPUT INSERTED.*
                 VALUES (
                     @nombre, @subdominio, @colores_primario, @colores_secundario,
-                    @colores_fondo, @colores_texto
+                    @colores_fondo, @colores_texto, @logo_url
                 )
             `);
         
