@@ -419,7 +419,12 @@ export const UserPortal: React.FC<UserPortalProps> = ({ agenciaParam }) => {
                 // 🔥 CORREGIDO: Construir URL completa del logo
                 if (data.logo_url) {
                     if (data.logo_url.startsWith('http')) {
-                        data.logo_url = data.logo_url;
+                        try {
+                            const parsed = new URL(data.logo_url);
+                            data.logo_url = `${IMAGE_BASE_URL}${parsed.pathname}`;
+                        } catch {
+                            data.logo_url = data.logo_url;
+                        }
                     } else {
                         data.logo_url = `${IMAGE_BASE_URL}${data.logo_url}`;
                     }

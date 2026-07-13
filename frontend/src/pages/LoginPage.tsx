@@ -35,7 +35,7 @@ export const LoginPage: React.FC = () => {
                     const response = await api.get(`/agencias/${user.agencia_id}`);
                     if (response.data.success) {
                         const subdominio = response.data.data.subdominio;
-                        const url = `http://${PUBLIC_IP}:5173?agencia=${subdominio}&admin=true`;
+                        const url = `/?agencia=${subdominio}&admin=true`;
                         console.log('🔗 Redirigiendo a:', url);
                         window.location.href = url;
                         return;
@@ -53,7 +53,7 @@ export const LoginPage: React.FC = () => {
                     const response = await api.get(`/agencias/${user.agencia_id}`);
                     if (response.data.success) {
                         const subdominio = response.data.data.subdominio;
-                        const url = `http://${PUBLIC_IP}:5173?agencia=${subdominio}&usuario=true`;
+                        const url = `/?agencia=${subdominio}&usuario=true`;
                         console.log('🔗 Redirigiendo a:', url);
                         window.location.href = url;
                         return;

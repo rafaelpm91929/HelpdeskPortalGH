@@ -332,10 +332,18 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             
             if (response?.data.success) {
                 const data = response.data.data;
-                // 🔥 Si tiene logo, usar IMAGE_BASE_URL
+                // 🔥 Si tiene logo, usar IMAGE_BASE_URL y limpiar urls absolutas viejas para evitar mixed content
                 if (data.logo_url) {
-                    data.logo_url = data.logo_url.startsWith('http') ? 
-                        data.logo_url : `${IMAGE_BASE_URL}${data.logo_url}`;
+                    if (data.logo_url.startsWith('http')) {
+                        try {
+                            const parsed = new URL(data.logo_url);
+                            data.logo_url = `${IMAGE_BASE_URL}${parsed.pathname}`;
+                        } catch {
+                            data.logo_url = data.logo_url;
+                        }
+                    } else {
+                        data.logo_url = `${IMAGE_BASE_URL}${data.logo_url}`;
+                    }
                 }
                 setAgenciaInfo(data);
                 console.log('🏢 Agencia cargada:', data);

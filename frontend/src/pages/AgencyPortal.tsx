@@ -120,10 +120,20 @@ export const AgencyPortal: React.FC<AgencyPortalProps> = ({ subdominio }) => {
         );
     }
 
-    // Si tiene logo, construimos la URL usando IMAGE_BASE_URL
-    const logoSrc = agencia.logo_url 
-        ? (agencia.logo_url.startsWith('http') ? agencia.logo_url : `${IMAGE_BASE_URL}${agencia.logo_url}`)
-        : null;
+    // Si tiene logo, construimos la URL usando IMAGE_BASE_URL y limpiamos absolutas viejas para evitar mixed content
+    let logoSrc = null;
+    if (agencia.logo_url) {
+        if (agencia.logo_url.startsWith('http')) {
+            try {
+                const parsed = new URL(agencia.logo_url);
+                logoSrc = `${IMAGE_BASE_URL}${parsed.pathname}`;
+            } catch {
+                logoSrc = agencia.logo_url;
+            }
+        } else {
+            logoSrc = `${IMAGE_BASE_URL}${agencia.logo_url}`;
+        }
+    }
 
     return (
         <div

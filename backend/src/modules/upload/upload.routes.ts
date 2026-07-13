@@ -115,17 +115,20 @@ router.post('/logo/:agencia_id', authMiddleware, upload.single('logo'), async (r
             });
         }
 
-        // 🔥 URL del logo con IP PÚBLICA (completa)
+        // 🔥 URL del logo (ruta relativa en BD y URL dinámica en respuesta)
         const ext = path.extname(req.file.filename);
         const logoUrl = `/uploads/logos/${agenciaIdNum}/logo${ext}`;
-        const fullUrl = `http://${PUBLIC_IP}:${PORT}${logoUrl}`;
+        
+        // Construir URL completa dinámicamente usando los datos de la petición actual
+        const host = req.get('host') || `${PUBLIC_IP}:${PORT}`;
+        const fullUrl = `${req.protocol}://${host}${logoUrl}`;
 
-        console.log('✅ Logo guardado en:', fullUrl);
+        console.log('✅ Logo guardado en:', logoUrl);
 
         const pool = await getConnection();
         await pool.request()
             .input('id', agenciaIdNum)
-            .input('logo_url', fullUrl)  // 🔥 Guardar URL completa con IP pública
+            .input('logo_url', logoUrl)  // 🔥 Guardar ruta relativa en la base de datos
             .query(`
                 UPDATE tbl_agencias 
                 SET logo_url = @logo_url

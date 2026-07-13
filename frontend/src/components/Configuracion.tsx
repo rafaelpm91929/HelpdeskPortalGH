@@ -99,9 +99,19 @@ export const Configuracion: React.FC<ConfiguracionProps> = ({ agenciaId, subdomi
                     setAgenciaData(data);
                     
                     // 🔥 Usar IMAGE_BASE_URL para el logo
-                    const logoUrl = data.logo_url ? 
-                        (data.logo_url.startsWith('http') ? data.logo_url : `${IMAGE_BASE_URL}${data.logo_url}`) : 
-                        '';
+                    let logoUrl = '';
+                    if (data.logo_url) {
+                        if (data.logo_url.startsWith('http')) {
+                            try {
+                                const parsed = new URL(data.logo_url);
+                                logoUrl = `${IMAGE_BASE_URL}${parsed.pathname}`;
+                            } catch {
+                                logoUrl = data.logo_url;
+                            }
+                        } else {
+                            logoUrl = `${IMAGE_BASE_URL}${data.logo_url}`;
+                        }
+                    }
                     
                     const [fondoColor, tema] = (data.colores_fondo || '#f3f4f6').split('|');
                     const [textoColor, tiposRaw] = (data.colores_texto || '#1f2937').split('|');
