@@ -536,6 +536,67 @@ export class AuthController {
             });
         }
     }
+
+    static async getCurrentUser(req: any, res: Response) {
+        try {
+            const currentUser = req.user;
+            if (!currentUser) {
+                return res.status(401).json({
+                    success: false,
+                    error: 'No autenticado'
+                });
+            }
+
+            const pool = await getConnection();
+            const result = await pool.request()
+                .input('id', currentUser.id)
+                .query(`
+                    SELECT u.id, u.nombre, u.apellido, u.email, u.rol, u.agencia_id, u.telefono, u.puesto, u.area, u.activo, a.nombre AS agencia_name, a.subdominio AS agencia_subdominio
+                    FROM tbl_usuarios u
+                    LEFT JOIN tbl_agencias a ON u.agencia_id = a.id
+                    WHERE u.id = @id
+                `);
+
+            if (result.recordset.length === 0) {
+                return res.status(404).json({
+                    success: false,
+                    error: 'Usuario no encontrado'
+                });
+            }
+
+            const dbUser = result.recordset[0];
+            
+            if (!dbUser.activo) {
+                return res.status(401).json({
+                    success: false,
+                    error: 'Usuario desactivado'
+                });
+            }
+
+            res.json({
+                success: true,
+                data: {
+                    id: dbUser.id,
+                    nombre: dbUser.nombre,
+                    apellido: dbUser.apellido,
+                    email: dbUser.email,
+                    rol: dbUser.rol,
+                    agencia_id: dbUser.agencia_id,
+                    telefono: dbUser.telefono || '',
+                    puesto: dbUser.puesto || '',
+                    area: dbUser.area || '',
+                    agencia_name: dbUser.agencia_name || '',
+                    agencia_subdominio: dbUser.agencia_subdominio || ''
+                }
+            });
+        } catch (error: any) {
+            console.error('Error al obtener usuario actual:', error);
+            res.status(500).json({
+                success: false,
+                error: error.message
+            });
+        }
+    }
 }
 
 export default AuthController;

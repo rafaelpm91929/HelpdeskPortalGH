@@ -77,7 +77,7 @@ interface UserPortalProps {
 // COMPONENTE PRINCIPAL
 // ============================================
 export const UserPortal: React.FC<UserPortalProps> = ({ agenciaParam }) => {
-    const { user } = useAuth();
+    const { user, refreshProfile } = useAuth();
     const [activeTab, setActiveTab] = useState<'bienvenida' | 'crear' | 'ver' | 'perfil'>(() => {
         return (localStorage.getItem(`active_tab_user_${user?.id}`) as any) || 'bienvenida';
     });
@@ -97,6 +97,10 @@ export const UserPortal: React.FC<UserPortalProps> = ({ agenciaParam }) => {
     const [areas, setAreas] = useState<IArea[]>([]);
     const [agenciaInfo, setAgenciaInfo] = useState<IAgenciaInfo | null>(null);
     const [selectedTicket, setSelectedTicket] = useState<ITicket | null>(null);
+    const selectedTicketIdRef = useRef<number | null>(null);
+    useEffect(() => {
+        selectedTicketIdRef.current = selectedTicket ? selectedTicket.id : null;
+    }, [selectedTicket]);
     const [showTicketDetail, setShowTicketDetail] = useState(false);
     const [replyMessage, setReplyMessage] = useState('');
     const [enviando, setEnviando] = useState(false);
@@ -276,6 +280,10 @@ export const UserPortal: React.FC<UserPortalProps> = ({ agenciaParam }) => {
                     });
 
                     loadTickets();
+                    refreshProfile().catch(() => {});
+                    if (selectedTicketIdRef.current) {
+                        loadTicketDetail(selectedTicketIdRef.current, true);
+                    }
                 } catch (err) {
                     console.error('Error al procesar notificación en tiempo real:', err);
                 }
@@ -292,6 +300,10 @@ export const UserPortal: React.FC<UserPortalProps> = ({ agenciaParam }) => {
                     fallbackInterval = setInterval(() => {
                         loadNotificaciones();
                         loadTickets();
+                        refreshProfile().catch(() => {});
+                        if (selectedTicketIdRef.current) {
+                            loadTicketDetail(selectedTicketIdRef.current, true);
+                        }
                     }, 10000);
                 }
             };
@@ -492,9 +504,9 @@ export const UserPortal: React.FC<UserPortalProps> = ({ agenciaParam }) => {
     // ============================================
     // CARGAR DETALLE DEL TICKET CON MENSAJES
     // ============================================
-    const loadTicketDetail = async (ticketId: number) => {
+    const loadTicketDetail = async (ticketId: number, silent = false) => {
         try {
-            setLoading(true);
+            if (!silent) setLoading(true);
             const response = await api.get(`/tickets/${ticketId}/detalle`);
             if (response.data.success) {
                 setSelectedTicket(response.data.data);
@@ -502,9 +514,9 @@ export const UserPortal: React.FC<UserPortalProps> = ({ agenciaParam }) => {
             }
         } catch (error: any) {
             console.error('Error al cargar detalle:', error);
-            toast.error('Error al cargar detalle del ticket');
+            if (!silent) toast.error('Error al cargar detalle del ticket');
         } finally {
-            setLoading(false);
+            if (!silent) setLoading(false);
         }
     };
 

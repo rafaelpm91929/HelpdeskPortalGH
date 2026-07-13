@@ -65,6 +65,7 @@ interface AdminTicketsProps {
     initialSelectedTicketId?: number | null;
     onClearInitialTicketId?: () => void;
     initialStatusFilter?: string;
+    refreshTrigger?: number;
 }
 
 // ============================================
@@ -76,7 +77,8 @@ export const AdminTickets: React.FC<AdminTicketsProps> = ({
     isDarkMode,
     initialSelectedTicketId,
     onClearInitialTicketId,
-    initialStatusFilter
+    initialStatusFilter,
+    refreshTrigger
 }) => {
     const { user } = useAuth();
     
@@ -98,6 +100,10 @@ export const AdminTickets: React.FC<AdminTicketsProps> = ({
     const [agentes, setAgentes] = useState<IUsuario[]>([]);
     const [loading, setLoading] = useState(false);
     const [selectedTicket, setSelectedTicket] = useState<ITicket | null>(null);
+    const selectedTicketIdRef = useRef<number | null>(null);
+    useEffect(() => {
+        selectedTicketIdRef.current = selectedTicket ? selectedTicket.id : null;
+    }, [selectedTicket]);
     const [showDetailModal, setShowDetailModal] = useState(false);
     const [replyMessage, setReplyMessage] = useState('');
     const [filtros, setFiltros] = useState({
@@ -152,17 +158,17 @@ export const AdminTickets: React.FC<AdminTicketsProps> = ({
     // ============================================
     // CARGAR DATOS
     // ============================================
-    const loadTickets = async () => {
+    const loadTickets = async (silent = false) => {
         try {
-            setLoading(true);
+            if (!silent) setLoading(true);
             const response = await api.get(`/tickets/agencia/${agenciaId}`);
             if (response.data.success) {
                 setTickets(response.data.data);
             }
         } catch (error) {
-            toast.error('Error al cargar tickets');
+            if (!silent) toast.error('Error al cargar tickets');
         } finally {
-            setLoading(false);
+            if (!silent) setLoading(false);
         }
     };
 
@@ -180,10 +186,20 @@ export const AdminTickets: React.FC<AdminTicketsProps> = ({
 
     useEffect(() => {
         if (agenciaId) {
-            loadTickets();
+            loadTickets(false);
             loadAgentes();
         }
     }, [agenciaId]);
+
+    // Recargas silenciosas en tiempo real al recibir notificaciones por SSE
+    useEffect(() => {
+        if (refreshTrigger && agenciaId) {
+            loadTickets(true);
+            if (selectedTicketIdRef.current) {
+                loadTicketDetail(selectedTicketIdRef.current, true);
+            }
+        }
+    }, [refreshTrigger]);
 
     // ============================================
     // FILTRAR TICKETS
@@ -207,18 +223,18 @@ export const AdminTickets: React.FC<AdminTicketsProps> = ({
     // ============================================
     // CARGAR DETALLE DEL TICKET CON CONVERSACIÓN
     // ============================================
-    const loadTicketDetail = async (ticketId: number) => {
+    const loadTicketDetail = async (ticketId: number, silent = false) => {
         try {
-            setLoading(true);
+            if (!silent) setLoading(true);
             const response = await api.get(`/tickets/${ticketId}/detalle`);
             if (response.data.success) {
                 setSelectedTicket(response.data.data);
                 setShowDetailModal(true);
             }
         } catch (error: any) {
-            toast.error('Error al cargar detalle del ticket');
+            if (!silent) toast.error('Error al cargar detalle del ticket');
         } finally {
-            setLoading(false);
+            if (!silent) setLoading(false);
         }
     };
 

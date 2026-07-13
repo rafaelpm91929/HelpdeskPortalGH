@@ -9,6 +9,7 @@ interface AuthContextType {
     register: (data: any) => Promise<void>;
     logout: () => void;
     isLoading: boolean;
+    refreshProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -19,7 +20,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [isLoading, setIsLoading] = useState(true);
     const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-    // Cargar sesión guardada desde sessionStorage al iniciar
+    const refreshProfile = async () => {
+        const storedToken = sessionStorage.getItem('token');
+        if (!storedToken) return;
+        try {
+            const response = await authApi.getProfile();
+            if (response.success) {
+                const freshUser = response.data;
+                setUser(freshUser);
+                sessionStorage.setItem('user', JSON.stringify(freshUser));
+                console.log('🔄 Perfil de usuario refrescado:', freshUser);
+            }
+        } catch (err) {
+            console.error('Error al refrescar perfil:', err);
+        }
+    };
+
+    // Cargar sesión guardada desde sessionStorage al iniciar y refrescarla con datos frescos
     useEffect(() => {
         const storedToken = sessionStorage.getItem('token');
         const storedUser = sessionStorage.getItem('user');
@@ -27,6 +44,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (storedToken && storedUser) {
             setToken(storedToken);
             setUser(JSON.parse(storedUser));
+            
+            // Refrescar perfil en segundo plano
+            authApi.getProfile()
+                .then(response => {
+                    if (response.success) {
+                        const freshUser = response.data;
+                        setUser(freshUser);
+                        sessionStorage.setItem('user', JSON.stringify(freshUser));
+                        console.log('🔄 Perfil inicial actualizado con datos frescos');
+                    }
+                })
+                .catch(err => {
+                    console.error('Error al refrescar perfil inicial:', err);
+                });
         }
         setIsLoading(false);
     }, []);
@@ -38,6 +69,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (timeoutRef.current) {
             clearTimeout(timeoutRef.current);
         }
+        // Redirigir al login limpiando parámetros para evitar bucles de redirección
+        window.location.replace('/login');
     };
 
     const resetTimer = () => {
@@ -123,7 +156,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     return (
-        <AuthContext.Provider value={{ user, token, login, register, logout, isLoading }}>
+        <AuthContext.Provider value={{ user, token, login, register, logout, isLoading, refreshProfile }}>
             {children}
         </AuthContext.Provider>
     );

@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { api } from '../api/axios.config';
 import toast from 'react-hot-toast';
 import { logout } from '../utils/logout';
-import { PUBLIC_IP, FRONTEND_BASE_URL } from '../config';
+import { PUBLIC_IP, FRONTEND_BASE_URL, IMAGE_BASE_URL } from '../config';
 
 // ============================================
 // TIPOS
@@ -903,7 +903,7 @@ export const SuperAdminDashboard: React.FC = () => {
 
                                             <div style={{ fontSize: '12px', color: '#94a3b8', display: 'flex', flexDirection: 'column', gap: '4px' }}>
                                                 <span>📅 Creada el {new Date(agencia.fecha_creacion).toLocaleDateString()}</span>
-                                                <span>🔗 {`${agencia.subdominio}.${PUBLIC_IP}:5173`}</span>
+                                                <span>🔗 {`${window.location.protocol}//${window.location.hostname}${window.location.port ? ':' + window.location.port : ''}/?agencia=${agencia.subdominio}`}</span>
                                             </div>
                                         </div>
 
@@ -919,7 +919,7 @@ export const SuperAdminDashboard: React.FC = () => {
                                         }}>
                                             <button
                                                 onClick={() => {
-                                                    const url = `http://${PUBLIC_IP}:5173?agencia=${agencia.subdominio}&superadmin=true`;
+                                                    const url = `/?agencia=${agencia.subdominio}&superadmin=true`;
                                                     window.location.href = url;
                                                 }}
                                                 style={{
@@ -1251,7 +1251,7 @@ export const SuperAdminDashboard: React.FC = () => {
                                             </div>
                                             <div style={{ display: 'flex', gap: '8px', borderTop: '1px solid #f1f5f9', paddingTop: '12px' }}>
                                                 <a
-                                                    href={`http://${PUBLIC_IP}:4000${m.ruta}`}
+                                                    href={m.ruta.startsWith('http') ? m.ruta : `${IMAGE_BASE_URL}${m.ruta}`}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
                                                     style={{

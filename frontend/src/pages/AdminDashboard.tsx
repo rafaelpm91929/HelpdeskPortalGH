@@ -72,7 +72,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     agenciaId, 
     isSuperAdminMode = false 
 }) => {
-    const { user } = useAuth();
+    const { user, refreshProfile } = useAuth();
     const [tickets, setTickets] = useState<ITicket[]>([]);
     const [selectedStatusFilter, setSelectedStatusFilter] = useState<string>('todos');
 
@@ -81,6 +81,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     const [unreadCount, setUnreadCount] = useState(0);
     const [showNotifications, setShowNotifications] = useState(false);
     const [selectedTicketIdForNotification, setSelectedTicketIdForNotification] = useState<number | null>(null);
+    const [refreshTicketsTrigger, setRefreshTicketsTrigger] = useState(0);
 
     const [estadisticas, setEstadisticas] = useState<IEstadisticas>({
         total: 0,
@@ -217,6 +218,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     if (currentAgenciaId) {
                          loadTickets(currentAgenciaId);
                     }
+                    refreshProfile().catch(() => {});
+                    setRefreshTicketsTrigger(prev => prev + 1);
                 } catch (err) {
                     console.error('Error al procesar notificación en tiempo real:', err);
                 }
@@ -239,6 +242,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         if (currentAgenciaId) {
                             loadTickets(currentAgenciaId);
                         }
+                        refreshProfile().catch(() => {});
+                        setRefreshTicketsTrigger(prev => prev + 1);
                     }, 10000);
                 }
             };
@@ -1019,7 +1024,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                             alignItems: 'center',
                                             backgroundColor: isDarkMode ? '#1e293b' : '#f9fafb'
                                         }}>
-                                            <span style={{ fontWeight: '600', fontSize: '14px', color: colores.texto }}>Notificaciones</span>
+                                            <span style={{ fontWeight: '600', fontSize: '14px', color: isDarkMode ? '#f8fafc' : '#1f2937' }}>Notificaciones</span>
                                             {unreadCount > 0 && (
                                                 <button 
                                                     onClick={handleMarkAllAsRead}
@@ -1076,7 +1081,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                                             <p style={{ 
                                                                 margin: 0, 
                                                                 fontSize: '13px', 
-                                                                color: colores.texto,
+                                                                color: isDarkMode ? '#f8fafc' : '#1f2937',
                                                                 lineHeight: 1.4,
                                                                 fontWeight: notif.leido ? '400' : '500',
                                                                 textAlign: 'left'
@@ -1310,6 +1315,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         initialSelectedTicketId={selectedTicketIdForNotification}
                         onClearInitialTicketId={() => setSelectedTicketIdForNotification(null)}
                         initialStatusFilter={selectedStatusFilter}
+                        refreshTrigger={refreshTicketsTrigger}
                     />
                 )}
 

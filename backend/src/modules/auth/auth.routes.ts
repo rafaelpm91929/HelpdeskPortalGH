@@ -18,6 +18,9 @@ router.post('/register-first-admin', AuthController.registerFirstAdmin);
 // RUTAS PROTEGIDAS (requieren token)
 // ============================================
 
+// 🔥 Obtener perfil del usuario autenticado actual
+router.get('/me', authMiddleware, AuthController.getCurrentUser);
+
 // 🔥 Obtener todos los administradores (solo superadmin)
 router.get('/users/all', authMiddleware, AuthController.getAllAdmins);
 

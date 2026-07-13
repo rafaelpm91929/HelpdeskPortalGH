@@ -24,4 +24,9 @@ export const authApi = {
         sessionStorage.removeItem('token');
         sessionStorage.removeItem('user');
     },
+
+    getProfile: async () => {
+        const response = await api.get<any>('/auth/me');
+        return response.data;
+    },
 };
