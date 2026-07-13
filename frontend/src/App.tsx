@@ -133,6 +133,12 @@ if (user.rol === 'usuario') {
         console.log('🏢 Mostrando portal público para parámetro:', agenciaParam);
         return <AgencyPortal subdominio={agenciaParam} />;
     }
+
+    // 🔥 Redirigir al login si se entra directamente a la raíz de helpdeskgrupohuerta
+    if (subdominio === 'helpdeskgrupohuerta' && (pathname === '/' || pathname === '')) {
+        console.log('✨ Redirigiendo de la raíz de helpdeskgrupohuerta a /login');
+        return <Navigate to="/login" replace />;
+    }
     
     // 🔥 5c. Si hay subdominio, mostrar portal público
     if (subdominio) {
