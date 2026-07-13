@@ -24,6 +24,10 @@ export default defineConfig({
         host: '0.0.0.0',
         port: 5173,
         https: httpsOptions,
+        hmr: {
+            host: PUBLIC_IP,
+            protocol: hasCert ? 'wss' : 'ws',
+        },
         origin: process.env.VITE_FRONTEND_URL || `${hasCert ? 'https' : 'http'}://${PUBLIC_IP}:5173`,
         proxy: {
             '/api': {
