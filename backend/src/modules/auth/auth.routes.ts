@@ -82,8 +82,7 @@ router.post('/users/:id/enviar-claves', authMiddleware, async (req: any, res: an
 
         // 3. Enviar correo usando el helper sendCredentialsEmail
         const { sendCredentialsEmail } = require('../../shared/utils/email.service');
-        const PUBLIC_IP = process.env.PUBLIC_IP || '201.149.60.82';
-        const linkPortal = `http://${PUBLIC_IP}:5173`;
+        const linkPortal = 'https://helpdeskgrupohuerta.mooo.com:5173';
 
         await sendCredentialsEmail(
             user.email,
