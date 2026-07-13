@@ -99,8 +99,8 @@ export async function crearNotificaciones(ticketId: number, agenciaId: number, m
             writeLog(`[crearNotificaciones] ✅ Inserción exitosa para usuario: ${recipientId} - Notif ID: ${newNotif?.id}`);
             notificationEvents.emit('new-notification', { usuario_id: recipientId, notification: newNotif });
 
-            // 🔥 ENVIAR NOTIFICACIÓN POR EMAIL VÍA EMAILJS, SMTP O RESEND (SEGÚN LA CLAVE QUE EXISTA EN .ENV)
-            if (process.env.EMAILJS_PUBLIC_KEY || process.env.SMTP_USER || process.env.RESEND_API_KEY) {
+            // 🔥 ENVIAR NOTIFICACIÓN POR EMAIL VÍA EMAILJS, SMTP O RESEND (SOLO CUANDO SE CREA EL TICKET)
+            if (titulo === 'Nuevo Ticket' && (process.env.EMAILJS_PUBLIC_KEY || process.env.SMTP_USER || process.env.RESEND_API_KEY)) {
                 writeLog(`[crearNotificaciones] Disparando envío de correo a: ${recipientEmail}`);
                 
                 // Diseño de tabla compatible con Outlook Classic
@@ -641,6 +641,34 @@ router.post('/', authMiddleware, upload.array('archivos', 5), async (req: any, r
             parseInt(usuario_id)
         );
 
+        // Si el ticket es creado por un administrador/agente en nombre del cliente, notificar al cliente en tiempo real
+        if (req.user && req.user.id !== parseInt(usuario_id)) {
+            const adminNombre = req.user.nombre ? `${req.user.nombre} ${req.user.apellido || ''}`.trim() : 'Soporte';
+            const tituloNotif = 'Nuevo Ticket';
+            const mensajeNotif = `Soporte ha creado el ticket #${numeroSecuencial} a tu nombre: ${asunto}`;
+            
+            writeLog(`[POST /tickets] Creando notificación para el cliente ID: ${usuario_id} por ticket creado en su nombre`);
+            const insertResult = await pool.request()
+                .input('usuario_id', parseInt(usuario_id))
+                .input('ticket_id', ticketId)
+                .input('titulo', tituloNotif)
+                .input('mensaje', mensajeNotif)
+                .query(`
+                    INSERT INTO tbl_notificaciones (usuario_id, ticket_id, titulo, mensaje)
+                    VALUES (@usuario_id, @ticket_id, @titulo, @mensaje);
+                    
+                    SELECT id, ticket_id, mensaje, leido, fecha_creacion
+                    FROM tbl_notificaciones
+                    WHERE id = SCOPE_IDENTITY();
+                `);
+            
+            const newNotif = insertResult.recordset[0];
+            writeLog(`[POST /tickets] ✅ Inserción exitosa para cliente: ${usuario_id} - Notif ID: ${newNotif?.id}`);
+            
+            // Emitir evento para SSE en tiempo real
+            notificationEvents.emit('new-notification', { usuario_id: parseInt(usuario_id), notification: newNotif });
+        }
+
         const files = req.files || [];
         const fileData = files.map((file: any) => ({
             nombre: file.originalname,
@@ -711,10 +739,10 @@ router.put('/:id/estado', authMiddleware, async (req: any, res: any) => {
             });
         }
 
-        // Obtener datos actuales del ticket
+        // Obtener datos actuales del ticket (incluyendo usuario_id)
         const ticketInfo = await pool.request()
             .input('id', parseInt(id))
-            .query('SELECT numero_secuencial, asunto, agente_id, agencia_id, estado FROM tbl_tickets WHERE id = @id');
+            .query('SELECT numero_secuencial, asunto, agente_id, agencia_id, estado, usuario_id FROM tbl_tickets WHERE id = @id');
         
         if (ticketInfo.recordset.length === 0) {
             return res.status(404).json({
@@ -728,6 +756,7 @@ router.put('/:id/estado', authMiddleware, async (req: any, res: any) => {
         const asunto = ticketInfo.recordset[0]?.asunto;
         const currentAgenciaId = ticketInfo.recordset[0]?.agencia_id;
         const currentAgenteId = ticketInfo.recordset[0]?.agente_id;
+        const creatorId = ticketInfo.recordset[0]?.usuario_id;
 
         // Actualizar estado
         await pool.request()
@@ -761,6 +790,48 @@ router.put('/:id/estado', authMiddleware, async (req: any, res: any) => {
                 currentAgenteId,
                 currentUser.id
             );
+        }
+
+        // Si el admin/agente cambia el estado del ticket (notificar al usuario/cliente en tiempo real)
+        if (currentUser.rol !== 'usuario' && prevEstado !== estado) {
+            const adminNombre = currentUser.nombre ? `${currentUser.nombre} ${currentUser.apellido || ''}`.trim() : 'Soporte';
+            
+            let tituloNotif = 'Ticket Actualizado';
+            let mensajeNotif = `Tu ticket #${numeroSecuencial} cambió de estado a ${estado.toUpperCase()}`;
+            
+            if (estado === 'resuelto') {
+                tituloNotif = 'Ticket Resuelto';
+                mensajeNotif = `Tu ticket #${numeroSecuencial} ha sido marcado como RESUELTO por ${adminNombre}: ${asunto}`;
+            } else if (estado === 'cerrado') {
+                tituloNotif = 'Ticket Cerrado';
+                mensajeNotif = `Tu ticket #${numeroSecuencial} ha sido CERRADO por ${adminNombre}: ${asunto}`;
+            } else if (estado === 'abierto') {
+                tituloNotif = 'Ticket Reabierto';
+                mensajeNotif = `Tu ticket #${numeroSecuencial} ha sido reabierto por ${adminNombre}: ${asunto}`;
+            }
+
+            if (creatorId) {
+                writeLog(`[PUT /tickets/:id/estado] Creando notificación para el cliente ID: ${creatorId} por cambio de estado a ${estado}`);
+                const insertResult = await pool.request()
+                    .input('usuario_id', creatorId)
+                    .input('ticket_id', parseInt(id))
+                    .input('titulo', tituloNotif)
+                    .input('mensaje', mensajeNotif)
+                    .query(`
+                        INSERT INTO tbl_notificaciones (usuario_id, ticket_id, titulo, mensaje)
+                        VALUES (@usuario_id, @ticket_id, @titulo, @mensaje);
+                        
+                        SELECT id, ticket_id, mensaje, leido, fecha_creacion
+                        FROM tbl_notificaciones
+                        WHERE id = SCOPE_IDENTITY();
+                    `);
+                
+                const newNotif = insertResult.recordset[0];
+                writeLog(`[PUT /tickets/:id/estado] ✅ Inserción exitosa para cliente: ${creatorId} - Notif ID: ${newNotif?.id}`);
+                
+                // Emitir evento para SSE en tiempo real
+                notificationEvents.emit('new-notification', { usuario_id: creatorId, notification: newNotif });
+            }
         }
 
         // Obtener el ticket actualizado
@@ -981,8 +1052,8 @@ router.post('/:id/responder', authMiddleware, async (req: any, res: any) => {
                 // Emitir evento para SSE en tiempo real
                 notificationEvents.emit('new-notification', { usuario_id: usuario_id, notification: newNotif });
 
-                // 🔥 ENVIAR NOTIFICACIÓN POR EMAIL AL CLIENTE VÍA EMAILJS/SMTP/RESEND
-                if (process.env.EMAILJS_PUBLIC_KEY || process.env.SMTP_USER || process.env.RESEND_API_KEY) {
+                // 🔥 DESACTIVADO POR REQUERIMIENTO: No enviar correo al cliente al contestar
+                if (false && (process.env.EMAILJS_PUBLIC_KEY || process.env.SMTP_USER || process.env.RESEND_API_KEY)) {
                     writeLog(`[POST /responder] Enviando correo de alerta al cliente: ${email}`);
                     const emailHtml = `
                         <table cellpadding="0" cellspacing="0" border="0" width="100%" bgcolor="#f3f4f6" style="background-color: #f3f4f6; width: 100%;">
