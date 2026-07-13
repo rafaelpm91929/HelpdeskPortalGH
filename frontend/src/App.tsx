@@ -127,17 +127,17 @@ if (user.rol === 'usuario') {
         console.log('🔓 Mostrando Login');
         return <LoginPage />;
     }
-    
-    // 🔥 5b. Si hay subdominio, mostrar portal público
-    if (subdominio) {
-        console.log('🏢 Mostrando portal público para:', subdominio);
-        return <AgencyPortal subdominio={subdominio} />;
+
+    // 🔥 5b. Si hay parámetro agencia, mostrar portal público (Prioridad para poder testear/override)
+    if (agenciaParam) {
+        console.log('🏢 Mostrando portal público para parámetro:', agenciaParam);
+        return <AgencyPortal subdominio={agenciaParam} />;
     }
     
-    // 🔥 5c. Si hay parámetro agencia, mostrar portal público
-    if (agenciaParam) {
-        console.log('🏢 Mostrando portal público para:', agenciaParam);
-        return <AgencyPortal subdominio={agenciaParam} />;
+    // 🔥 5c. Si hay subdominio, mostrar portal público
+    if (subdominio) {
+        console.log('🏢 Mostrando portal público para subdominio:', subdominio);
+        return <AgencyPortal subdominio={subdominio} />;
     }
 
     // 🔥 5d. Si está en la raíz, mostrar la página de bienvenida (LandingPage)
