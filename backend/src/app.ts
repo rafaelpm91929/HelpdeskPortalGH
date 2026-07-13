@@ -3,6 +3,9 @@ import cors from 'cors';
 import helmet from 'helmet';
 import dotenv from 'dotenv';
 import rateLimit from 'express-rate-limit';
+import https from 'https';
+import fs from 'fs';
+import path from 'path';
 import { testConnection, getConnection } from './config/database';
 import authRoutes from './modules/auth/auth.routes';
 import agenciasRoutes from './modules/agencias/agencias.routes';
@@ -156,15 +159,35 @@ const runMigrations = async () => {
 };
 
 // ============================================
-// INICIAR SERVIDOR
+// INICIAR SERVIDOR (SOPORTE HTTPS / HTTP)
 // ============================================
-app.listen(PORT, '0.0.0.0', async () => {
+let server: any = app;
+let isHttps = false;
+
+try {
+    const keyPath = path.join(__dirname, '../ssl/key.pem');
+    const certPath = path.join(__dirname, '../ssl/cert.pem');
+    
+    if (fs.existsSync(keyPath) && fs.existsSync(certPath)) {
+        const sslOptions = {
+            key: fs.readFileSync(keyPath),
+            cert: fs.readFileSync(certPath)
+        };
+        server = https.createServer(sslOptions, app);
+        isHttps = true;
+    }
+} catch (error) {
+    console.warn('⚠️ Error al cargar certificados SSL. Iniciando en modo HTTP normal.', error);
+}
+
+server.listen(PORT, '0.0.0.0', async () => {
+    const protocol = isHttps ? 'https' : 'http';
     console.log('=================================');
-    console.log('🚀 HELPDESK PORTAL API');
+    console.log(`🚀 HELPDESK PORTAL API (${protocol.toUpperCase()})`);
     console.log('=================================');
-    console.log(`📡 Local: http://localhost:${PORT}`);
-    console.log(`🌐 Red: http://${PUBLIC_IP}:${PORT}`);
-    console.log(`🌍 Internet: http://${PUBLIC_IP}:${PORT}`);
+    console.log(`📡 Local: ${protocol}://localhost:${PORT}`);
+    console.log(`🌐 Red: ${protocol}://${PUBLIC_IP}:${PORT}`);
+    console.log(`🌍 Internet: ${protocol}://${PUBLIC_IP}:${PORT}`);
     console.log('=================================');
     console.log(`📦 Entorno: ${process.env.NODE_ENV}`);
     console.log('=================================');
