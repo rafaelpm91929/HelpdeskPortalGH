@@ -122,22 +122,22 @@ if (user.rol === 'usuario') {
     // 🔥 5. USUARIO NO AUTENTICADO
     // ============================================
     
-    // 🔥 5a. Si hay subdominio, mostrar portal público
+    // 🔥 5a. Si está en la ruta de login, mostrar login (Primero para permitir iniciar sesión en subdominios)
+    if (pathname === '/login') {
+        console.log('🔓 Mostrando Login');
+        return <LoginPage />;
+    }
+    
+    // 🔥 5b. Si hay subdominio, mostrar portal público
     if (subdominio) {
         console.log('🏢 Mostrando portal público para:', subdominio);
         return <AgencyPortal subdominio={subdominio} />;
     }
     
-    // 🔥 5b. Si hay parámetro agencia, mostrar portal público
+    // 🔥 5c. Si hay parámetro agencia, mostrar portal público
     if (agenciaParam) {
         console.log('🏢 Mostrando portal público para:', agenciaParam);
         return <AgencyPortal subdominio={agenciaParam} />;
-    }
-
-    // 🔥 5c. Si está en la ruta de login, mostrar login
-    if (pathname === '/login') {
-        console.log('🔓 Mostrando Login');
-        return <LoginPage />;
     }
 
     // 🔥 5d. Si está en la raíz, mostrar la página de bienvenida (LandingPage)
