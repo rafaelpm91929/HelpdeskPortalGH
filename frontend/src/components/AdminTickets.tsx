@@ -715,11 +715,11 @@ export const AdminTickets: React.FC<AdminTicketsProps> = ({
                                                     padding: '10px 14px',
                                                     borderRadius: '8px',
                                                     marginBottom: '8px',
-                                                    backgroundColor: mensaje.usuario_rol === 'admin' || mensaje.usuario_rol === 'superadmin'
+                                                    backgroundColor: ['admin', 'superadmin', 'agente'].includes(mensaje.usuario_rol)
                                                         ? (isDarkMode ? 'rgba(37, 99, 235, 0.15)' : '#eff6ff')
                                                         : (isDarkMode ? '#334155' : '#f3f4f6'),
                                                     color: c.texto,
-                                                    borderLeft: mensaje.usuario_rol === 'admin' || mensaje.usuario_rol === 'superadmin'
+                                                    borderLeft: ['admin', 'superadmin', 'agente'].includes(mensaje.usuario_rol)
                                                         ? '4px solid #2563eb'
                                                         : `4px solid ${c.textoMuted}`
                                                 }}
@@ -727,7 +727,7 @@ export const AdminTickets: React.FC<AdminTicketsProps> = ({
                                                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
                                                     <strong style={{ fontSize: '13px' }}>
                                                         {mensaje.usuario_nombre} {mensaje.usuario_apellido}
-                                                        {(mensaje.usuario_rol === 'admin' || mensaje.usuario_rol === 'superadmin') && (
+                                                        {['admin', 'superadmin', 'agente'].includes(mensaje.usuario_rol) && (
                                                             <span style={{
                                                                 fontSize: '11px',
                                                                 backgroundColor: '#2563eb',
@@ -736,7 +736,7 @@ export const AdminTickets: React.FC<AdminTicketsProps> = ({
                                                                 borderRadius: '4px',
                                                                 marginLeft: '8px'
                                                             }}>
-                                                                Admin
+                                                                {mensaje.usuario_rol === 'superadmin' ? 'SuperAdmin' : mensaje.usuario_rol === 'admin' ? 'Admin' : 'Soporte'}
                                                             </span>
                                                         )}
                                                     </strong>

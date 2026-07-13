@@ -1022,11 +1022,11 @@ export const UserPortal: React.FC<UserPortalProps> = ({ agenciaParam }) => {
                                     padding: '10px 14px',
                                     borderRadius: '8px',
                                     marginBottom: '8px',
-                                    backgroundColor: mensaje.usuario_rol === 'admin' || mensaje.usuario_rol === 'superadmin'
+                                    backgroundColor: ['admin', 'superadmin', 'agente'].includes(mensaje.usuario_rol)
                                         ? `${colores.primario}25`
                                         : (isDarkMode ? '#334155' : '#f3f4f6'),
                                     color: colores.texto,
-                                    borderLeft: mensaje.usuario_rol === 'admin' || mensaje.usuario_rol === 'superadmin'
+                                    borderLeft: ['admin', 'superadmin', 'agente'].includes(mensaje.usuario_rol)
                                         ? `4px solid ${colores.primario}`
                                         : `4px solid ${colores.textoMuted}`
                                 }}
@@ -1034,7 +1034,7 @@ export const UserPortal: React.FC<UserPortalProps> = ({ agenciaParam }) => {
                                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
                                     <strong style={{ fontSize: '13px' }}>
                                         {mensaje.usuario_nombre} {mensaje.usuario_apellido}
-                                        {(mensaje.usuario_rol === 'admin' || mensaje.usuario_rol === 'superadmin') && (
+                                        {['admin', 'superadmin', 'agente'].includes(mensaje.usuario_rol) && (
                                             <span style={{
                                                 fontSize: '11px',
                                                 backgroundColor: colores.primario,
@@ -1043,7 +1043,7 @@ export const UserPortal: React.FC<UserPortalProps> = ({ agenciaParam }) => {
                                                 borderRadius: '4px',
                                                 marginLeft: '8px'
                                             }}>
-                                                Admin
+                                                {mensaje.usuario_rol === 'superadmin' ? 'SuperAdmin' : mensaje.usuario_rol === 'admin' ? 'Admin' : 'Soporte'}
                                             </span>
                                         )}
                                     </strong>
