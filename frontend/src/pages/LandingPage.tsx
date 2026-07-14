@@ -1,199 +1,175 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { IMAGE_BASE_URL } from '../config';
 
 export const LandingPage: React.FC = () => {
     const navigate = useNavigate();
+    const logoUrl = `${IMAGE_BASE_URL}/uploads/logos/logo_gh.jpg`;
 
     return (
-        <div
-            style={{
-                minHeight: '100vh',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                background: 'linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #020617 100%)',
-                fontFamily: 'system-ui, -apple-system, sans-serif',
-                position: 'relative',
-                overflow: 'hidden',
-                color: 'white',
-            }}
-        >
-            {/* Animación de Fondos y Luces Degradadas */}
+        <div style={{
+            minHeight: '100vh',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: 'radial-gradient(circle at top right, #1e293b 0%, #0f172a 100%)',
+            fontFamily: "'Outfit', 'Inter', sans-serif",
+            color: '#f8fafc',
+            padding: '20px',
+            position: 'relative',
+            overflow: 'hidden'
+        }}>
+            {/* Elementos decorativos de fondo */}
             <div style={{
                 position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                pointerEvents: 'none',
-                zIndex: 1,
+                top: '-10%',
+                right: '-10%',
+                width: '400px',
+                height: '400px',
+                borderRadius: '50%',
+                background: 'rgba(37, 99, 235, 0.1)',
+                filter: 'blur(100px)',
+                pointerEvents: 'none'
+            }} />
+            <div style={{
+                position: 'absolute',
+                bottom: '-10%',
+                left: '-10%',
+                width: '300px',
+                height: '300px',
+                borderRadius: '50%',
+                background: 'rgba(139, 92, 246, 0.1)',
+                filter: 'blur(80px)',
+                pointerEvents: 'none'
+            }} />
+
+            {/* Tarjeta principal */}
+            <div style={{
+                maxWidth: '500px',
+                width: '100%',
+                backgroundColor: 'rgba(30, 41, 59, 0.7)',
+                backdropFilter: 'blur(20px)',
+                WebkitBackdropFilter: 'blur(20px)',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                borderRadius: '24px',
+                padding: '40px 30px',
+                textAlign: 'center',
+                boxShadow: '0 20px 40px rgba(0, 0, 0, 0.4)',
+                animation: 'fadeIn 0.8s ease-out',
+                position: 'relative',
+                zIndex: 2
             }}>
-                {/* Luz circular 1 */}
+                {/* Logo contenedor */}
                 <div style={{
-                    position: 'absolute',
-                    width: '600px',
-                    height: '600px',
-                    borderRadius: '50%',
-                    background: 'radial-gradient(circle, rgba(59, 130, 246, 0.15) 0%, transparent 70%)',
-                    top: '-10%',
-                    right: '-10%',
-                    animation: 'floatGlow 15s ease-in-out infinite',
-                }} />
-                {/* Luz circular 2 */}
-                <div style={{
-                    position: 'absolute',
-                    width: '500px',
-                    height: '500px',
-                    borderRadius: '50%',
-                    background: 'radial-gradient(circle, rgba(96, 165, 250, 0.12) 0%, transparent 70%)',
-                    bottom: '-10%',
-                    left: '-10%',
-                    animation: 'floatGlow 20s ease-in-out infinite reverse',
-                }} />
-            </div>
-
-            {/* Inyección de Keyframes de Animaciones */}
-            <style>{`
-                @keyframes floatGlow {
-                    0%, 100% { transform: translate(0, 0); }
-                    50% { transform: translate(-30px, 30px); }
-                }
-                @keyframes scaleIn {
-                    from {
-                        opacity: 0;
-                        transform: scale(0.9);
-                    }
-                    to {
-                        opacity: 1;
-                        transform: scale(1);
-                    }
-                }
-                @keyframes floatLogo {
-                    0%, 100% { transform: translateY(0); }
-                    50% { transform: translateY(-8px); }
-                }
-                @keyframes pulseBtn {
-                    0%, 100% {
-                        box-shadow: 0 0 15px rgba(59, 130, 246, 0.4);
-                    }
-                    50% {
-                        box-shadow: 0 0 25px rgba(59, 130, 246, 0.7);
-                    }
-                }
-                .landing-card {
-                    animation: scaleIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-                }
-                .btn-inicia-sesion {
-                    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-                    animation: pulseBtn 3s infinite;
-                }
-                .btn-inicia-sesion:hover {
-                    background-color: #3b82f6 !important;
-                    transform: translateY(-2px) scale(1.03);
-                    box-shadow: 0 10px 25px rgba(59, 130, 246, 0.6) !important;
-                }
-                .btn-inicia-sesion:active {
-                    transform: translateY(0) scale(1);
-                }
-            `}</style>
-
-            {/* Contenedor Principal */}
-            <div
-                className="landing-card"
-                style={{
-                    position: 'relative',
-                    zIndex: 2,
-                    maxWidth: '450px',
-                    width: '90%',
-                    textAlign: 'center',
-                    padding: '50px 30px',
-                    backgroundColor: 'rgba(15, 23, 42, 0.55)',
-                    backdropFilter: 'blur(16px)',
-                    WebkitBackdropFilter: 'blur(16px)',
-                    borderRadius: '24px',
-                    border: '1px solid rgba(255, 255, 255, 0.08)',
-                    boxShadow: '0 25px 60px -15px rgba(0, 0, 0, 0.7)',
-                }}
-            >
-                {/* Contenedor del Logo de Grupo Huerta */}
-                <div
-                    style={{
-                        width: '220px',
-                        height: '80px',
-                        backgroundColor: 'white',
-                        borderRadius: '16px',
-                        padding: '10px 20px',
-                        margin: '0 auto 35px auto',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        boxShadow: '0 10px 30px rgba(0, 0, 0, 0.25)',
-                        border: '1px solid rgba(255, 255, 255, 0.1)',
-                        animation: 'floatLogo 4s ease-in-out infinite',
-                    }}
-                >
-                    <img
-                        src="/logo_gh.jpg"
-                        alt="Logo Grupo Huerta"
+                    width: '120px',
+                    height: '120px',
+                    margin: '0 auto 24px auto',
+                    borderRadius: '20px',
+                    overflow: 'hidden',
+                    backgroundColor: '#ffffff',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    boxShadow: '0 8px 16px rgba(0, 0, 0, 0.25)',
+                    border: '3px solid rgba(255, 255, 255, 0.1)',
+                    animation: 'scaleIn 0.6s cubic-bezier(0.16, 1, 0.3, 1)'
+                }}>
+                    <img 
+                        src={logoUrl} 
+                        alt="Logo Grupo Huerta" 
                         style={{
                             maxWidth: '100%',
                             maxHeight: '100%',
-                            objectFit: 'contain',
+                            objectFit: 'contain'
                         }}
                         onError={(e) => {
-                            e.currentTarget.src = '/logo_gh_alt.jpg';
+                            (e.target as HTMLImageElement).src = 'https://via.placeholder.com/120?text=Grupo+Huerta';
                         }}
                     />
                 </div>
 
-                {/* Título de la Aplicación */}
-                <h1
-                    style={{
-                        fontSize: '28px',
-                        fontWeight: '700',
-                        margin: '0 0 10px 0',
-                        letterSpacing: '-0.03em',
-                        background: 'linear-gradient(to right, #ffffff 40%, #93c5fd 100%)',
-                        WebkitBackgroundClip: 'text',
-                        WebkitTextFillColor: 'transparent',
-                    }}
-                >
-                    Helpdesk Portal
+                {/* Títulos */}
+                <h1 style={{
+                    fontSize: '26px',
+                    fontWeight: 800,
+                    marginBottom: '8px',
+                    background: 'linear-gradient(135deg, #ffffff 30%, #93c5fd 100%)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    letterSpacing: '-0.5px',
+                    lineHeight: '1.2'
+                }}>
+                    Bienvenido al Portal de Soporte
                 </h1>
+                
+                <h2 style={{
+                    fontSize: '16px',
+                    fontWeight: 600,
+                    color: '#3b82f6',
+                    marginBottom: '24px',
+                    textTransform: 'uppercase',
+                    letterSpacing: '1px'
+                }}>
+                    Grupo Huerta
+                </h2>
 
-                {/* Subtítulo descriptivo */}
-                <p
-                    style={{
-                        fontSize: '15px',
-                        color: '#94a3b8',
-                        margin: '0 0 40px 0',
-                        lineHeight: '1.5',
-                    }}
-                >
-                    Bienvenido al sistema de soporte técnico y gestión de incidencias de Grupo Huerta.
+                <p style={{
+                    fontSize: '14px',
+                    color: '#94a3b8',
+                    lineHeight: '1.6',
+                    marginBottom: '36px',
+                    padding: '0 10px'
+                }}>
+                    Bienvenido a nuestro centro de atención técnica y soporte. Aquí podrás crear reportes, consultar el estado de tus solicitudes y comunicarte directamente con nuestro equipo de ingenieros.
                 </p>
 
-                {/* Botón de Entrada */}
+                {/* Botón de acción */}
                 <button
                     onClick={() => navigate('/login')}
-                    className="btn-inicia-sesion"
                     style={{
                         width: '100%',
-                        padding: '16px 30px',
-                        backgroundColor: '#2563eb',
-                        border: 'none',
-                        borderRadius: '14px',
+                        padding: '16px 28px',
+                        background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
                         color: 'white',
+                        border: 'none',
+                        borderRadius: '12px',
                         fontSize: '16px',
-                        fontWeight: '600',
-                        letterSpacing: '0.05em',
+                        fontWeight: '700',
                         cursor: 'pointer',
-                        boxSizing: 'border-box',
+                        boxShadow: '0 4px 12px rgba(37, 99, 235, 0.3)',
+                        transition: 'all 0.25s ease',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '10px'
+                    }}
+                    onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = 'translateY(-2px)';
+                        e.currentTarget.style.boxShadow = '0 6px 20px rgba(37, 99, 235, 0.4)';
+                    }}
+                    onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = 'translateY(0)';
+                        e.currentTarget.style.boxShadow = '0 4px 12px rgba(37, 99, 235, 0.3)';
                     }}
                 >
-                    INICIA SESIÓN
+                    Ingresar al Portal
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
                 </button>
             </div>
+
+            {/* Estilos CSS para animaciones básicas */}
+            <style dangerouslySetInnerHTML={{__html: `
+                @keyframes fadeIn {
+                    from { opacity: 0; transform: translateY(15px); }
+                    to { opacity: 1; transform: translateY(0); }
+                }
+                @keyframes scaleIn {
+                    from { opacity: 0; transform: scale(0.9); }
+                    to { opacity: 1; transform: scale(1); }
+                }
+            `}} />
         </div>
     );
 };

@@ -134,10 +134,10 @@ if (user.rol === 'usuario') {
         return <AgencyPortal subdominio={agenciaParam} />;
     }
 
-    // 🔥 Redirigir al login si se entra directamente a la raíz de helpdesksmartsolutions
+    // 🔥 Mostrar landing page si se entra directamente a la raíz de helpdesksmartsolutions
     if (subdominio === 'helpdesksmartsolutions' && (pathname === '/' || pathname === '')) {
-        console.log('✨ Redirigiendo de la raíz de helpdesksmartsolutions a /login');
-        return <Navigate to="/login" replace />;
+        console.log('✨ Mostrando landing page de bienvenida para helpdesksmartsolutions');
+        return <LandingPage />;
     }
     
     // 🔥 5c. Si hay subdominio, mostrar portal público
