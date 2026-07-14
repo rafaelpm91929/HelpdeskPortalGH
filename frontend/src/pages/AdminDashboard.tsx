@@ -263,6 +263,18 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         };
     }, [user, agenciaId, agenciaInfo?.id, isSuperAdminMode]);
 
+    // 🔥 Solicitar permiso de notificaciones nativas en el arranque si es necesario
+    useEffect(() => {
+        if ('Notification' in window && Notification.permission === 'default') {
+            Notification.requestPermission().then(permission => {
+                setNotifPermission(permission);
+                if (permission === 'granted') {
+                    console.log('🔔 Notificaciones de escritorio permitidas por el administrador.');
+                }
+            });
+        }
+    }, []);
+
     // 🔥 MARCAR COMO LEÍDA Y ABRIR TICKET
     const handleNotificationClick = async (notif: INotificacion) => {
         try {

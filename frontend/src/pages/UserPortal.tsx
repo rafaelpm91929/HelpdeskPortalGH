@@ -317,6 +317,18 @@ export const UserPortal: React.FC<UserPortalProps> = ({ agenciaParam }) => {
         };
     }, [user?.id, agenciaInfo?.logo_url]);
 
+    // 🔥 Solicitar permiso de notificaciones nativas en el arranque si es necesario
+    useEffect(() => {
+        if ('Notification' in window && Notification.permission === 'default') {
+            Notification.requestPermission().then(permission => {
+                setNotifPermission(permission);
+                if (permission === 'granted') {
+                    console.log('🔔 Notificaciones de escritorio permitidas por el usuario.');
+                }
+            });
+        }
+    }, []);
+
     const defaultTema = (agenciaInfo?.colores_fondo || '').split('|')[1] || 'claro';
     const temaActivo = temaUsuario === 'agencia' ? defaultTema : temaUsuario;
     const isDarkMode = temaActivo === 'oscuro';
