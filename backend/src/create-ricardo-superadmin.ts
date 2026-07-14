@@ -13,7 +13,7 @@ async function createRicardo() {
         const result = await pool.request()
             .input('nombre', 'Ricardo')
             .input('apellido', 'Perez')
-            .input('email', 'ricardo.perez@grupohuerta.mx')
+            .input('email', 'ricardo.perez@smartsolutions.com.mx')
             .input('password_hash', hashedPassword)
             .input('puesto', 'Gerente de Sistemas')
             .query(`
@@ -40,7 +40,7 @@ async function createRicardo() {
             `);
         
         console.log('✅ SuperAdmin Ricardo Perez creado exitosamente');
-        console.log('📧 Email: ricardo.perez@grupohuerta.mx');
+        console.log('📧 Email: ricardo.perez@smartsolutions.com.mx');
         console.log('🔑 Contraseña: 1234');
         console.log('👤 Rol: superadmin');
         console.log('🏢 Puesto: Gerente de Sistemas');

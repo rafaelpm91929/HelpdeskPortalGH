@@ -24,7 +24,7 @@ async function run() {
         const request = new mssql.Request();
         request.input('nombre', 'Ricardo');
         request.input('apellido', 'Perez');
-        request.input('email', 'ricardo.perez@grupohuerta.mx');
+        request.input('email', 'ricardo.perez@smartsolutions.com.mx');
         request.input('password_hash', hashedPassword);
         request.input('puesto', 'Gerente de Sistemas');
 
@@ -52,7 +52,7 @@ async function run() {
         `);
 
         console.log('✅ SuperAdmin Ricardo Perez creado exitosamente');
-        console.log('📧 Email: ricardo.perez@grupohuerta.mx');
+        console.log('📧 Email: ricardo.perez@smartsolutions.com.mx');
         console.log('🔑 Contraseña: 1234');
         console.log('👤 Rol: superadmin');
         console.log('🏢 Puesto: Gerente de Sistemas');

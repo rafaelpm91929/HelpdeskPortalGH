@@ -663,7 +663,7 @@ export const Configuracion: React.FC<ConfiguracionProps> = ({ agenciaId, subdomi
                                 }}>
                                     <span style={{ fontSize: '18px' }}>✉️</span>
                                     <a 
-                                        href="mailto:helpdesk@grupohuerta.mx" 
+                                        href="mailto:soporte@smartsolutions.com.mx" 
                                         style={{ 
                                             color: colores.primario, 
                                             fontWeight: 'bold', 
@@ -671,7 +671,7 @@ export const Configuracion: React.FC<ConfiguracionProps> = ({ agenciaId, subdomi
                                             fontSize: '14px'
                                         }}
                                     >
-                                        helpdesk@grupohuerta.mx
+                                        soporte@smartsolutions.com.mx
                                     </a>
                                 </div>
 

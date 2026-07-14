@@ -74,16 +74,16 @@ export const LandingPage: React.FC = () => {
                     border: '3px solid rgba(255, 255, 255, 0.1)',
                     animation: 'scaleIn 0.6s cubic-bezier(0.16, 1, 0.3, 1)'
                 }}>
-                    <img 
-                        src={logoUrl} 
-                        alt="Logo Grupo Huerta" 
+                    <img
+                        src={logoUrl}
+                        alt="Logo Smart Solutions"
                         style={{
                             maxWidth: '100%',
                             maxHeight: '100%',
                             objectFit: 'contain'
                         }}
                         onError={(e) => {
-                            (e.target as HTMLImageElement).src = 'https://via.placeholder.com/120?text=Grupo+Huerta';
+                            (e.target as HTMLImageElement).src = 'https://via.placeholder.com/120?text=Smart+Solutions';
                         }}
                     />
                 </div>
@@ -101,7 +101,7 @@ export const LandingPage: React.FC = () => {
                 }}>
                     Bienvenido al Portal de Soporte
                 </h1>
-                
+
                 <h2 style={{
                     fontSize: '16px',
                     fontWeight: 600,
@@ -110,7 +110,7 @@ export const LandingPage: React.FC = () => {
                     textTransform: 'uppercase',
                     letterSpacing: '1px'
                 }}>
-                    Grupo Huerta
+                    SMART SOLUTIONS
                 </h2>
 
                 <p style={{
@@ -154,13 +154,14 @@ export const LandingPage: React.FC = () => {
                 >
                     Ingresar al Portal
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                 </button>
             </div>
 
             {/* Estilos CSS para animaciones básicas */}
-            <style dangerouslySetInnerHTML={{__html: `
+            <style dangerouslySetInnerHTML={{
+                __html: `
                 @keyframes fadeIn {
                     from { opacity: 0; transform: translateY(15px); }
                     to { opacity: 1; transform: translateY(0); }
