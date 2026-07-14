@@ -56,7 +56,7 @@ export class AuthService {
             SELECT u.*, a.nombre as agencia_nombre, a.subdominio as agencia_subdominio 
             FROM tbl_usuarios u 
             JOIN tbl_agencias a ON u.agencia_id = a.id
-            WHERE u.email = @email AND u.activo = 1 AND a.activa = 1
+            WHERE u.email = @email AND u.activo = 1 AND a.activo = 1
         `;
         const request = pool.request().input('email', email);
         
