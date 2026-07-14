@@ -120,7 +120,7 @@ export const LandingPage: React.FC = () => {
                     marginBottom: '36px',
                     padding: '0 10px'
                 }}>
-                    Bienvenido a nuestro centro de atención técnica y soporte. Aquí podrás crear reportes, consultar el estado de tus solicitudes y comunicarte directamente con nuestro equipo de ingenieros.
+                    Bienvenido a nuestro portal de soporte técnico.
                 </p>
 
                 {/* Botón de acción */}
