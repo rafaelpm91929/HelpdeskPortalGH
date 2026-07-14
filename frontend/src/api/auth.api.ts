@@ -15,8 +15,8 @@ export const authApi = {
         return response.data;
     },
 
-    login: async (data: { email: string; password: string }) => {
-        const response = await api.post<IAuthResponse>('/auth/login', data);
+    login: async (data: { email: string; password: string; agencia_id?: number }) => {
+        const response = await api.post<any>('/auth/login', data);
         return response.data;
     },
 

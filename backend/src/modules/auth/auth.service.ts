@@ -1,6 +1,7 @@
 import { UsuarioModel } from '../../shared/models/Usuario.model';
 import { generateToken } from '../../shared/utils/jwt.utils';
 import { hashPassword, comparePassword } from '../../shared/utils/bcrypt.utils';
+import { getConnection } from '../../config/database';
 
 export class AuthService {
     static async register(userData: any): Promise<any> {
@@ -48,23 +49,73 @@ export class AuthService {
         };
     }
 
-    static async login(email: string, password: string): Promise<any> {
-        const user = await UsuarioModel.findByEmail(email);
-        if (!user) {
+    static async login(email: string, password: string, agenciaId?: number): Promise<any> {
+        const pool = await getConnection();
+        
+        let query = `
+            SELECT u.*, a.nombre as agencia_nombre, a.subdominio as agencia_subdominio 
+            FROM tbl_usuarios u 
+            JOIN tbl_agencias a ON u.agencia_id = a.id
+            WHERE u.email = @email AND u.activo = 1 AND a.activa = 1
+        `;
+        const request = pool.request().input('email', email);
+        
+        if (agenciaId) {
+            query += ' AND u.agencia_id = @agenciaId';
+            request.input('agenciaId', agenciaId);
+        }
+        
+        const result = await request.query(query);
+        const dbUsers = result.recordset;
+        
+        if (dbUsers.length === 0) {
             throw new Error('Credenciales inválidas');
         }
-
-        if (!user.activo) {
-            throw new Error('Usuario desactivado');
+        
+        // Si hay múltiples agencias asociadas a este correo
+        if (!agenciaId && dbUsers.length > 1) {
+            const validAgencies = [];
+            for (const u of dbUsers) {
+                const passwordMatch = await comparePassword(password, u.password_hash);
+                if (passwordMatch) {
+                    validAgencies.push({
+                        id: u.agencia_id,
+                        nombre: u.agencia_nombre,
+                        subdominio: u.agencia_subdominio
+                    });
+                }
+            }
+            
+            if (validAgencies.length === 0) {
+                throw new Error('Credenciales inválidas');
+            }
+            
+            // Si el correo y contraseña coinciden en más de una agencia, solicitar selección
+            if (validAgencies.length > 1) {
+                return {
+                    requiresAgencySelection: true,
+                    agencias: validAgencies
+                };
+            }
+            
+            // Si la contraseña solo coincidió con una cuenta de las agencias
+            const singleUser = dbUsers.find(u => u.agencia_id === validAgencies[0].id);
+            return this.generateUserSession(singleUser);
         }
-
-        const passwordMatch = await comparePassword(password, user.password_hash);
+        
+        // Si hay una sola agencia o ya se seleccionó una
+        const candidateUser = dbUsers[0];
+        const passwordMatch = await comparePassword(password, candidateUser.password_hash);
         if (!passwordMatch) {
             throw new Error('Credenciales inválidas');
         }
-
+        
+        return this.generateUserSession(candidateUser);
+    }
+    
+    private static async generateUserSession(user: any) {
         await UsuarioModel.updateLastAccess(user.id);
-
+        
         console.log('👤 Usuario logueado:', { 
             userId: user.id, 
             agencia_id: user.agencia_id, 
@@ -89,7 +140,7 @@ export class AuthService {
                 agencia_id: user.agencia_id,
                 telefono: user.telefono || '',
                 puesto: user.puesto || '',
-                area: user.area || ''  // 🔥 Incluir área en la respuesta
+                area: user.area || ''
             }
         };
     }

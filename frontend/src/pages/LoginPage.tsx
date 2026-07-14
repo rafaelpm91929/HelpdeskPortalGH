@@ -12,15 +12,32 @@ export const LoginPage: React.FC = () => {
     const { login } = useAuth();
     const navigate = useNavigate();
 
+    // Estados para login de múltiples agencias (correo duplicado)
+    const [agenciesList, setAgenciesList] = useState<Array<{ id: number; nombre: string; subdominio: string }>>([]);
+    const [requiresSelection, setRequiresSelection] = useState(false);
+    const [selectedAgenciaId, setSelectedAgenciaId] = useState<number | null>(null);
+
     // Refs para el efecto de olas
     const containerRef = useRef<HTMLDivElement>(null);
     const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const handleSubmit = async (e: React.FormEvent, forceAgenciaId?: number) => {
+        if (e) e.preventDefault();
         setLoading(true);
         try {
-            await login(email, password);
+            const loginAgenciaId = forceAgenciaId !== undefined ? forceAgenciaId : (selectedAgenciaId || undefined);
+            const result = await login(email, password, loginAgenciaId);
+            
+            // Si requiere selección de agencias
+            if (result && result.requiresAgencySelection && forceAgenciaId === undefined) {
+                setAgenciesList(result.agencias);
+                setRequiresSelection(true);
+                setSelectedAgenciaId(result.agencias[0].id);
+                setLoading(false);
+                toast.success('🏢 Selecciona la agencia a la que deseas acceder');
+                return;
+            }
+
             toast.success('✅ Inicio de sesión exitoso');
 
             const user = JSON.parse(sessionStorage.getItem('user') || '{}');
@@ -71,7 +88,7 @@ export const LoginPage: React.FC = () => {
             }
         } catch (error: any) {
             console.error('❌ Error en login:', error);
-            toast.error(error.response?.data?.error || '❌ Error al iniciar sesión');
+            toast.error(error.response?.data?.error || error.message || '❌ Error al iniciar sesión');
         } finally {
             setLoading(false);
         }
@@ -375,43 +392,114 @@ export const LoginPage: React.FC = () => {
                     </p>
                 </div>
 
-                <form onSubmit={handleSubmit}>
-                    <div style={{ marginBottom: '20px' }}>
-                        <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#cbd5e1', marginBottom: '6px' }}>
-                            Correo Electrónico
-                        </label>
-                        <input
-                            type="email"
-                            required
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            className="login-input"
-                            placeholder="usuario@smartsolutions.com.mx"
-                        />
-                    </div>
+                {requiresSelection ? (
+                    <form onSubmit={(e) => {
+                        e.preventDefault();
+                        if (selectedAgenciaId) {
+                            handleSubmit(e, selectedAgenciaId);
+                        }
+                    }}>
+                        <div style={{ marginBottom: '28px' }}>
+                            <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#cbd5e1', marginBottom: '12px', textAlign: 'center', lineHeight: '1.5' }}>
+                                Se detectó que tu correo pertenece a múltiples agencias.<br />
+                                <strong>Selecciona la agencia a la que deseas ingresar:</strong>
+                            </label>
+                            
+                            <select
+                                value={selectedAgenciaId || ''}
+                                onChange={(e) => setSelectedAgenciaId(Number(e.target.value))}
+                                style={{
+                                    width: '100%',
+                                    padding: '12px 16px',
+                                    borderRadius: '8px',
+                                    backgroundColor: '#1e293b',
+                                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                                    color: 'white',
+                                    fontSize: '15px',
+                                    outline: 'none',
+                                    cursor: 'pointer'
+                                }}
+                            >
+                                {agenciesList.map((a) => (
+                                    <option key={a.id} value={a.id}>
+                                        {a.nombre} ({a.subdominio})
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
 
-                    <div style={{ marginBottom: '28px' }}>
-                        <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#cbd5e1', marginBottom: '6px' }}>
-                            Contraseña
-                        </label>
-                        <input
-                            type="password"
-                            required
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            className="login-input"
-                            placeholder="••••••••"
-                        />
-                    </div>
+                        <button
+                            type="submit"
+                            disabled={loading}
+                            className="login-btn"
+                            style={{ marginBottom: '12px' }}
+                        >
+                            {loading ? 'Ingresando...' : 'Ingresar a esta Agencia'}
+                        </button>
 
-                    <button
-                        type="submit"
-                        disabled={loading}
-                        className="login-btn"
-                    >
-                        {loading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
-                    </button>
-                </form>
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setRequiresSelection(false);
+                                setAgenciesList([]);
+                                setSelectedAgenciaId(null);
+                            }}
+                            style={{
+                                width: '100%',
+                                padding: '12px',
+                                backgroundColor: 'transparent',
+                                border: '1px solid rgba(255, 255, 255, 0.1)',
+                                color: '#94a3b8',
+                                borderRadius: '8px',
+                                fontSize: '14px',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s'
+                            }}
+                            onMouseEnter={(e) => e.currentTarget.style.color = 'white'}
+                            onMouseLeave={(e) => e.currentTarget.style.color = '#94a3b8'}
+                        >
+                            Volver
+                        </button>
+                    </form>
+                ) : (
+                    <form onSubmit={handleSubmit}>
+                        <div style={{ marginBottom: '20px' }}>
+                            <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#cbd5e1', marginBottom: '6px' }}>
+                                Correo Electrónico
+                            </label>
+                            <input
+                                type="email"
+                                required
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                className="login-input"
+                                placeholder="usuario@smartsolutions.com.mx"
+                            />
+                        </div>
+
+                        <div style={{ marginBottom: '28px' }}>
+                            <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#cbd5e1', marginBottom: '6px' }}>
+                                Contraseña
+                            </label>
+                            <input
+                                type="password"
+                                required
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                className="login-input"
+                                placeholder="••••••••"
+                            />
+                        </div>
+
+                        <button
+                            type="submit"
+                            disabled={loading}
+                            className="login-btn"
+                        >
+                            {loading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
+                        </button>
+                    </form>
+                )}
             </div>
         </div>
     );

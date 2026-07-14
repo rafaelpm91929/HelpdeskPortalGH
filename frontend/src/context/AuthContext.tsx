@@ -5,7 +5,7 @@ import { authApi } from '../api/auth.api';
 interface AuthContextType {
     user: IUsuario | null;
     token: string | null;
-    login: (email: string, password: string) => Promise<void>;
+    login: (email: string, password: string, agenciaId?: number) => Promise<any>;
     register: (data: any) => Promise<void>;
     logout: () => void;
     isLoading: boolean;
@@ -119,12 +119,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         };
     }, [token]);
 
-    const login = async (email: string, password: string) => {
+    const login = async (email: string, password: string, agenciaId?: number) => {
         try {
-            const response = await authApi.login({ email, password });
+            const response = await authApi.login({ email, password, agencia_id: agenciaId });
             console.log('📡 Respuesta login:', response);
             
             if (response.success) {
+                if (response.data && response.data.requiresAgencySelection) {
+                    return response.data;
+                }
+
                 const { token, user } = response.data;
                 console.log('🔑 Token recibido:', token ? 'Sí' : 'No');
                 console.log('👤 Usuario recibido:', user);
@@ -135,8 +139,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 sessionStorage.setItem('user', JSON.stringify(user));
                 
                 console.log('✅ Token guardado en sessionStorage');
+                return response.data;
             } else {
                 console.error('❌ Login falló:', response);
+                return response;
             }
         } catch (error) {
             console.error('❌ Error en login:', error);

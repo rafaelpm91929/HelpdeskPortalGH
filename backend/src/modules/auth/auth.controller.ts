@@ -8,7 +8,7 @@ export class AuthController {
     // ✅ LOGIN (público)
     static async login(req: Request, res: Response) {
         try {
-            const { email, password } = req.body;
+            const { email, password, agencia_id } = req.body;
             
             if (!email || !password) {
                 return res.status(400).json({
@@ -17,7 +17,7 @@ export class AuthController {
                 });
             }
 
-            const result = await AuthService.login(email, password);
+            const result = await AuthService.login(email, password, agencia_id ? parseInt(agencia_id, 10) : undefined);
 
             res.json({
                 success: true,
