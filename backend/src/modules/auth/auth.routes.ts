@@ -85,7 +85,7 @@ router.post('/users/:id/enviar-claves', authMiddleware, async (req: any, res: an
 
         // 3. Enviar correo usando el helper sendCredentialsEmail
         const { sendCredentialsEmail } = require('../../shared/utils/email.service');
-        const linkPortal = 'https://smartsolutions.mooo.com:5173';
+        const linkPortal = 'https://helpdesksmartsolutions.mooo.com:5173';
 
         await sendCredentialsEmail(
             user.email,
