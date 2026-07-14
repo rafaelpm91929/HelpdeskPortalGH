@@ -134,9 +134,9 @@ if (user.rol === 'usuario') {
         return <AgencyPortal subdominio={agenciaParam} />;
     }
 
-    // 🔥 Redirigir al login si se entra directamente a la raíz de helpdeskgrupohuerta
-    if (subdominio === 'helpdeskgrupohuerta' && (pathname === '/' || pathname === '')) {
-        console.log('✨ Redirigiendo de la raíz de helpdeskgrupohuerta a /login');
+    // 🔥 Redirigir al login si se entra directamente a la raíz de smartsolutions
+    if (subdominio === 'smartsolutions' && (pathname === '/' || pathname === '')) {
+        console.log('✨ Redirigiendo de la raíz de smartsolutions a /login');
         return <Navigate to="/login" replace />;
     }
     
