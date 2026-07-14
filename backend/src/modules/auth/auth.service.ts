@@ -74,7 +74,7 @@ export class AuthService {
         
         // Si hay múltiples agencias asociadas a este correo
         if (!agenciaId && dbUsers.length > 1) {
-            const validAgencies = [];
+            const validAgencies: any[] = [];
             for (const u of dbUsers) {
                 const passwordMatch = await comparePassword(password, u.password_hash);
                 if (passwordMatch) {
