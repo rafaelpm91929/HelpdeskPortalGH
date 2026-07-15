@@ -2092,6 +2092,8 @@ export const SuperAdminDashboard: React.FC = () => {
                         </div>
                     </div>
                 </div>
+            )}
+
             {/* ============================================
             MODAL DE INFORMACIÓN Y ESTADÍSTICAS DE AGENCIA
             ============================================ */}
