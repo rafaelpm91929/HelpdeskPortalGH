@@ -47,6 +47,86 @@ router.get('/subdominio/:subdominio', async (req, res) => {
 });
 
 // ============================================
+// RUTA DE SUPERADMIN/ADMIN - Obtener estadísticas/info de una agencia
+// ============================================
+router.get('/:id/info', authMiddleware, async (req: any, res: any) => {
+    try {
+        const { id } = req.params;
+        const agenciaId = parseInt(id, 10);
+        
+        if (isNaN(agenciaId)) {
+            return res.status(400).json({
+                success: false,
+                error: 'ID de agencia inválido'
+            });
+        }
+        
+        const pool = await getConnection();
+        
+        // 1. Obtener nombre del administrador
+        const adminResult = await pool.request()
+            .input('agencia_id', agenciaId)
+            .query(`
+                SELECT TOP 1 nombre, apellido, email 
+                FROM tbl_usuarios 
+                WHERE agencia_id = @agencia_id AND rol = 'admin' AND activo = 1
+            `);
+        
+        const admin = adminResult.recordset[0] || null;
+        
+        // 2. Obtener total de usuarios (excluyendo administradores)
+        const usersResult = await pool.request()
+            .input('agencia_id', agenciaId)
+            .query(`
+                SELECT COUNT(*) AS total 
+                FROM tbl_usuarios 
+                WHERE agencia_id = @agencia_id AND rol = 'usuario'
+            `);
+            
+        const totalUsuarios = usersResult.recordset[0]?.total || 0;
+        
+        // 3. Obtener cantidad de áreas distintas configuradas en usuarios
+        const areasResult = await pool.request()
+            .input('agencia_id', agenciaId)
+            .query(`
+                SELECT COUNT(DISTINCT area) AS total 
+                FROM tbl_usuarios 
+                WHERE agencia_id = @agencia_id AND area IS NOT NULL AND area != '' AND area != 'sin area' AND area != 'sin área'
+            `);
+            
+        const totalAreas = areasResult.recordset[0]?.total || 0;
+        
+        // 4. Obtener cantidad de tickets abiertos/pendientes
+        const ticketsResult = await pool.request()
+            .input('agencia_id', agenciaId)
+            .query(`
+                SELECT COUNT(*) AS total 
+                FROM tbl_tickets 
+                WHERE agencia_id = @agencia_id AND estado IN ('abierto', 'pendiente', 'en_proceso', 'en proceso')
+            `);
+            
+        const ticketsAbiertos = ticketsResult.recordset[0]?.total || 0;
+        
+        res.json({
+            success: true,
+            data: {
+                adminName: admin ? `${admin.nombre} ${admin.apellido}` : 'Sin administrador activo',
+                adminEmail: admin ? admin.email : '',
+                totalUsuarios,
+                totalAreas,
+                ticketsAbiertos
+            }
+        });
+    } catch (error: any) {
+        console.error('Error al obtener info de agencia:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// ============================================
 // RUTA PÚBLICA - Obtener agencia por ID
 // ============================================
 router.get('/:id', async (req, res) => {

@@ -95,6 +95,41 @@ export const SuperAdminDashboard: React.FC = () => {
     const [sendKeysPassword, setSendKeysPassword] = useState('');
     const [sendingKeys, setSendingKeys] = useState(false);
 
+    // 🔥 Nuevos estados de búsqueda y modal de estadísticas
+    const [searchAgencia, setSearchAgencia] = useState('');
+    const [searchAdmin, setSearchAdmin] = useState('');
+    const [searchLicencia, setSearchLicencia] = useState('');
+
+    const [showAgenciaInfoModal, setShowAgenciaInfoModal] = useState(false);
+    const [loadingAgenciaInfo, setLoadingAgenciaInfo] = useState(false);
+    const [selectedAgenciaName, setSelectedAgenciaName] = useState('');
+    const [agenciaInfoDetails, setAgenciaInfoDetails] = useState<{
+        adminName: string;
+        adminEmail: string;
+        totalUsuarios: number;
+        totalAreas: number;
+        ticketsAbiertos: number;
+    } | null>(null);
+
+    const openAgenciaInfoModal = async (agenciaId: number, agenciaNombre: string) => {
+        setSelectedAgenciaName(agenciaNombre);
+        setLoadingAgenciaInfo(true);
+        setShowAgenciaInfoModal(true);
+        try {
+            const response = await api.get(`/agencias/${agenciaId}/info`);
+            if (response.data.success) {
+                setAgenciaInfoDetails(response.data.data);
+            } else {
+                toast.error('❌ No se pudo cargar la información de la agencia');
+            }
+        } catch (error: any) {
+            console.error('Error al obtener info de agencia:', error);
+            toast.error(error.response?.data?.error || '❌ Error al obtener la información');
+        } finally {
+            setLoadingAgenciaInfo(false);
+        }
+    };
+
     // ============================================
     // VERIFICAR PERMISOS
     // ============================================
@@ -356,6 +391,7 @@ export const SuperAdminDashboard: React.FC = () => {
             await api.put(`/auth/users/${editingAdmin.id}`, {
                 nombre: adminForm.nombre,
                 apellido: adminForm.apellido,
+                email: adminForm.email,
                 agencia_id: adminForm.agencia_id,
                 password: adminForm.password || undefined
             });
@@ -811,6 +847,27 @@ export const SuperAdminDashboard: React.FC = () => {
                             </button>
                         </div>
 
+                        {/* 🔥 Buscador de Agencias */}
+                        <div style={{ marginBottom: '20px' }}>
+                            <input
+                                type="text"
+                                placeholder="🔍 Buscar agencia por nombre o subdominio..."
+                                value={searchAgencia}
+                                onChange={(e) => setSearchAgencia(e.target.value)}
+                                style={{
+                                    width: '100%',
+                                    maxWidth: '400px',
+                                    padding: '10px 14px',
+                                    borderRadius: '8px',
+                                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                                    backgroundColor: '#1e293b',
+                                    color: 'white',
+                                    fontSize: '14px',
+                                    outline: 'none'
+                                }}
+                            />
+                        </div>
+
                         {loadingAgencias ? (
                             <p style={{ color: '#f8fafc' }}>Cargando...</p>
                         ) : (
@@ -819,7 +876,12 @@ export const SuperAdminDashboard: React.FC = () => {
                                 gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))',
                                 gap: '16px'
                             }}>
-                                {agencias.map((agencia) => (
+                                {agencias
+                                    .filter(agencia => 
+                                        agencia.nombre.toLowerCase().includes(searchAgencia.toLowerCase()) ||
+                                        agencia.subdominio.toLowerCase().includes(searchAgencia.toLowerCase())
+                                    )
+                                    .map((agencia) => (
                                     <div key={agencia.id} style={{
                                         backgroundColor: 'white',
                                         padding: '24px',
@@ -917,6 +979,24 @@ export const SuperAdminDashboard: React.FC = () => {
                                             justifyContent: 'flex-end',
                                             flexWrap: 'wrap'
                                         }}>
+                                            <button
+                                                onClick={() => openAgenciaInfoModal(agencia.id, agencia.nombre)}
+                                                style={{
+                                                    padding: '8px 16px',
+                                                    background: 'linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)',
+                                                    color: 'white',
+                                                    border: 'none',
+                                                    borderRadius: '6px',
+                                                    cursor: 'pointer',
+                                                    fontSize: '13px',
+                                                    fontWeight: '600',
+                                                    boxShadow: '0 2px 4px rgba(2, 132, 199, 0.2)',
+                                                    transition: 'all 0.2s'
+                                                }}
+                                                title="Ver estadísticas e información de la agencia"
+                                            >
+                                                ℹ️ Info
+                                            </button>
                                             <button
                                                 onClick={() => {
                                                     const url = `/?agencia=${agencia.subdominio}&superadmin=true`;
@@ -1047,6 +1127,27 @@ export const SuperAdminDashboard: React.FC = () => {
                             </button>
                         </div>
 
+                        {/* 🔥 Buscador de Administradores */}
+                        <div style={{ marginBottom: '20px' }}>
+                            <input
+                                type="text"
+                                placeholder="🔍 Buscar administrador por nombre, apellido o correo..."
+                                value={searchAdmin}
+                                onChange={(e) => setSearchAdmin(e.target.value)}
+                                style={{
+                                    width: '100%',
+                                    maxWidth: '400px',
+                                    padding: '10px 14px',
+                                    borderRadius: '8px',
+                                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                                    backgroundColor: '#1e293b',
+                                    color: 'white',
+                                    fontSize: '14px',
+                                    outline: 'none'
+                                }}
+                            />
+                        </div>
+
                         {loadingAdmins ? (
                             <p style={{ color: '#f8fafc' }}>Cargando...</p>
                         ) : (
@@ -1067,7 +1168,13 @@ export const SuperAdminDashboard: React.FC = () => {
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {admins.map((admin) => {
+                                        {admins
+                                            .filter(admin => 
+                                                admin.nombre.toLowerCase().includes(searchAdmin.toLowerCase()) ||
+                                                admin.apellido.toLowerCase().includes(searchAdmin.toLowerCase()) ||
+                                                admin.email.toLowerCase().includes(searchAdmin.toLowerCase())
+                                            )
+                                            .map((admin) => {
                                             const agencia = agencias.find(a => a.id === admin.agencia_id);
                                             return (
                                                 <tr key={admin.id} style={{ borderTop: '1px solid #e5e7eb' }}>
@@ -1110,22 +1217,7 @@ export const SuperAdminDashboard: React.FC = () => {
                                                         </span>
                                                     </td>
                                                     <td style={{ padding: '12px 16px', textAlign: 'center' }}>
-                                                        <button
-                                                            onClick={() => openSendKeysModal(admin)}
-                                                            style={{
-                                                                padding: '4px 12px',
-                                                                backgroundColor: '#eff6ff',
-                                                                border: 'none',
-                                                                borderRadius: '4px',
-                                                                cursor: 'pointer',
-                                                                marginRight: '4px',
-                                                                color: '#2563eb',
-                                                                fontWeight: 'bold'
-                                                            }}
-                                                            title="Enviar Claves por Correo"
-                                                        >
-                                                            🔑 Claves
-                                                        </button>
+
                                                         <button
                                                             onClick={() => {
                                                                 setEditingAdmin(admin);
@@ -1309,6 +1401,27 @@ export const SuperAdminDashboard: React.FC = () => {
                             </h2>
                         </div>
 
+                        {/* 🔥 Buscador de Licencias */}
+                        <div style={{ marginBottom: '20px' }}>
+                            <input
+                                type="text"
+                                placeholder="🔍 Buscar agencia por nombre o subdominio..."
+                                value={searchLicencia}
+                                onChange={(e) => setSearchLicencia(e.target.value)}
+                                style={{
+                                    width: '100%',
+                                    maxWidth: '400px',
+                                    padding: '10px 14px',
+                                    borderRadius: '8px',
+                                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                                    backgroundColor: '#1e293b',
+                                    color: 'white',
+                                    fontSize: '14px',
+                                    outline: 'none'
+                                }}
+                            />
+                        </div>
+
                         <div style={{
                             backgroundColor: 'white',
                             borderRadius: '12px',
@@ -1327,7 +1440,12 @@ export const SuperAdminDashboard: React.FC = () => {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {agencias.map((agencia) => {
+                                    {agencias
+                                        .filter(a => 
+                                            a.nombre.toLowerCase().includes(searchLicencia.toLowerCase()) || 
+                                            a.subdominio.toLowerCase().includes(searchLicencia.toLowerCase())
+                                        )
+                                        .map((agencia) => {
                                         const dateStr = agencia.fecha_licencia;
                                         let statusBadge = { bg: '#e2e8f0', text: '#475569', label: 'Sin Asignar' };
                                         
@@ -1613,7 +1731,6 @@ export const SuperAdminDashboard: React.FC = () => {
                                         borderRadius: '6px',
                                         outline: 'none'
                                     }}
-                                    disabled={!!editingAdmin}
                                 />
                             </div>
                             
@@ -1973,6 +2090,146 @@ export const SuperAdminDashboard: React.FC = () => {
                                 Guardar Licencia
                             </button>
                         </div>
+                    </div>
+                </div>
+            {/* ============================================
+            MODAL DE INFORMACIÓN Y ESTADÍSTICAS DE AGENCIA
+            ============================================ */}
+            {showAgenciaInfoModal && (
+                <div style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    backgroundColor: 'rgba(0,0,0,0.5)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    zIndex: 1000
+                }}>
+                    <div style={{
+                        backgroundColor: 'white',
+                        padding: '28px',
+                        borderRadius: '12px',
+                        width: '90%',
+                        maxWidth: '450px',
+                        boxShadow: '0 20px 25px -5px rgba(0,0,0,0.15)',
+                        border: '1px solid #cbd5e1'
+                    }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                            <h3 style={{ fontSize: '19px', fontWeight: 'bold', color: '#0f172a', margin: 0 }}>
+                                ℹ️ Información: {selectedAgenciaName}
+                            </h3>
+                            <button
+                                onClick={() => {
+                                    setShowAgenciaInfoModal(false);
+                                    setAgenciaInfoDetails(null);
+                                }}
+                                style={{
+                                    background: 'none',
+                                    border: 'none',
+                                    fontSize: '20px',
+                                    cursor: 'pointer',
+                                    color: '#94a3b8'
+                                }}
+                            >
+                                ✕
+                            </button>
+                        </div>
+
+                        {loadingAgenciaInfo ? (
+                            <div style={{ textAlign: 'center', padding: '30px 0' }}>
+                                <span style={{ fontSize: '14px', color: '#64748b' }}>Cargando información...</span>
+                            </div>
+                        ) : agenciaInfoDetails ? (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                                <div style={{ 
+                                    padding: '16px', 
+                                    backgroundColor: '#f8fafc', 
+                                    borderRadius: '8px',
+                                    border: '1px solid #f1f5f9'
+                                }}>
+                                    <span style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#64748b', textTransform: 'uppercase', marginBottom: '4px' }}>
+                                        Administrador Principal
+                                    </span>
+                                    <span style={{ display: 'block', fontSize: '15px', fontWeight: 'bold', color: '#0f172a' }}>
+                                        👤 {agenciaInfoDetails.adminName}
+                                    </span>
+                                    {agenciaInfoDetails.adminEmail && (
+                                        <span style={{ display: 'block', fontSize: '13px', color: '#64748b', marginTop: '2px' }}>
+                                            ✉️ {agenciaInfoDetails.adminEmail}
+                                        </span>
+                                    )}
+                                </div>
+
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                                    <div style={{ padding: '16px', backgroundColor: '#f0fdf4', borderRadius: '8px', border: '1px solid #dcfce7', textAlign: 'center' }}>
+                                        <span style={{ display: 'block', fontSize: '24px', marginBottom: '4px' }}>👥</span>
+                                        <span style={{ display: 'block', fontSize: '20px', fontWeight: 'bold', color: '#166534' }}>
+                                            {agenciaInfoDetails.totalUsuarios}
+                                        </span>
+                                        <span style={{ fontSize: '12px', color: '#166534', fontWeight: '500' }}>Usuarios</span>
+                                    </div>
+
+                                    <div style={{ padding: '16px', backgroundColor: '#eff6ff', borderRadius: '8px', border: '1px solid #dbeafe', textAlign: 'center' }}>
+                                        <span style={{ display: 'block', fontSize: '24px', marginBottom: '4px' }}>🏢</span>
+                                        <span style={{ display: 'block', fontSize: '20px', fontWeight: 'bold', color: '#1e40af' }}>
+                                            {agenciaInfoDetails.totalAreas}
+                                        </span>
+                                        <span style={{ fontSize: '12px', color: '#1e40af', fontWeight: '500' }}>Áreas</span>
+                                    </div>
+                                </div>
+
+                                <div style={{ 
+                                    padding: '16px', 
+                                    backgroundColor: '#fff7ed', 
+                                    borderRadius: '8px', 
+                                    border: '1px solid #ffedd5',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'space-between'
+                                }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                        <span style={{ fontSize: '24px' }}>🎫</span>
+                                        <div>
+                                            <span style={{ display: 'block', fontSize: '14px', fontWeight: '600', color: '#9a3412' }}>
+                                                Tickets Abiertos
+                                            </span>
+                                            <span style={{ fontSize: '12px', color: '#c2410c' }}>Pendientes de atención</span>
+                                        </div>
+                                    </div>
+                                    <span style={{ fontSize: '24px', fontWeight: 'bold', color: '#9a3412', marginRight: '8px' }}>
+                                        {agenciaInfoDetails.ticketsAbiertos}
+                                    </span>
+                                </div>
+                            </div>
+                        ) : (
+                            <div style={{ textAlign: 'center', padding: '20px 0', color: '#dc2626' }}>
+                                Ocurrió un error al cargar los datos.
+                            </div>
+                        )}
+
+                        <button
+                            onClick={() => {
+                                setShowAgenciaInfoModal(false);
+                                setAgenciaInfoDetails(null);
+                            }}
+                            style={{
+                                width: '100%',
+                                marginTop: '20px',
+                                padding: '10px',
+                                backgroundColor: '#0f172a',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '6px',
+                                cursor: 'pointer',
+                                fontSize: '14px',
+                                fontWeight: '600'
+                            }}
+                        >
+                            Cerrar
+                        </button>
                     </div>
                 </div>
             )}

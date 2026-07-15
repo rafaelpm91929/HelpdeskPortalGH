@@ -249,6 +249,7 @@ export class AuthController {
             const { 
                 nombre, 
                 apellido, 
+                email, // 🔥 Habilitar edición de correo
                 password, 
                 agencia_id,
                 telefono,
@@ -315,6 +316,22 @@ export class AuthController {
             if (apellido !== undefined) {
                 updates.push('apellido = @apellido');
                 request.input('apellido', apellido);
+            }
+
+            if (email !== undefined && email.trim() !== '') {
+                const emailCheck = await pool.request()
+                    .input('email', email)
+                    .input('id', userId)
+                    .query('SELECT id FROM tbl_usuarios WHERE email = @email AND id != @id');
+
+                if (emailCheck.recordset.length > 0) {
+                    return res.status(400).json({
+                        success: false,
+                        error: 'El correo electrónico ya está registrado por otro usuario.'
+                    });
+                }
+                updates.push('email = @email');
+                request.input('email', email);
             }
 
             if (telefono !== undefined) {
