@@ -569,6 +569,11 @@ export const UserPortal: React.FC<UserPortalProps> = ({ agenciaParam }) => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
+        if (!user?.area || user.area.trim() === '' || user.area.toLowerCase() === 'sin area' || user.area.toLowerCase() === 'sin área') {
+            toast.error('⚠️ No puedes enviar un ticket porque no tienes un área asignada en tu perfil.');
+            return;
+        }
+
         if (!formData.asunto || !formData.descripcion) {
             toast.error('Asunto y descripción son requeridos');
             return;
@@ -1602,7 +1607,37 @@ export const UserPortal: React.FC<UserPortalProps> = ({ agenciaParam }) => {
                             Completa los campos para crear un nuevo ticket de soporte.
                         </p>
 
-                        <form onSubmit={handleSubmit}>
+                        {(!user?.area || user.area.trim() === '' || user.area.toLowerCase() === 'sin area' || user.area.toLowerCase() === 'sin área') ? (
+                            <div style={{
+                                backgroundColor: '#fef2f2',
+                                border: '1px solid #fee2e2',
+                                borderRadius: '12px',
+                                padding: '24px',
+                                textAlign: 'center',
+                                marginTop: '10px'
+                            }}>
+                                <span style={{ fontSize: '48px', display: 'block', marginBottom: '16px' }}>⚠️</span>
+                                <h3 style={{ fontSize: '18px', fontWeight: 'bold', color: '#991b1b', marginBottom: '8px' }}>
+                                    Área No Asignada
+                                </h3>
+                                <p style={{ fontSize: '14px', color: '#7f1d1d', lineHeight: '1.5', maxWidth: '400px', margin: '0 auto 20px auto' }}>
+                                    No tienes un área asignada en tu perfil de usuario. Para poder enviar tickets de soporte, es obligatorio pertenecer a un área o departamento.
+                                </p>
+                                <div style={{
+                                    fontSize: '13px',
+                                    color: '#b91c1c',
+                                    fontWeight: '500',
+                                    backgroundColor: '#fff',
+                                    padding: '12px',
+                                    borderRadius: '6px',
+                                    border: '1px dashed #fca5a5',
+                                    display: 'inline-block'
+                                }}>
+                                    Por favor contacta a tu Administrador para asignar tu área.
+                                </div>
+                            </div>
+                        ) : (
+                            <form onSubmit={handleSubmit}>
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                                 {/* Asunto */}
                                 <div style={{ gridColumn: 'span 2' }}>
@@ -1838,6 +1873,7 @@ export const UserPortal: React.FC<UserPortalProps> = ({ agenciaParam }) => {
                                 </button>
                             </div>
                         </form>
+                        )}
                     </div>
                 )}
 

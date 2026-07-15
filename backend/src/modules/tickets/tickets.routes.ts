@@ -592,6 +592,28 @@ router.post('/', authMiddleware, upload.array('archivos', 5), async (req: any, r
 
         const pool = await getConnection();
 
+        // 🔥 Validar que el usuario tenga un área asignada activa en la base de datos
+        const userCheck = await pool.request()
+            .input('usuario_id', parseInt(usuario_id))
+            .query('SELECT area, activo FROM tbl_usuarios WHERE id = @usuario_id');
+
+        if (userCheck.recordset.length === 0) {
+            writeLog(`[POST /tickets] ❌ Error: Usuario ${usuario_id} no encontrado`);
+            return res.status(404).json({
+                success: false,
+                error: 'Usuario no encontrado'
+            });
+        }
+
+        const dbUser = userCheck.recordset[0];
+        if (!dbUser.area || dbUser.area.trim() === '' || dbUser.area.toLowerCase() === 'sin area' || dbUser.area.toLowerCase() === 'sin área') {
+            writeLog(`[POST /tickets] ❌ Error: Usuario ${usuario_id} sin área asignada intentó crear ticket`);
+            return res.status(400).json({
+                success: false,
+                error: 'No puedes crear tickets de soporte porque no tienes un área asignada en tu perfil. Contacta a tu administrador para que la asigne.'
+            });
+        }
+
         const result = await pool.request()
             .input('agencia_id', parseInt(agencia_id))
             .input('usuario_id', parseInt(usuario_id))
