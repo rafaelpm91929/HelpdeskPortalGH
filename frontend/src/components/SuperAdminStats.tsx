@@ -934,7 +934,8 @@ export const SuperAdminStats: React.FC<SuperAdminStatsProps> = ({ agencias }) =>
                                 width={maxBarWidth} 
                                 height={barHeight} 
                                 fill="#f8fafc" 
-                                border="1px solid #f1f5f9"
+                                stroke="#f1f5f9"
+                                strokeWidth="1"
                                 rx="5"
                             />
 
