@@ -4,6 +4,7 @@ import { api } from '../api/axios.config';
 import toast from 'react-hot-toast';
 import { logout } from '../utils/logout';
 import { PUBLIC_IP, FRONTEND_BASE_URL, IMAGE_BASE_URL } from '../config';
+import { SuperAdminStats } from '../components/SuperAdminStats';
 
 // ============================================
 // TIPOS
@@ -38,7 +39,7 @@ interface IUsuario {
 // ============================================
 export const SuperAdminDashboard: React.FC = () => {
     const { user, logout: authLogout } = useAuth();
-    const [activeTab, setActiveTab] = useState<'menu' | 'agencias' | 'admins' | 'manuales' | 'licencias'>(() => {
+    const [activeTab, setActiveTab] = useState<'menu' | 'agencias' | 'admins' | 'manuales' | 'licencias' | 'estadisticas'>(() => {
         return (localStorage.getItem(`active_tab_superadmin_${user?.id}`) as any) || 'menu';
     });
 
@@ -591,6 +592,21 @@ export const SuperAdminDashboard: React.FC = () => {
                         >
                             📅 Licencias
                         </button>
+                        <button
+                            onClick={() => setActiveTab('estadisticas')}
+                            style={{
+                                flex: 1,
+                                padding: '10px',
+                                backgroundColor: activeTab === 'estadisticas' ? '#2563eb' : 'transparent',
+                                color: activeTab === 'estadisticas' ? 'white' : '#374151',
+                                border: 'none',
+                                borderRadius: '6px',
+                                cursor: 'pointer',
+                                fontWeight: '500'
+                            }}
+                        >
+                            📈 Estadísticas
+                        </button>
                     </div>
                 )}
 
@@ -795,6 +811,58 @@ export const SuperAdminDashboard: React.FC = () => {
                                 </h3>
                                 <p style={{ fontSize: '14px', color: '#64748b', lineHeight: '1.5' }}>
                                     Administra el vencimiento de licencias de cada portal de ayuda y suspende accesos vencidos.
+                                </p>
+                            </div>
+                            <button style={{
+                                marginTop: 'auto',
+                                padding: '10px 20px',
+                                backgroundColor: '#3b82f6',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '6px',
+                                fontWeight: '600',
+                                cursor: 'pointer',
+                                width: '100%'
+                            }}>
+                                Ingresar
+                            </button>
+                        </div>
+
+                        {/* Card Estadísticas */}
+                        <div 
+                            onClick={() => setActiveTab('estadisticas')}
+                            style={{
+                                backgroundColor: 'white',
+                                borderRadius: '12px',
+                                padding: '32px 24px',
+                                textAlign: 'center',
+                                cursor: 'pointer',
+                                boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03)',
+                                border: '1px solid #e2e8f0',
+                                transition: 'all 0.2s ease-in-out',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                                gap: '16px'
+                            }}
+                            onMouseEnter={(e) => {
+                                e.currentTarget.style.transform = 'translateY(-4px)';
+                                e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05)';
+                                e.currentTarget.style.borderColor = '#3b82f6';
+                            }}
+                            onMouseLeave={(e) => {
+                                e.currentTarget.style.transform = 'translateY(0)';
+                                e.currentTarget.style.boxShadow = '0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03)';
+                                e.currentTarget.style.borderColor = '#e2e8f0';
+                            }}
+                        >
+                            <div style={{ fontSize: '48px' }}>📈</div>
+                            <div>
+                                <h3 style={{ fontSize: '20px', fontWeight: 'bold', color: '#0f172a', marginBottom: '8px' }}>
+                                    Estadísticas
+                                </h3>
+                                <p style={{ fontSize: '14px', color: '#64748b', lineHeight: '1.5' }}>
+                                    Analiza el volumen de tickets, tiempos de respuesta, carga por agente y tendencias de soporte.
                                 </p>
                             </div>
                             <button style={{
@@ -1511,6 +1579,10 @@ export const SuperAdminDashboard: React.FC = () => {
                             </table>
                         </div>
                     </div>
+                )}
+
+                {activeTab === 'estadisticas' && (
+                    <SuperAdminStats agencias={agencias} />
                 )}
             </div>
 

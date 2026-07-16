@@ -228,6 +228,89 @@ const upload = multer({
 });
 
 // ============================================
+// GET /api/tickets/stats
+// ============================================
+router.get('/stats', authMiddleware, async (req: any, res: any) => {
+    try {
+        const currentUser = req.user;
+        if (currentUser.rol !== 'superadmin' && currentUser.rol !== 'admin') {
+            return res.status(403).json({
+                success: false,
+                error: 'No tienes permiso para ver estadísticas'
+            });
+        }
+
+        const { agencia_id, fecha_inicio, fecha_fin } = req.query;
+
+        let query = `
+            SELECT 
+                t.id,
+                t.agencia_id,
+                ag.nombre as agencia_nombre,
+                t.usuario_id,
+                t.asunto,
+                t.tipo,
+                t.estado,
+                t.prioridad,
+                t.area,
+                t.fecha_creacion,
+                t.fecha_resolucion,
+                t.fecha_cierre,
+                t.agente_id,
+                a.nombre as agente_nombre,
+                a.apellido as agente_apellido,
+                (
+                    SELECT MIN(m.fecha_creacion)
+                    FROM tbl_mensajes m
+                    INNER JOIN tbl_usuarios u ON m.usuario_id = u.id
+                    WHERE m.ticket_id = t.id AND u.rol IN ('admin', 'superadmin', 'agente')
+                ) as fecha_primera_respuesta
+            FROM tbl_tickets t
+            LEFT JOIN tbl_usuarios a ON t.agente_id = a.id
+            LEFT JOIN tbl_agencias ag ON t.agencia_id = ag.id
+            WHERE 1=1
+        `;
+
+        const pool = await getConnection();
+        const request = pool.request();
+
+        // Restringir si es admin normal
+        if (currentUser.rol === 'admin') {
+            query += ` AND t.agencia_id = @user_agencia_id `;
+            request.input('user_agencia_id', currentUser.agenciaId);
+        } else if (currentUser.rol === 'superadmin' && agencia_id && agencia_id !== 'all') {
+            query += ` AND t.agencia_id = @agencia_id `;
+            request.input('agencia_id', parseInt(agencia_id));
+        }
+
+        if (fecha_inicio) {
+            query += ` AND t.fecha_creacion >= @fecha_inicio `;
+            request.input('fecha_inicio', fecha_inicio);
+        }
+
+        if (fecha_fin) {
+            query += ` AND t.fecha_creacion <= @fecha_fin `;
+            request.input('fecha_fin', fecha_fin);
+        }
+
+        query += ` ORDER BY t.fecha_creacion DESC`;
+
+        const result = await request.query(query);
+        res.json({
+            success: true,
+            data: result.recordset
+        });
+
+    } catch (error: any) {
+        console.error('❌ Error al obtener estadísticas:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// ============================================
 // GET /api/tickets/agencia/:agencia_id
 // ============================================
 router.get('/agencia/:agencia_id', authMiddleware, async (req: any, res: any) => {
