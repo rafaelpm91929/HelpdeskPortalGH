@@ -473,7 +473,7 @@ export const LoginPage: React.FC = () => {
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 className="login-input"
-                                placeholder="usuario@smartsolutions.com.mx"
+                                placeholder="usuario@grupohuerta.mx"
                             />
                         </div>
 

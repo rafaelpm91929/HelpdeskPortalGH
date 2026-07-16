@@ -14,7 +14,7 @@ La pantalla de acceso es la puerta de entrada para todos los niveles de usuario 
 ### Campos de entrada y elementos interactivos:
 *   **Campo: Correo Electrónico (`email`):**
     *   *Descripción:* Caja de entrada de texto.
-    *   *Instrucciones:* Escriba su dirección de correo registrada (ej: `usuario@smartsolutions.com.mx`).
+    *   *Instrucciones:* Escriba su dirección de correo registrada (ej: `usuario@grupohuerta.mx`).
 *   **Campo: Contraseña (`password`):**
     *   *Descripción:* Caja de entrada protegida. Oculta los caracteres introducidos por seguridad.
     *   *Instrucciones:* Escriba la contraseña correspondiente a su cuenta.
