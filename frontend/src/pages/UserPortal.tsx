@@ -110,32 +110,6 @@ export const UserPortal: React.FC<UserPortalProps> = ({ agenciaParam }) => {
     const [filtroEstado, setFiltroEstado] = useState('todos');
 
     // ============================================
-    // MANUALES Y GUÍAS PDF
-    // ============================================
-    const [manuales, setManuales] = useState<any[]>([]);
-    const [loadingManuales, setLoadingManuales] = useState(false);
-
-    const loadManuales = async () => {
-        try {
-            setLoadingManuales(true);
-            const response = await api.get('/manuales');
-            if (response.data.success) {
-                setManuales(response.data.data);
-            }
-        } catch (error) {
-            console.error('Error al cargar manuales:', error);
-        } finally {
-            setLoadingManuales(false);
-        }
-    };
-
-    useEffect(() => {
-        if (activeTab === 'manuales') {
-            loadManuales();
-        }
-    }, [activeTab]);
-
-    // ============================================
     // NOTIFICACIONES EN TIEMPO REAL PARA USUARIO
     // ============================================
     const [notificaciones, setNotificaciones] = useState<any[]>([]);
