@@ -240,7 +240,7 @@ router.get('/stats', authMiddleware, async (req: any, res: any) => {
             });
         }
 
-        const { agencia_id, fecha_inicio, fecha_fin } = req.query;
+        const { agencia_id, agencia_ids, fecha_inicio, fecha_fin } = req.query;
 
         let query = `
             SELECT 
@@ -278,9 +278,24 @@ router.get('/stats', authMiddleware, async (req: any, res: any) => {
         if (currentUser.rol === 'admin') {
             query += ` AND t.agencia_id = @user_agencia_id `;
             request.input('user_agencia_id', currentUser.agenciaId);
-        } else if (currentUser.rol === 'superadmin' && agencia_id && agencia_id !== 'all') {
-            query += ` AND t.agencia_id = @agencia_id `;
-            request.input('agencia_id', parseInt(agencia_id));
+        } else if (currentUser.rol === 'superadmin') {
+            if (agencia_ids && agencia_ids !== 'all') {
+                const ids = String(agencia_ids).split(',')
+                    .map(id => parseInt(id.trim()))
+                    .filter(id => !isNaN(id));
+                
+                if (ids.length > 0) {
+                    const paramNames = ids.map((id, index) => {
+                        const paramName = `ag_id_${index}`;
+                        request.input(paramName, id);
+                        return `@${paramName}`;
+                    });
+                    query += ` AND t.agencia_id IN (${paramNames.join(', ')}) `;
+                }
+            } else if (agencia_id && agencia_id !== 'all') {
+                query += ` AND t.agencia_id = @agencia_id `;
+                request.input('agencia_id', parseInt(agencia_id));
+            }
         }
 
         if (fecha_inicio) {
