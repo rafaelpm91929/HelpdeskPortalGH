@@ -955,7 +955,9 @@ export const SuperAdminDashboard: React.FC = () => {
                         </div>
 
                         {loadingAgencias ? (
-                                   <div style={{
+                            <p style={{ color: '#f8fafc' }}>Cargando...</p>
+                        ) : (
+                            <div style={{
                                 display: 'grid',
                                 gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))',
                                 gap: '16px'
