@@ -191,12 +191,12 @@ router.get('/', async (req: any, res: any) => {
         
         let agencias = result.recordset;
 
-        // Si es superadmin, obtener usuarios activos en tiempo real (último ping hace menos de 60 segundos)
+        // Si es superadmin, obtener usuarios activos en tiempo real (último ping hace menos de 20 segundos)
         if (currentUser && currentUser.rol === 'superadmin') {
             const activeUsersResult = await pool.request().query(`
                 SELECT id, nombre, apellido, email, rol, agencia_id, ultimo_ping
                 FROM tbl_usuarios
-                WHERE ultimo_ping >= DATEADD(second, -60, GETDATE())
+                WHERE ultimo_ping >= DATEADD(second, -20, GETDATE())
             `);
             
             const activeUsers = activeUsersResult.recordset;

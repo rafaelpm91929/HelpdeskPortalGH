@@ -21,6 +21,7 @@ export const authApi = {
     },
 
     logout: () => {
+        api.post('/auth/logout').catch(err => console.error('Error al notificar logout:', err));
         sessionStorage.removeItem('token');
         sessionStorage.removeItem('user');
     },

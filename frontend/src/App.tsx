@@ -29,7 +29,7 @@ const AppRouter: React.FC = () => {
         };
 
         sendHeartbeat();
-        const intervalId = setInterval(sendHeartbeat, 30000);
+        const intervalId = setInterval(sendHeartbeat, 10000);
 
         return () => clearInterval(intervalId);
     }, [user]);

@@ -24,6 +24,9 @@ router.get('/me', authMiddleware, AuthController.getCurrentUser);
 // 🔥 Heartbeat para actualizar la actividad y tiempo de uso del usuario
 router.post('/heartbeat', authMiddleware, AuthController.heartbeat);
 
+// 🔥 Logout para marcar al usuario como offline
+router.post('/logout', authMiddleware, AuthController.logout);
+
 // 🔥 Obtener todos los administradores (solo superadmin)
 router.get('/users/all', authMiddleware, AuthController.getAllAdmins);
 

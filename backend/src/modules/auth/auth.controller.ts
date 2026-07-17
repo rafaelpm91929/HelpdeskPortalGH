@@ -572,7 +572,7 @@ export class AuthController {
                 .query('UPDATE tbl_usuarios SET ultimo_ping = GETDATE() WHERE id = @id');
 
             // 2. Incrementar/insertar tiempo de uso en tbl_uso_tiempo
-            const interval = 30;
+            const interval = 10;
             await pool.request()
                 .input('usuario_id', currentUser.id)
                 .input('intervalo', interval)
@@ -597,6 +597,35 @@ export class AuthController {
             });
         } catch (error: any) {
             console.error('Error en heartbeat:', error);
+            res.status(500).json({
+                success: false,
+                error: error.message
+            });
+        }
+    }
+
+    static async logout(req: any, res: Response) {
+        try {
+            const currentUser = req.user;
+            if (!currentUser) {
+                return res.status(401).json({
+                    success: false,
+                    error: 'No autenticado'
+                });
+            }
+
+            const pool = await getConnection();
+            
+            await pool.request()
+                .input('id', currentUser.id)
+                .query('UPDATE tbl_usuarios SET ultimo_ping = NULL WHERE id = @id');
+
+            res.json({
+                success: true,
+                message: 'Sesión terminada y usuario marcado offline'
+            });
+        } catch (error: any) {
+            console.error('Error al marcar offline en logout:', error);
             res.status(500).json({
                 success: false,
                 error: error.message

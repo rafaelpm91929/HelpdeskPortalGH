@@ -755,10 +755,10 @@ export const SuperAdminDashboard: React.FC = () => {
 
         const intervalId = setInterval(() => {
             loadAgencias(true);
-        }, 15000);
+        }, 5000);
 
         return () => clearInterval(intervalId);
-    }, [activeTab]);
+    }, [activeTab, loadAgencias]);
 
     // ============================================
     // RENDER
