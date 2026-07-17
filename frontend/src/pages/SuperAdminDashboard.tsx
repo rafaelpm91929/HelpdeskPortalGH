@@ -304,7 +304,13 @@ export const SuperAdminDashboard: React.FC = () => {
         try {
             if (!isBackground) setLoadingAgencias(true);
             const response = await api.get('/agencias');
-            setAgencias(response.data.data);
+            setAgencias(prev => {
+                // Comparación profunda para evitar re-renderizados innecesarios si los datos son idénticos
+                if (JSON.stringify(prev) === JSON.stringify(response.data.data)) {
+                    return prev;
+                }
+                return response.data.data;
+            });
         } catch (error) {
             console.error('Error al cargar agencias:', error);
             if (!isBackground) toast.error('Error al cargar agencias');
@@ -437,10 +443,10 @@ export const SuperAdminDashboard: React.FC = () => {
     }, []);
 
     useEffect(() => {
-        if (agencias.length > 0) {
+        if (agencias.length > 0 && admins.length === 0) {
             loadAdmins();
         }
-    }, [agencias]);
+    }, [agencias, admins.length]);
 
     useEffect(() => {
         if (activeTab !== 'agencias') return;
