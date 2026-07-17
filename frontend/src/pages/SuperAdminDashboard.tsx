@@ -412,6 +412,25 @@ export const SuperAdminDashboard: React.FC = () => {
         ticketsAbiertos: number;
     } | null>(null);
 
+    const loadAgencias = useCallback(async (isBackground = false) => {
+        try {
+            if (!isBackground) setLoadingAgencias(true);
+            const response = await api.get('/agencias');
+            setAgencias(prev => {
+                // Comparación profunda para evitar re-renderizados innecesarios si los datos son idénticos
+                if (JSON.stringify(prev) === JSON.stringify(response.data.data)) {
+                    return prev;
+                }
+                return response.data.data;
+            });
+        } catch (error) {
+            console.error('Error al cargar agencias:', error);
+            if (!isBackground) toast.error('Error al cargar agencias');
+        } finally {
+            if (!isBackground) setLoadingAgencias(false);
+        }
+    }, []);
+
     const openAgenciaInfoModal = useCallback(async (agenciaId: number, agenciaNombre: string) => {
         setSelectedAgenciaName(agenciaNombre);
         setLoadingAgenciaInfo(true);
@@ -590,27 +609,6 @@ export const SuperAdminDashboard: React.FC = () => {
         }
     };
 
-    // ============================================
-    // CRUD AGENCIAS
-    // ============================================
-    const loadAgencias = async (isBackground = false) => {
-        try {
-            if (!isBackground) setLoadingAgencias(true);
-            const response = await api.get('/agencias');
-            setAgencias(prev => {
-                // Comparación profunda para evitar re-renderizados innecesarios si los datos son idénticos
-                if (JSON.stringify(prev) === JSON.stringify(response.data.data)) {
-                    return prev;
-                }
-                return response.data.data;
-            });
-        } catch (error) {
-            console.error('Error al cargar agencias:', error);
-            if (!isBackground) toast.error('Error al cargar agencias');
-        } finally {
-            if (!isBackground) setLoadingAgencias(false);
-        }
-    };
 
     const createAgencia = async (e: React.FormEvent) => {
         e.preventDefault();
