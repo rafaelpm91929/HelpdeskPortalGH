@@ -300,15 +300,16 @@ export const SuperAdminDashboard: React.FC = () => {
     // ============================================
     // CRUD AGENCIAS
     // ============================================
-    const loadAgencias = async () => {
+    const loadAgencias = async (isBackground = false) => {
         try {
-            setLoadingAgencias(true);
+            if (!isBackground) setLoadingAgencias(true);
             const response = await api.get('/agencias');
             setAgencias(response.data.data);
         } catch (error) {
-            toast.error('Error al cargar agencias');
+            console.error('Error al cargar agencias:', error);
+            if (!isBackground) toast.error('Error al cargar agencias');
         } finally {
-            setLoadingAgencias(false);
+            if (!isBackground) setLoadingAgencias(false);
         }
     };
 
@@ -441,12 +442,11 @@ export const SuperAdminDashboard: React.FC = () => {
         }
     }, [agencias]);
 
-    // 🔥 Polling periódico cuando se visualizan las agencias (para actualización en tiempo real)
     useEffect(() => {
         if (activeTab !== 'agencias') return;
 
         const intervalId = setInterval(() => {
-            loadAgencias();
+            loadAgencias(true);
         }, 15000);
 
         return () => clearInterval(intervalId);
