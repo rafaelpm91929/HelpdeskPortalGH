@@ -34,6 +34,7 @@ export const SuperAdminStats: React.FC<SuperAdminStatsProps> = ({ agencias }) =>
     // Configuración de visibilidad de gráficos
     const [chartCategory, setChartCategory] = useState<'todos' | 'tendencias' | 'kpis' | 'distribucion'>('kpis');
     const [activeSubTab, setActiveSubTab] = useState<'graficos' | 'tiempos'>('graficos');
+    const [filterUsageRole, setFilterUsageRole] = useState<'all' | 'admin' | 'usuario'>('all');
     const [visibleCharts, setVisibleCharts] = useState({
         creados: true,
         resueltos: true,
@@ -43,7 +44,8 @@ export const SuperAdminStats: React.FC<SuperAdminStatsProps> = ({ agencias }) =>
         area: true,
         agente: true,
         antiguedad: true,
-        heatmap: true
+        heatmap: true,
+        comparativo: true
     });
 
     // Toggle del panel de configuración de gráficos
@@ -205,7 +207,8 @@ export const SuperAdminStats: React.FC<SuperAdminStatsProps> = ({ agencias }) =>
                 area: false,
                 agente: false,
                 antiguedad: false,
-                heatmap: result.heatmap
+                heatmap: result.heatmap,
+                comparativo: false
             };
         }
         if (chartCategory === 'kpis') {
@@ -218,7 +221,8 @@ export const SuperAdminStats: React.FC<SuperAdminStatsProps> = ({ agencias }) =>
                 area: false,
                 agente: false,
                 antiguedad: false,
-                heatmap: false
+                heatmap: false,
+                comparativo: result.comparativo
             };
         }
         if (chartCategory === 'distribucion') {
@@ -231,7 +235,8 @@ export const SuperAdminStats: React.FC<SuperAdminStatsProps> = ({ agencias }) =>
                 area: result.area,
                 agente: result.agente,
                 antiguedad: result.antiguedad,
-                heatmap: false
+                heatmap: false,
+                comparativo: result.comparativo
             };
         }
         return result;
@@ -338,6 +343,40 @@ export const SuperAdminStats: React.FC<SuperAdminStatsProps> = ({ agencias }) =>
         const sortedKeys = Object.keys(groups).sort();
         return sortedKeys.map((key) => ({ label: key, value: groups[key] }));
     }, [filteredTickets, agrupacionResueltos]);
+
+    const ticketsPorAgenciaData = useMemo(() => {
+        const groups: { [key: string]: number } = {};
+        // Inicializar las agencias seleccionadas en 0
+        const selectedIds = selectedAgencias.includes('all') 
+            ? agencias.map(a => String(a.id)) 
+            : selectedAgencias;
+            
+        selectedIds.forEach(id => {
+            const agency = agencias.find(a => String(a.id) === id);
+            if (agency) {
+                groups[agency.nombre] = 0;
+            }
+        });
+
+        filteredTickets.forEach(t => {
+            const agency = agencias.find(a => a.id === t.agencia_id);
+            if (agency) {
+                groups[agency.nombre] = (groups[agency.nombre] || 0) + 1;
+            }
+        });
+
+        return Object.keys(groups).map(name => ({ label: name, value: groups[name] }));
+    }, [filteredTickets, selectedAgencias, agencias]);
+
+    const filteredUsageUsers = useMemo(() => {
+        if (!usageStats?.uso_por_usuario) return [];
+        return usageStats.uso_por_usuario.filter((u: any) => {
+            if (filterUsageRole === 'all') return true;
+            if (filterUsageRole === 'admin') return u.rol === 'admin';
+            if (filterUsageRole === 'usuario') return u.rol === 'usuario';
+            return true;
+        });
+    }, [usageStats?.uso_por_usuario, filterUsageRole]);
 
     const abiertosVsCerradosData = useMemo(() => {
         let abiertos = 0;
@@ -1431,11 +1470,12 @@ export const SuperAdminStats: React.FC<SuperAdminStatsProps> = ({ agencias }) =>
                     }}>
                         {/* KPI Total */}
                         <div style={{
-                            backgroundColor: 'white',
+                            backgroundColor: 'rgba(30, 41, 59, 0.45)',
+                            backdropFilter: 'blur(12px)',
+                            border: '1px solid rgba(255, 255, 255, 0.08)',
+                            boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.25)',
                             padding: '24px',
                             borderRadius: '16px',
-                            border: '1px solid #e2e8f0',
-                            boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)',
                             display: 'flex',
                             flexDirection: 'column',
                             gap: '6px',
@@ -1443,18 +1483,19 @@ export const SuperAdminStats: React.FC<SuperAdminStatsProps> = ({ agencias }) =>
                             overflow: 'hidden'
                         }}>
                             <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '4px', backgroundColor: '#94a3b8' }} />
-                            <span style={{ fontSize: '12px', color: '#64748b', fontWeight: '800', letterSpacing: '0.5px' }}>TICKETS EN EL RANGO</span>
-                            <span style={{ fontSize: '36px', fontWeight: '900', color: '#0f172a', fontFamily: 'system-ui' }}>{kpis.totalCount}</span>
-                            <span style={{ fontSize: '11px', color: '#94a3b8', fontWeight: '500' }}>Volumen correspondiente a los filtros activos</span>
+                            <span style={{ fontSize: '12px', color: '#94a3b8', fontWeight: '800', letterSpacing: '0.5px' }}>TICKETS EN EL RANGO</span>
+                            <span style={{ fontSize: '36px', fontWeight: '900', color: '#ffffff', fontFamily: 'system-ui' }}>{kpis.totalCount}</span>
+                            <span style={{ fontSize: '11px', color: '#64748b', fontWeight: '500' }}>Volumen correspondiente a los filtros activos</span>
                         </div>
 
                         {/* KPI Primera Respuesta */}
                         <div style={{
-                            backgroundColor: 'white',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            backdropFilter: 'blur(12px)',
+                            border: '1px solid rgba(59, 130, 246, 0.25)',
+                            boxShadow: '0 8px 32px 0 rgba(59, 130, 246, 0.15)',
                             padding: '24px',
                             borderRadius: '16px',
-                            border: '1px solid #dbeafe',
-                            boxShadow: '0 10px 20px -5px rgba(59, 130, 246, 0.08)',
                             display: 'flex',
                             flexDirection: 'column',
                             gap: '6px',
@@ -1462,18 +1503,19 @@ export const SuperAdminStats: React.FC<SuperAdminStatsProps> = ({ agencias }) =>
                             overflow: 'hidden'
                         }}>
                             <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '4px', backgroundColor: '#3b82f6' }} />
-                            <span style={{ fontSize: '12px', color: '#2563eb', fontWeight: '800', letterSpacing: '0.5px' }}>⏱️ PROM. PRIMERA RESPUESTA</span>
-                            <span style={{ fontSize: '36px', fontWeight: '900', color: '#1d4ed8' }}>{kpis.avgPrimeraRespuesta}</span>
-                            <span style={{ fontSize: '11px', color: '#60a5fa', fontWeight: '500' }}>Velocidad inicial de atención de soporte</span>
+                            <span style={{ fontSize: '12px', color: '#93c5fd', fontWeight: '800', letterSpacing: '0.5px' }}>⏱️ PROM. PRIMERA RESPUESTA</span>
+                            <span style={{ fontSize: '36px', fontWeight: '900', color: '#60a5fa' }}>{kpis.avgPrimeraRespuesta}</span>
+                            <span style={{ fontSize: '11px', color: '#3b82f6', fontWeight: '500' }}>Velocidad inicial de atención de soporte</span>
                         </div>
 
                         {/* KPI Resolución/Cierre */}
                         <div style={{
-                            backgroundColor: 'white',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            backdropFilter: 'blur(12px)',
+                            border: '1px solid rgba(16, 185, 129, 0.25)',
+                            boxShadow: '0 8px 32px 0 rgba(16, 185, 129, 0.15)',
                             padding: '24px',
                             borderRadius: '16px',
-                            border: '1px solid #d1fae5',
-                            boxShadow: '0 10px 20px -5px rgba(16, 185, 129, 0.08)',
                             display: 'flex',
                             flexDirection: 'column',
                             gap: '6px',
@@ -1481,12 +1523,13 @@ export const SuperAdminStats: React.FC<SuperAdminStatsProps> = ({ agencias }) =>
                             overflow: 'hidden'
                         }}>
                             <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '4px', backgroundColor: '#10b981' }} />
-                            <span style={{ fontSize: '12px', color: '#059669', fontWeight: '800', letterSpacing: '0.5px' }}>⏱️ PROM. CIERRE / RESOLUCIÓN</span>
-                            <span style={{ fontSize: '36px', fontWeight: '900', color: '#047857' }}>{kpis.avgResolucion}</span>
-                            <span style={{ fontSize: '11px', color: '#34d399', fontWeight: '500' }}>Tiempo total transcurrido hasta resolver el caso</span>
+                            <span style={{ fontSize: '12px', color: '#a7f3d0', fontWeight: '800', letterSpacing: '0.5px' }}>⏱️ PROM. CIERRE / RESOLUCIÓN</span>
+                            <span style={{ fontSize: '36px', fontWeight: '900', color: '#34d399' }}>{kpis.avgResolucion}</span>
+                            <span style={{ fontSize: '11px', color: '#10b981', fontWeight: '500' }}>Tiempo total transcurrido hasta resolver el caso</span>
                         </div>
                     </div>
 
+                    {/* ============================================
                     {/* ============================================
                     GRID DE GRÁFICOS Y ANÁLISIS MEJORADOS
                     ============================================ */}
@@ -1495,19 +1538,49 @@ export const SuperAdminStats: React.FC<SuperAdminStatsProps> = ({ agencias }) =>
                         gridTemplateColumns: 'repeat(auto-fit, minmax(420px, 1fr))',
                         gap: '24px'
                     }}>
+                        {/* 0. COMPARATIVA ENTRE AGENCIAS (VISTA COMPARATIVA) */}
+                        {displayCharts.comparativo && (
+                            <div 
+                                style={{
+                                    backgroundColor: 'rgba(30, 41, 59, 0.45)',
+                                    backdropFilter: 'blur(12px)',
+                                    border: '1px solid rgba(255, 255, 255, 0.08)',
+                                    boxShadow: '0 12px 40px rgba(0, 0, 0, 0.25)',
+                                    borderRadius: '16px',
+                                    padding: '24px',
+                                    transition: 'transform 0.2s',
+                                    gridColumn: '1 / -1'
+                                }}
+                                onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
+                                onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+                            >
+                                <h3 style={{ fontSize: '16px', fontWeight: 'bold', color: '#ffffff', marginBottom: '20px' }}>
+                                    📊 Volumen Comparativo por Agencia (Tickets de Soporte)
+                                </h3>
+                                <div style={{ height: '300px' }}>
+                                    <SVGHorizontalBarChart data={ticketsPorAgenciaData} color="#3b82f6" />
+                                </div>
+                            </div>
+                        )}
                         
                         {/* 1. TICKETS CREADOS */}
                         {displayCharts.creados && (
-                            <div style={{
-                                backgroundColor: 'white',
-                                padding: '24px',
-                                borderRadius: '16px',
-                                border: '1px solid #e2e8f0',
-                                boxShadow: '0 10px 25px -5px rgba(0,0,0,0.03)'
-                            }}>
+                            <div 
+                                style={{
+                                    backgroundColor: 'rgba(30, 41, 59, 0.45)',
+                                    backdropFilter: 'blur(12px)',
+                                    border: '1px solid rgba(255, 255, 255, 0.08)',
+                                    boxShadow: '0 12px 40px rgba(0, 0, 0, 0.25)',
+                                    borderRadius: '16px',
+                                    padding: '24px',
+                                    transition: 'transform 0.2s'
+                                }}
+                                onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
+                                onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+                            >
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                                    <h3 style={{ fontSize: '16px', fontWeight: 'bold', color: '#0f172a' }}>📈 Tendencia de Tickets Creados</h3>
-                                    <div style={{ display: 'flex', gap: '4px', backgroundColor: '#f1f5f9', padding: '3px', borderRadius: '8px' }}>
+                                    <h3 style={{ fontSize: '16px', fontWeight: 'bold', color: '#ffffff' }}>📈 Tendencia de Tickets Creados</h3>
+                                    <div style={{ display: 'flex', gap: '4px', backgroundColor: 'rgba(15, 23, 42, 0.5)', padding: '3px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
                                         {(['dia', 'semana', 'mes', 'ano'] as const).map((type) => (
                                             <button 
                                                 key={type}
@@ -1519,9 +1592,9 @@ export const SuperAdminStats: React.FC<SuperAdminStatsProps> = ({ agencias }) =>
                                                     fontSize: '11px',
                                                     fontWeight: '700',
                                                     cursor: 'pointer',
-                                                    backgroundColor: agrupacionCreados === type ? 'white' : 'transparent',
-                                                    color: agrupacionCreados === type ? '#2563eb' : '#64748b',
-                                                    boxShadow: agrupacionCreados === type ? '0 2px 4px rgba(0,0,0,0.05)' : 'none',
+                                                    backgroundColor: agrupacionCreados === type ? '#2563eb' : 'transparent',
+                                                    color: agrupacionCreados === type ? 'white' : '#94a3b8',
+                                                    boxShadow: agrupacionCreados === type ? '0 2px 4px rgba(0,0,0,0.1)' : 'none',
                                                     transition: 'all 0.15s'
                                                 }}
                                             >
@@ -1536,16 +1609,22 @@ export const SuperAdminStats: React.FC<SuperAdminStatsProps> = ({ agencias }) =>
 
                         {/* 2. TICKETS RESUELTOS */}
                         {displayCharts.resueltos && (
-                            <div style={{
-                                backgroundColor: 'white',
-                                padding: '24px',
-                                borderRadius: '16px',
-                                border: '1px solid #e2e8f0',
-                                boxShadow: '0 10px 25px -5px rgba(0,0,0,0.03)'
-                            }}>
+                            <div 
+                                style={{
+                                    backgroundColor: 'rgba(30, 41, 59, 0.45)',
+                                    backdropFilter: 'blur(12px)',
+                                    border: '1px solid rgba(255, 255, 255, 0.08)',
+                                    boxShadow: '0 12px 40px rgba(0, 0, 0, 0.25)',
+                                    borderRadius: '16px',
+                                    padding: '24px',
+                                    transition: 'transform 0.2s'
+                                }}
+                                onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
+                                onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+                            >
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                                    <h3 style={{ fontSize: '16px', fontWeight: 'bold', color: '#0f172a' }}>✅ Tickets Resueltos y Cerrados</h3>
-                                    <div style={{ display: 'flex', gap: '4px', backgroundColor: '#f1f5f9', padding: '3px', borderRadius: '8px' }}>
+                                    <h3 style={{ fontSize: '16px', fontWeight: 'bold', color: '#ffffff' }}>✅ Tickets Resueltos y Cerrados</h3>
+                                    <div style={{ display: 'flex', gap: '4px', backgroundColor: 'rgba(15, 23, 42, 0.5)', padding: '3px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
                                         {(['dia', 'semana'] as const).map((type) => (
                                             <button 
                                                 key={type}
@@ -1557,9 +1636,9 @@ export const SuperAdminStats: React.FC<SuperAdminStatsProps> = ({ agencias }) =>
                                                     fontSize: '11px',
                                                     fontWeight: '700',
                                                     cursor: 'pointer',
-                                                    backgroundColor: agrupacionResueltos === type ? 'white' : 'transparent',
-                                                    color: agrupacionResueltos === type ? '#10b981' : '#64748b',
-                                                    boxShadow: agrupacionResueltos === type ? '0 2px 4px rgba(0,0,0,0.05)' : 'none',
+                                                    backgroundColor: agrupacionResueltos === type ? '#10b981' : 'transparent',
+                                                    color: agrupacionResueltos === type ? 'white' : '#94a3b8',
+                                                    boxShadow: agrupacionResueltos === type ? '0 2px 4px rgba(0,0,0,0.1)' : 'none',
                                                     transition: 'all 0.15s'
                                                 }}
                                             >
@@ -1574,28 +1653,40 @@ export const SuperAdminStats: React.FC<SuperAdminStatsProps> = ({ agencias }) =>
 
                         {/* 3. ABIERTOS VS CERRADOS */}
                         {displayCharts.backlog && (
-                            <div style={{
-                                backgroundColor: 'white',
-                                padding: '24px',
-                                borderRadius: '16px',
-                                border: '1px solid #e2e8f0',
-                                boxShadow: '0 10px 25px -5px rgba(0,0,0,0.03)'
-                            }}>
-                                <h3 style={{ fontSize: '16px', fontWeight: 'bold', color: '#0f172a', marginBottom: '20px' }}>📊 Backlog Comparativo</h3>
+                            <div 
+                                style={{
+                                    backgroundColor: 'rgba(30, 41, 59, 0.45)',
+                                    backdropFilter: 'blur(12px)',
+                                    border: '1px solid rgba(255, 255, 255, 0.08)',
+                                    boxShadow: '0 12px 40px rgba(0, 0, 0, 0.25)',
+                                    borderRadius: '16px',
+                                    padding: '24px',
+                                    transition: 'transform 0.2s'
+                                }}
+                                onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
+                                onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+                            >
+                                <h3 style={{ fontSize: '16px', fontWeight: 'bold', color: '#ffffff', marginBottom: '20px' }}>📊 Backlog Comparativo</h3>
                                 <SVGBarChart data={abiertosVsCerradosData} defaultColor="#3b82f6" gradientId="blueBarGrad" />
                             </div>
                         )}
 
                         {/* 4. ESTADO DE TICKETS */}
                         {displayCharts.estado && (
-                            <div style={{
-                                backgroundColor: 'white',
-                                padding: '24px',
-                                borderRadius: '16px',
-                                border: '1px solid #e2e8f0',
-                                boxShadow: '0 10px 25px -5px rgba(0,0,0,0.03)'
-                            }}>
-                                <h3 style={{ fontSize: '16px', fontWeight: 'bold', color: '#0f172a', marginBottom: '20px' }}>🍩 Distribución por Estado</h3>
+                            <div 
+                                style={{
+                                    backgroundColor: 'rgba(30, 41, 59, 0.45)',
+                                    backdropFilter: 'blur(12px)',
+                                    border: '1px solid rgba(255, 255, 255, 0.08)',
+                                    boxShadow: '0 12px 40px rgba(0, 0, 0, 0.25)',
+                                    borderRadius: '16px',
+                                    padding: '24px',
+                                    transition: 'transform 0.2s'
+                                }}
+                                onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
+                                onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+                            >
+                                <h3 style={{ fontSize: '16px', fontWeight: 'bold', color: '#ffffff', marginBottom: '20px' }}>🍩 Distribución por Estado</h3>
                                 <div style={{ display: 'flex', justifyContent: 'center', padding: '10px 0' }}>
                                     <SVGDoughnutChart data={estadoChartData} />
                                 </div>
@@ -1604,56 +1695,80 @@ export const SuperAdminStats: React.FC<SuperAdminStatsProps> = ({ agencias }) =>
 
                         {/* 5. PRIORIDAD */}
                         {displayCharts.prioridad && (
-                            <div style={{
-                                backgroundColor: 'white',
-                                padding: '24px',
-                                borderRadius: '16px',
-                                border: '1px solid #e2e8f0',
-                                boxShadow: '0 10px 25px -5px rgba(0,0,0,0.03)'
-                            }}>
-                                <h3 style={{ fontSize: '16px', fontWeight: 'bold', color: '#0f172a', marginBottom: '20px' }}>⚠️ Criticidad de Tickets</h3>
+                            <div 
+                                style={{
+                                    backgroundColor: 'rgba(30, 41, 59, 0.45)',
+                                    backdropFilter: 'blur(12px)',
+                                    border: '1px solid rgba(255, 255, 255, 0.08)',
+                                    boxShadow: '0 12px 40px rgba(0, 0, 0, 0.25)',
+                                    borderRadius: '16px',
+                                    padding: '24px',
+                                    transition: 'transform 0.2s'
+                                }}
+                                onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
+                                onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+                            >
+                                <h3 style={{ fontSize: '16px', fontWeight: 'bold', color: '#ffffff', marginBottom: '20px' }}>⚠️ Criticidad de Tickets</h3>
                                 <SVGBarChart data={prioridadChartData} defaultColor="#f59e0b" gradientId="orangeBarGrad" />
                             </div>
                         )}
 
                         {/* 6. TICKETS POR AREA */}
                         {displayCharts.area && (
-                            <div style={{
-                                backgroundColor: 'white',
-                                padding: '24px',
-                                borderRadius: '16px',
-                                border: '1px solid #e2e8f0',
-                                boxShadow: '0 10px 25px -5px rgba(0,0,0,0.03)'
-                            }}>
-                                <h3 style={{ fontSize: '16px', fontWeight: 'bold', color: '#0f172a', marginBottom: '20px' }}>🏢 Frecuencia por Área</h3>
+                            <div 
+                                style={{
+                                    backgroundColor: 'rgba(30, 41, 59, 0.45)',
+                                    backdropFilter: 'blur(12px)',
+                                    border: '1px solid rgba(255, 255, 255, 0.08)',
+                                    boxShadow: '0 12px 40px rgba(0, 0, 0, 0.25)',
+                                    borderRadius: '16px',
+                                    padding: '24px',
+                                    transition: 'transform 0.2s'
+                                }}
+                                onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
+                                onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+                            >
+                                <h3 style={{ fontSize: '16px', fontWeight: 'bold', color: '#ffffff', marginBottom: '20px' }}>🏢 Frecuencia por Área</h3>
                                 <SVGHorizontalBarChart data={areaChartData} color="#8b5cf6" />
                             </div>
                         )}
 
                         {/* 7. TICKETS POR AGENTE */}
                         {displayCharts.agente && (
-                            <div style={{
-                                backgroundColor: 'white',
-                                padding: '24px',
-                                borderRadius: '16px',
-                                border: '1px solid #e2e8f0',
-                                boxShadow: '0 10px 25px -5px rgba(0,0,0,0.03)'
-                            }}>
-                                <h3 style={{ fontSize: '16px', fontWeight: 'bold', color: '#0f172a', marginBottom: '20px' }}>👥 Carga de Trabajo por Agente</h3>
+                            <div 
+                                style={{
+                                    backgroundColor: 'rgba(30, 41, 59, 0.45)',
+                                    backdropFilter: 'blur(12px)',
+                                    border: '1px solid rgba(255, 255, 255, 0.08)',
+                                    boxShadow: '0 12px 40px rgba(0, 0, 0, 0.25)',
+                                    borderRadius: '16px',
+                                    padding: '24px',
+                                    transition: 'transform 0.2s'
+                                }}
+                                onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
+                                onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+                            >
+                                <h3 style={{ fontSize: '16px', fontWeight: 'bold', color: '#ffffff', marginBottom: '20px' }}>👥 Carga de Trabajo por Agente</h3>
                                 <SVGBarChart data={agenteChartData} defaultColor="#06b6d4" gradientId="cyanBarGrad" />
                             </div>
                         )}
 
                         {/* 9. ANTIGÜEDAD HISTOGRAMA */}
                         {displayCharts.antiguedad && (
-                            <div style={{
-                                backgroundColor: 'white',
-                                padding: '24px',
-                                borderRadius: '16px',
-                                border: '1px solid #e2e8f0',
-                                boxShadow: '0 10px 25px -5px rgba(0,0,0,0.03)'
-                            }}>
-                                <h3 style={{ fontSize: '16px', fontWeight: 'bold', color: '#0f172a', marginBottom: '20px' }}>⏳ Antigüedad de Tickets Pendientes</h3>
+                            <div 
+                                style={{
+                                    backgroundColor: 'rgba(30, 41, 59, 0.45)',
+                                    backdropFilter: 'blur(12px)',
+                                    border: '1px solid rgba(255, 255, 255, 0.08)',
+                                    boxShadow: '0 12px 40px rgba(0, 0, 0, 0.25)',
+                                    borderRadius: '16px',
+                                    padding: '24px',
+                                    transition: 'transform 0.2s'
+                                }}
+                                onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
+                                onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+                            >
+                                <h3 style={{ fontSize: '16px', fontWeight: 'bold', color: '#ffffff', marginBottom: '20px' }}>⏳ Antigüedad de Tickets Pendientes</h3>
                                 <SVGBarChart data={antiguedadData} defaultColor="#f87171" gradientId="redBarGrad" />
                             </div>
                         )}
@@ -1661,160 +1776,191 @@ export const SuperAdminStats: React.FC<SuperAdminStatsProps> = ({ agencias }) =>
 
                     {/* 8. HEATMAP: TENDENCIA POR HORA DEL DÍA */}
                     {displayCharts.heatmap && (
+                        <div 
+                            style={{
+                                backgroundColor: 'rgba(30, 41, 59, 0.45)',
+                                backdropFilter: 'blur(12px)',
+                                border: '1px solid rgba(255, 255, 255, 0.08)',
+                                boxShadow: '0 12px 40px rgba(0, 0, 0, 0.25)',
+                                borderRadius: '16px',
+                                padding: '24px',
+                                transition: 'transform 0.2s',
+                                marginTop: '24px'
+                            }}
+                            onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
+                            onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+                        >
+                            <h3 style={{ fontSize: '16px', fontWeight: 'bold', color: '#ffffff', marginBottom: '20px' }}>🔥 Mapa de Calor: Flujo de Incidencias por Hora (Picos)</h3>
+                               {activeSubTab === 'tiempos' && (
                         <div style={{
-                            backgroundColor: 'white',
-                            padding: '24px',
+                            backgroundColor: 'rgba(30, 41, 59, 0.45)',
+                            backdropFilter: 'blur(12px)',
+                            border: '1px solid rgba(255, 255, 255, 0.08)',
+                            boxShadow: '0 12px 40px rgba(0, 0, 0, 0.25)',
                             borderRadius: '16px',
-                            border: '1px solid #e2e8f0',
-                            boxShadow: '0 10px 25px -5px rgba(0,0,0,0.03)',
-                            marginTop: '8px'
+                            padding: '24px',
+                            marginTop: '24px'
                         }}>
-                            <h3 style={{ fontSize: '16px', fontWeight: 'bold', color: '#0f172a', marginBottom: '20px' }}>🔥 Mapa de Calor: Flujo de Incidencias por Hora (Picos)</h3>
-                            {renderHeatmap()}
-                        </div>
-                    )}
-                        </>
-                    )}
+                            <h3 style={{ fontSize: '16px', fontWeight: 'bold', color: '#ffffff', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                ⏱️ Tiempo de Uso y Actividad (SuperAdmin)
+                            </h3>
 
-                    {activeSubTab === 'tiempos' && (
-                        <div style={{
-                        backgroundColor: 'white',
-                        padding: '24px',
-                        borderRadius: '16px',
-                        border: '1px solid #e2e8f0',
-                        boxShadow: '0 10px 25px -5px rgba(0,0,0,0.03)',
-                        marginTop: '24px'
-                    }}>
-                        <h3 style={{ fontSize: '16px', fontWeight: 'bold', color: '#0f172a', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            ⏱️ Tiempo de Uso y Actividad (SuperAdmin)
-                        </h3>
-
-                        {loadingUsage ? (
-                            <p style={{ color: '#64748b' }}>Cargando estadísticas de tiempo...</p>
-                        ) : !usageStats ? (
-                            <p style={{ color: '#64748b' }}>No se registraron actividades de uso en el periodo seleccionado.</p>
-                        ) : (
-                            <div>
-                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', marginBottom: '24px' }}>
-                                    <div style={{ padding: '16px', borderRadius: '12px', backgroundColor: '#eff6ff', border: '1px solid #bfdbfe' }}>
-                                        <span style={{ fontSize: '13px', color: '#1e3a8a', fontWeight: '600' }}>👑 Tiempo Total Admins</span>
-                                        <h2 style={{ fontSize: '24px', fontWeight: 'bold', color: '#1e40af', margin: '8px 0 0 0' }}>
-                                            {formatSeconds(usageStats.uso_por_rol?.find((r: any) => r.rol_grupo === 'admin')?.total_segundos || 0)}
-                                        </h2>
+                            {loadingUsage ? (
+                                <p style={{ color: '#94a3b8' }}>Cargando estadísticas de tiempo...</p>
+                            ) : !usageStats ? (
+                                <p style={{ color: '#94a3b8' }}>No se registraron actividades de uso en el periodo seleccionado.</p>
+                            ) : (
+                                <div>
+                                    {/* Indicadores Resumen */}
+                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', marginBottom: '24px' }}>
+                                        <div style={{ padding: '16px', borderRadius: '12px', backgroundColor: 'rgba(59, 130, 246, 0.1)', border: '1px solid rgba(59, 130, 246, 0.25)' }}>
+                                            <span style={{ fontSize: '13px', color: '#93c5fd', fontWeight: '600' }}>👑 Tiempo Total Admins</span>
+                                            <h2 style={{ fontSize: '24px', fontWeight: 'bold', color: '#60a5fa', margin: '8px 0 0 0' }}>
+                                                {formatSeconds(usageStats.uso_por_rol?.find((r: any) => r.rol_grupo === 'admin')?.total_segundos || 0)}
+                                            </h2>
+                                        </div>
+                                        <div style={{ padding: '16px', borderRadius: '12px', backgroundColor: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.25)' }}>
+                                            <span style={{ fontSize: '13px', color: '#a7f3d0', fontWeight: '600' }}>👤 Tiempo Total Usuarios</span>
+                                            <h2 style={{ fontSize: '24px', fontWeight: 'bold', color: '#34d399', margin: '8px 0 0 0' }}>
+                                                {formatSeconds(usageStats.uso_por_rol?.find((r: any) => r.rol_grupo === 'usuario')?.total_segundos || 0)}
+                                            </h2>
+                                        </div>
                                     </div>
-                                    <div style={{ padding: '16px', borderRadius: '12px', backgroundColor: '#f0fdf4', border: '1px solid #bbf7d0' }}>
-                                        <span style={{ fontSize: '13px', color: '#14532d', fontWeight: '600' }}>👤 Tiempo Total Usuarios</span>
-                                        <h2 style={{ fontSize: '24px', fontWeight: 'bold', color: '#166534', margin: '8px 0 0 0' }}>
-                                            {formatSeconds(usageStats.uso_por_rol?.find((r: any) => r.rol_grupo === 'usuario')?.total_segundos || 0)}
-                                        </h2>
-                                    </div>
-                                </div>
 
-                                <div style={{ overflowX: 'auto', border: '1px solid #e2e8f0', borderRadius: '12px' }}>
-                                    <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '14px' }}>
-                                        <thead>
-                                            <tr style={{ backgroundColor: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
-                                                <th style={{ padding: '12px 16px', fontWeight: '600', color: '#475569' }}>Agencia</th>
-                                                <th style={{ padding: '12px 16px', fontWeight: '600', color: '#475569' }}>Rol</th>
-                                                <th style={{ padding: '12px 16px', fontWeight: '600', color: '#475569', textAlign: 'right' }}>Tiempo de Uso</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {usageStats.uso_por_agencia && usageStats.uso_por_agencia.length > 0 ? (
-                                                usageStats.uso_por_agencia.map((item: any, idx: number) => (
-                                                    <tr key={idx} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                                                        <td style={{ padding: '12px 16px', fontWeight: '500', color: '#0f172a' }}>{item.agencia_nombre}</td>
-                                                        <td style={{ padding: '12px 16px' }}>
-                                                            <span style={{
-                                                                fontSize: '11px',
-                                                                padding: '2px 8px',
-                                                                borderRadius: '12px',
-                                                                fontWeight: 'bold',
-                                                                backgroundColor: item.rol_grupo === 'admin' ? '#dbeafe' : '#f1f5f9',
-                                                                color: item.rol_grupo === 'admin' ? '#1e40af' : '#475569',
-                                                                textTransform: 'uppercase'
-                                                            }}>
-                                                                {item.rol_grupo}
-                                                            </span>
-                                                        </td>
-                                                        <td style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 'bold', color: '#334155' }}>
-                                                            {formatSeconds(item.total_segundos)}
-                                                        </td>
-                                                    </tr>
-                                                ))
-                                            ) : (
-                                                <tr>
-                                                    <td colSpan={3} style={{ padding: '16px', textAlign: 'center', color: '#94a3b8' }}>
-                                                        No hay registros de tiempo en este periodo.
-                                                    </td>
-                                                </tr>
-                                            )}
-                                        </tbody>
-                                    </table>
-                                </div>
-
-                                <div style={{ marginTop: '24px' }}>
-                                    <h4 style={{ fontSize: '15px', fontWeight: 'bold', color: '#0f172a', marginBottom: '12px' }}>
-                                        👤 Detalle de Uso por Usuario
-                                    </h4>
-                                    <div style={{ overflowX: 'auto', border: '1px solid #e2e8f0', borderRadius: '12px' }}>
+                                    {/* Tabla 1: Tiempos por Agencia (Con Scroll) */}
+                                    <div style={{ maxHeight: '220px', overflowY: 'auto', border: '1px solid rgba(255, 255, 255, 0.08)', borderRadius: '12px' }}>
                                         <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '14px' }}>
                                             <thead>
-                                                <tr style={{ backgroundColor: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
-                                                    <th style={{ padding: '12px 16px', fontWeight: '600', color: '#475569' }}>Usuario</th>
-                                                    <th style={{ padding: '12px 16px', fontWeight: '600', color: '#475569' }}>Agencia</th>
-                                                    <th style={{ padding: '12px 16px', fontWeight: '600', color: '#475569' }}>Rol</th>
-                                                    <th style={{ padding: '12px 16px', fontWeight: '600', color: '#475569' }}>Última Actividad</th>
-                                                    <th style={{ padding: '12px 16px', fontWeight: '600', color: '#475569', textAlign: 'right' }}>Tiempo de Uso</th>
+                                                <tr style={{ backgroundColor: 'rgba(15, 23, 42, 0.6)', borderBottom: '1px solid rgba(255, 255, 255, 0.08)' }}>
+                                                    <th style={{ padding: '12px 16px', fontWeight: '600', color: '#cbd5e1' }}>Agencia</th>
+                                                    <th style={{ padding: '12px 16px', fontWeight: '600', color: '#cbd5e1' }}>Rol</th>
+                                                    <th style={{ padding: '12px 16px', fontWeight: '600', color: '#cbd5e1', textAlign: 'right' }}>Tiempo de Uso</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                {usageStats.uso_por_usuario && usageStats.uso_por_usuario.length > 0 ? (
-                                                    usageStats.uso_por_usuario.map((userItem: any, idx: number) => (
-                                                        <tr key={userItem.usuario_id || idx} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                                                            <td style={{ padding: '12px 16px' }}>
-                                                                <div style={{ fontWeight: '500', color: '#0f172a' }}>{userItem.nombre} {userItem.apellido}</div>
-                                                                <div style={{ fontSize: '12px', color: '#64748b' }}>{userItem.email}</div>
-                                                            </td>
-                                                            <td style={{ padding: '12px 16px', color: '#334155' }}>{userItem.agencia_nombre}</td>
+                                                {usageStats.uso_por_agencia && usageStats.uso_por_agencia.length > 0 ? (
+                                                    usageStats.uso_por_agencia.map((item: any, idx: number) => (
+                                                        <tr key={idx} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                                                            <td style={{ padding: '12px 16px', fontWeight: '500', color: '#f8fafc' }}>{item.agencia_nombre}</td>
                                                             <td style={{ padding: '12px 16px' }}>
                                                                 <span style={{
                                                                     fontSize: '11px',
                                                                     padding: '2px 8px',
                                                                     borderRadius: '12px',
                                                                     fontWeight: 'bold',
-                                                                    backgroundColor: userItem.rol === 'admin' ? '#dbeafe' : '#f1f5f9',
-                                                                    color: userItem.rol === 'admin' ? '#1e40af' : '#475569',
+                                                                    backgroundColor: item.rol_grupo === 'admin' ? 'rgba(59, 130, 246, 0.2)' : 'rgba(255, 255, 255, 0.1)',
+                                                                    color: item.rol_grupo === 'admin' ? '#93c5fd' : '#cbd5e1',
                                                                     textTransform: 'uppercase'
                                                                 }}>
-                                                                    {userItem.rol}
+                                                                    {item.rol_grupo}
                                                                 </span>
                                                             </td>
-                                                            <td style={{ padding: '12px 16px', color: '#64748b' }}>
-                                                                {userItem.ultima_fecha ? new Date(userItem.ultima_fecha).toLocaleDateString() : 'N/A'}
-                                                            </td>
-                                                            <td style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 'bold', color: '#2563eb' }}>
-                                                                {formatSeconds(userItem.total_segundos)}
+                                                            <td style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 'bold', color: '#e2e8f0' }}>
+                                                                {formatSeconds(item.total_segundos)}
                                                             </td>
                                                         </tr>
                                                     ))
                                                 ) : (
                                                     <tr>
-                                                        <td colSpan={5} style={{ padding: '16px', textAlign: 'center', color: '#94a3b8' }}>
-                                                            No hay registros de usuarios en este periodo.
+                                                        <td colSpan={3} style={{ padding: '16px', textAlign: 'center', color: '#94a3b8' }}>
+                                                            No hay registros de tiempo en este periodo.
                                                         </td>
                                                     </tr>
                                                 )}
                                             </tbody>
                                         </table>
                                     </div>
+
+                                    {/* Tabla 2: Detalle de Uso por Usuario con Filtro (Con Scroll) */}
+                                    <div style={{ marginTop: '24px' }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '10px' }}>
+                                            <h4 style={{ fontSize: '15px', fontWeight: 'bold', color: '#ffffff', margin: 0 }}>
+                                                👤 Detalle de Uso por Usuario
+                                            </h4>
+                                            {/* Filtro de rol en línea */}
+                                            <div style={{ display: 'flex', gap: '4px', backgroundColor: 'rgba(15, 23, 42, 0.5)', padding: '4px', borderRadius: '8px', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                                                {(['all', 'admin', 'usuario'] as const).map((role) => (
+                                                    <button
+                                                        key={role}
+                                                        onClick={() => setFilterUsageRole(role)}
+                                                        style={{
+                                                            padding: '4px 10px',
+                                                            border: 'none',
+                                                            borderRadius: '6px',
+                                                            fontSize: '11px',
+                                                            fontWeight: '700',
+                                                            cursor: 'pointer',
+                                                            backgroundColor: filterUsageRole === role ? '#2563eb' : 'transparent',
+                                                            color: filterUsageRole === role ? 'white' : '#94a3b8',
+                                                            transition: 'all 0.15s'
+                                                        }}
+                                                    >
+                                                        {role === 'all' && '👤 Todos'}
+                                                        {role === 'admin' && '👑 Admins'}
+                                                        {role === 'usuario' && '👥 Usuarios'}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        <div style={{ maxHeight: '320px', overflowY: 'auto', border: '1px solid rgba(255, 255, 255, 0.08)', borderRadius: '12px' }}>
+                                            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '14px' }}>
+                                                <thead>
+                                                    <tr style={{ backgroundColor: 'rgba(15, 23, 42, 0.6)', borderBottom: '1px solid rgba(255, 255, 255, 0.08)' }}>
+                                                        <th style={{ padding: '12px 16px', fontWeight: '600', color: '#cbd5e1' }}>Usuario</th>
+                                                        <th style={{ padding: '12px 16px', fontWeight: '600', color: '#cbd5e1' }}>Agencia</th>
+                                                        <th style={{ padding: '12px 16px', fontWeight: '600', color: '#cbd5e1' }}>Rol</th>
+                                                        <th style={{ padding: '12px 16px', fontWeight: '600', color: '#cbd5e1' }}>Última Actividad</th>
+                                                        <th style={{ padding: '12px 16px', fontWeight: '600', color: '#cbd5e1', textAlign: 'right' }}>Tiempo de Uso</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {filteredUsageUsers && filteredUsageUsers.length > 0 ? (
+                                                        filteredUsageUsers.map((userItem: any, idx: number) => (
+                                                            <tr key={userItem.usuario_id || idx} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                                                                <td style={{ padding: '12px 16px' }}>
+                                                                    <div style={{ fontWeight: '500', color: '#f8fafc' }}>{userItem.nombre} {userItem.apellido}</div>
+                                                                    <div style={{ fontSize: '12px', color: '#94a3b8' }}>{userItem.email}</div>
+                                                                </td>
+                                                                <td style={{ padding: '12px 16px', color: '#e2e8f0' }}>{userItem.agencia_nombre}</td>
+                                                                <td style={{ padding: '12px 16px' }}>
+                                                                    <span style={{
+                                                                        fontSize: '11px',
+                                                                        padding: '2px 8px',
+                                                                        borderRadius: '12px',
+                                                                        fontWeight: 'bold',
+                                                                        backgroundColor: userItem.rol === 'admin' ? 'rgba(59, 130, 246, 0.2)' : 'rgba(255, 255, 255, 0.1)',
+                                                                        color: userItem.rol === 'admin' ? '#93c5fd' : '#cbd5e1',
+                                                                        textTransform: 'uppercase'
+                                                                    }}>
+                                                                        {userItem.rol}
+                                                                    </span>
+                                                                </td>
+                                                                <td style={{ padding: '12px 16px', color: '#cbd5e1' }}>
+                                                                    {userItem.ultima_fecha ? new Date(userItem.ultima_fecha).toLocaleDateString() : 'N/A'}
+                                                                </td>
+                                                                <td style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 'bold', color: '#60a5fa' }}>
+                                                                    {formatSeconds(userItem.total_segundos)}
+                                                                </td>
+                                                            </tr>
+                                                        ))
+                                                    ) : (
+                                                        <tr>
+                                                            <td colSpan={5} style={{ padding: '16px', textAlign: 'center', color: '#94a3b8' }}>
+                                                                No hay registros de usuarios en este periodo.
+                                                            </td>
+                                                        </tr>
+                                                    )}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
-                        )}
-                    </div>
-                )}
-            </>
-        )}
+                            )}
+                        </div>
+                    )}
+                </>
+            )}
         </div>
     );
 };
