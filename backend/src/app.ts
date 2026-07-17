@@ -18,6 +18,7 @@ import manualesRoutes from './modules/manuales/manuales.routes';
 dotenv.config();
 
 const app = express();
+app.set('trust proxy', 1);
 const PORT = parseInt(process.env.PORT || '4000', 10);
 const PUBLIC_IP = process.env.PUBLIC_IP || '192.168.26.97';
 
