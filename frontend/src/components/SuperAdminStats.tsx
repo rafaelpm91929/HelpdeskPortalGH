@@ -32,7 +32,8 @@ export const SuperAdminStats: React.FC<SuperAdminStatsProps> = ({ agencias }) =>
     const [agrupacionResueltos, setAgrupacionResueltos] = useState<'dia' | 'semana'>('dia');
 
     // Configuración de visibilidad de gráficos
-    const [chartCategory, setChartCategory] = useState<'todos' | 'tendencias' | 'kpis' | 'distribucion'>('todos');
+    const [chartCategory, setChartCategory] = useState<'todos' | 'tendencias' | 'kpis' | 'distribucion'>('kpis');
+    const [activeSubTab, setActiveSubTab] = useState<'graficos' | 'tiempos'>('graficos');
     const [visibleCharts, setVisibleCharts] = useState({
         creados: true,
         resueltos: true,
@@ -1079,455 +1080,336 @@ export const SuperAdminStats: React.FC<SuperAdminStatsProps> = ({ agencias }) =>
     };
 
     return (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
             
             {/* ============================================
-            BARRA DE FILTROS PRINCIPALES CON SELECCIÓN MÚLTIPLE
+            CABECERA UNIFICADA DE NAVEGACIÓN Y FILTROS (SIN FONDO BLANCO)
             ============================================ */}
             <div style={{
-                backgroundColor: 'white',
-                padding: '24px',
-                borderRadius: '16px',
-                border: '1px solid #e2e8f0',
-                boxShadow: '0 10px 25px -5px rgba(0,0,0,0.03), 0 8px 10px -6px rgba(0,0,0,0.03)',
                 display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
                 flexWrap: 'wrap',
                 gap: '16px',
-                alignItems: 'flex-end',
-                position: 'relative'
+                padding: '12px 0',
+                borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+                paddingBottom: '20px'
             }}>
-                {/* Selector Múltiple Personalizado (WOW FACTOR) */}
-                <div style={{ flex: '1 1 240px', display: 'flex', flexDirection: 'column', gap: '6px', position: 'relative' }}>
-                    <label style={{ fontSize: '13px', fontWeight: '700', color: '#475569', letterSpacing: '0.3px' }}>🏢 Agencias (Selección Múltiple)</label>
-                    <div 
-                        onClick={() => setShowAgencyDropdown(!showAgencyDropdown)}
+                {/* A LA IZQUIERDA: Selector Único de Categorías y Tiempos */}
+                <div style={{ 
+                    display: 'flex', 
+                    gap: '4px', 
+                    backgroundColor: 'rgba(15, 23, 42, 0.6)', 
+                    padding: '4px', 
+                    borderRadius: '12px',
+                    border: '1px solid rgba(255, 255, 255, 0.08)'
+                }}>
+                    {(['kpis', 'tendencias', 'distribucion', 'todos'] as const).map((cat) => (
+                        <button
+                            key={cat}
+                            onClick={() => {
+                                setActiveSubTab('graficos');
+                                setChartCategory(cat);
+                            }}
+                            style={{
+                                padding: '8px 16px',
+                                border: 'none',
+                                borderRadius: '8px',
+                                fontSize: '13px',
+                                fontWeight: '700',
+                                cursor: 'pointer',
+                                backgroundColor: activeSubTab === 'graficos' && chartCategory === cat ? '#2563eb' : 'transparent',
+                                color: activeSubTab === 'graficos' && chartCategory === cat ? 'white' : '#94a3b8',
+                                boxShadow: activeSubTab === 'graficos' && chartCategory === cat ? '0 4px 12px rgba(37, 99, 235, 0.3)' : 'none',
+                                transition: 'all 0.2s'
+                            }}
+                        >
+                            {cat === 'kpis' && '🎯 KPIs'}
+                            {cat === 'tendencias' && '📈 Tendencias'}
+                            {cat === 'distribucion' && '📊 Distribución'}
+                            {cat === 'todos' && '🌐 Todos'}
+                        </button>
+                    ))}
+                    <button
+                        onClick={() => setActiveSubTab('tiempos')}
                         style={{
-                            padding: '12px 14px',
+                            padding: '8px 16px',
+                            border: 'none',
                             borderRadius: '8px',
-                            border: '1px solid #cbd5e1',
-                            fontSize: '14px',
-                            backgroundColor: '#f8fafc',
+                            fontSize: '13px',
+                            fontWeight: '700',
                             cursor: 'pointer',
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
-                            fontWeight: '600',
-                            color: '#1e293b',
-                            userSelect: 'none',
-                            boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.02)'
+                            backgroundColor: activeSubTab === 'tiempos' ? '#2563eb' : 'transparent',
+                            color: activeSubTab === 'tiempos' ? 'white' : '#94a3b8',
+                            boxShadow: activeSubTab === 'tiempos' ? '0 4px 12px rgba(37, 99, 235, 0.3)' : 'none',
+                            transition: 'all 0.2s'
                         }}
                     >
-                        <span>{agencyDropdownText}</span>
-                        <span style={{ fontSize: '10px', transition: 'transform 0.2s', transform: showAgencyDropdown ? 'rotate(180deg)' : 'rotate(0deg)' }}>▼</span>
-                    </div>
+                        ⏱️ Tiempos de Uso
+                    </button>
+                </div>
 
-                    {/* Capa invisible para cerrar dropdown en clic fuera */}
-                    {showAgencyDropdown && (
+                {/* A LA DERECHA: Filtros Generales */}
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'center' }}>
+                    {/* Selector de Agencias */}
+                    <div style={{ position: 'relative' }}>
                         <div 
-                            onClick={() => setShowAgencyDropdown(false)}
+                            onClick={() => setShowAgencyDropdown(!showAgencyDropdown)}
                             style={{
-                                position: 'fixed',
-                                top: 0,
-                                left: 0,
-                                right: 0,
-                                bottom: 0,
-                                zIndex: 90,
-                                cursor: 'default'
+                                padding: '10px 14px',
+                                borderRadius: '8px',
+                                border: '1px solid rgba(255, 255, 255, 0.15)',
+                                fontSize: '13px',
+                                backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                gap: '8px',
+                                alignItems: 'center',
+                                fontWeight: '600',
+                                color: 'white',
+                                userSelect: 'none'
                             }}
-                        />
-                    )}
+                        >
+                            <span>🏢 {agencyDropdownText}</span>
+                            <span style={{ fontSize: '10px', transition: 'transform 0.2s', transform: showAgencyDropdown ? 'rotate(180deg)' : 'rotate(0deg)' }}>▼</span>
+                        </div>
 
-                    {/* Menú Flotante del Selector Múltiple */}
-                    {showAgencyDropdown && (
-                        <div style={{
-                            position: 'absolute',
-                            top: '100%',
-                            left: 0,
-                            right: 0,
-                            marginTop: '6px',
-                            backgroundColor: 'white',
-                            border: '1px solid #cbd5e1',
-                            borderRadius: '10px',
-                            boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1), 0 8px 16px -8px rgba(0,0,0,0.1)',
-                            zIndex: 100,
-                            maxHeight: '260px',
-                            overflowY: 'auto',
-                            padding: '8px 0'
-                        }}>
-                            {/* Acción rápida */}
-                            <div 
-                                onClick={() => handleAgencySelect('all')}
-                                style={{
-                                    padding: '10px 14px',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '10px',
-                                    cursor: 'pointer',
-                                    backgroundColor: selectedAgencias.includes('all') ? '#eff6ff' : 'transparent',
-                                    borderBottom: '1px solid #f1f5f9',
-                                    fontWeight: 'bold',
-                                    color: selectedAgencias.includes('all') ? '#2563eb' : '#334155'
-                                }}
-                            >
-                                <input 
-                                    type="checkbox" 
-                                    checked={selectedAgencias.includes('all')} 
-                                    readOnly 
-                                    style={{ cursor: 'pointer' }}
+                        {showAgencyDropdown && (
+                            <>
+                                <div 
+                                    onClick={() => setShowAgencyDropdown(false)} 
+                                    style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 999 }} 
                                 />
-                                <span>Todas las Agencias</span>
-                            </div>
-
-                            {agencias.map((ag) => {
-                                const isSelected = selectedAgencias.includes(String(ag.id));
-                                return (
+                                <div style={{
+                                    position: 'absolute',
+                                    top: '100%',
+                                    right: 0,
+                                    marginTop: '6px',
+                                    width: '260px',
+                                    maxHeight: '260px',
+                                    overflowY: 'auto',
+                                    backgroundColor: 'white',
+                                    border: '1px solid #cbd5e1',
+                                    borderRadius: '12px',
+                                    boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+                                    zIndex: 1000,
+                                    padding: '6px 0'
+                                }}>
                                     <div 
-                                        key={ag.id}
-                                        onClick={() => handleAgencySelect(String(ag.id))}
+                                        onClick={() => handleAgencySelect('all')}
                                         style={{
                                             padding: '10px 14px',
+                                            cursor: 'pointer',
+                                            fontWeight: '700',
+                                            color: selectedAgencias.includes('all') ? '#2563eb' : '#334155',
+                                            backgroundColor: selectedAgencias.includes('all') ? '#eff6ff' : 'transparent',
                                             display: 'flex',
                                             alignItems: 'center',
                                             gap: '10px',
-                                            cursor: 'pointer',
-                                            backgroundColor: isSelected ? '#eff6ff' : 'transparent',
-                                            transition: 'background-color 0.1s',
-                                            color: isSelected ? '#2563eb' : '#334155',
-                                            fontWeight: isSelected ? '600' : '500'
+                                            borderBottom: '1px solid #f1f5f9'
                                         }}
-                                        onMouseEnter={(e) => { if(!isSelected) e.currentTarget.style.backgroundColor = '#f8fafc'; }}
-                                        onMouseLeave={(e) => { if(!isSelected) e.currentTarget.style.backgroundColor = 'transparent'; }}
                                     >
-                                        <input 
-                                            type="checkbox" 
-                                            checked={isSelected} 
-                                            readOnly 
-                                            style={{ cursor: 'pointer' }}
-                                        />
-                                        <span>{ag.nombre}</span>
+                                        <input type="checkbox" checked={selectedAgencias.includes('all')} readOnly />
+                                        <span>Todas las Agencias</span>
                                     </div>
-                                );
-                            })}
-                        </div>
-                    )}
-                </div>
+                                    {agencias.map((ag) => {
+                                        const isSelected = selectedAgencias.includes(String(ag.id));
+                                        return (
+                                            <div 
+                                                key={ag.id}
+                                                onClick={() => handleAgencySelect(String(ag.id))}
+                                                style={{
+                                                    padding: '10px 14px',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '10px',
+                                                    cursor: 'pointer',
+                                                    backgroundColor: isSelected ? '#eff6ff' : 'transparent',
+                                                    color: isSelected ? '#2563eb' : '#334155',
+                                                    fontWeight: isSelected ? '600' : '500'
+                                                }}
+                                            >
+                                                <input type="checkbox" checked={isSelected} readOnly />
+                                                <span>{ag.nombre}</span>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </>
+                        )}
+                    </div>
 
-                <div style={{ flex: '1 1 180px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                    <label style={{ fontSize: '13px', fontWeight: '700', color: '#475569' }}>📅 Rango Predefinido</label>
-                    <select 
-                        value={datePreset}
-                        onChange={(e) => setDatePreset(e.target.value)}
-                        style={{
-                            padding: '12px',
-                            borderRadius: '8px',
-                            border: '1px solid #cbd5e1',
-                            fontSize: '14px',
-                            outline: 'none',
-                            backgroundColor: '#f8fafc',
-                            fontWeight: '600',
-                            color: '#1e293b'
-                        }}
-                    >
-                        <option value="last7">Últimos 7 días</option>
-                        <option value="last30">Últimos 30 días</option>
-                        <option value="thisMonth">Este mes</option>
-                        <option value="thisYear">Este año</option>
-                        <option value="custom">Personalizado...</option>
-                        <option value="all">Todo el historial</option>
-                    </select>
-                </div>
+                    {/* Rango Predefinido */}
+                    <div>
+                        <select 
+                            value={datePreset}
+                            onChange={(e) => setDatePreset(e.target.value)}
+                            style={{
+                                padding: '10px 12px',
+                                borderRadius: '8px',
+                                border: '1px solid rgba(255, 255, 255, 0.15)',
+                                fontSize: '13px',
+                                backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                                color: 'white',
+                                fontWeight: '600',
+                                outline: 'none'
+                            }}
+                        >
+                            <option value="last7" style={{ color: '#0f172a' }}>Últimos 7 días</option>
+                            <option value="last30" style={{ color: '#0f172a' }}>Últimos 30 días</option>
+                            <option value="thisMonth" style={{ color: '#0f172a' }}>Este mes</option>
+                            <option value="thisYear" style={{ color: '#0f172a' }}>Este año</option>
+                            <option value="custom" style={{ color: '#0f172a' }}>Personalizado...</option>
+                            <option value="all" style={{ color: '#0f172a' }}>Todo el historial</option>
+                        </select>
+                    </div>
 
-                {datePreset === 'custom' && (
-                    <>
-                        <div style={{ flex: '1 1 150px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                            <label style={{ fontSize: '13px', fontWeight: '700', color: '#475569' }}>Fecha de Inicio</label>
+                    {/* Fechas personalizadas */}
+                    {datePreset === 'custom' && (
+                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                             <input 
                                 type="date" 
                                 value={fechaInicio}
                                 onChange={(e) => setFechaInicio(e.target.value)}
                                 style={{
-                                    padding: '11px',
+                                    padding: '8px 10px',
                                     borderRadius: '8px',
-                                    border: '1px solid #cbd5e1',
-                                    fontSize: '14px',
-                                    outline: 'none',
-                                    backgroundColor: '#f8fafc',
+                                    border: '1px solid rgba(255, 255, 255, 0.15)',
+                                    fontSize: '13px',
+                                    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                                    color: 'white',
                                     fontWeight: '600'
                                 }}
                             />
-                        </div>
-                        <div style={{ flex: '1 1 150px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                            <label style={{ fontSize: '13px', fontWeight: '700', color: '#475569' }}>Fecha de Fin</label>
+                            <span style={{ color: '#94a3b8', fontSize: '12px' }}>al</span>
                             <input 
                                 type="date" 
                                 value={fechaFin}
                                 onChange={(e) => setFechaFin(e.target.value)}
                                 style={{
-                                    padding: '11px',
+                                    padding: '8px 10px',
                                     borderRadius: '8px',
-                                    border: '1px solid #cbd5e1',
-                                    fontSize: '14px',
-                                    outline: 'none',
-                                    backgroundColor: '#f8fafc',
+                                    border: '1px solid rgba(255, 255, 255, 0.15)',
+                                    fontSize: '13px',
+                                    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                                    color: 'white',
                                     fontWeight: '600'
                                 }}
                             />
                         </div>
-                    </>
-                )}
-
-                <button 
-                    onClick={loadStatsData}
-                    style={{
-                        padding: '0 24px',
-                        backgroundColor: '#2563eb',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '8px',
-                        fontWeight: '700',
-                        fontSize: '14px',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                        height: '46px',
-                        transition: 'background-color 0.2s, transform 0.1s',
-                        boxShadow: '0 4px 12px rgba(37, 99, 235, 0.2)'
-                    }}
-                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#1d4ed8'}
-                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#2563eb'}
-                    onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.97)'}
-                    onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
-                >
-                    🔄 Cargar Filtros
-                </button>
-            </div>
-
-            {/* ============================================
-            PANEL INTERACTIVO: SELECCIÓN DE GRÁFICOS (TABS & CONFIG)
-            ============================================ */}
-            <div style={{
-                backgroundColor: 'white',
-                padding: '20px 24px',
-                borderRadius: '16px',
-                border: '1px solid #e2e8f0',
-                boxShadow: '0 10px 25px -5px rgba(0,0,0,0.03)',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '16px'
-            }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
-                    
-                    {/* Tabs de Filtro de Gráficos Rápido */}
-                    <div style={{ display: 'flex', gap: '6px', backgroundColor: '#f1f5f9', padding: '4px', borderRadius: '10px' }}>
-                        {(['todos', 'tendencias', 'kpis', 'distribucion'] as const).map((cat) => (
-                            <button
-                                key={cat}
-                                onClick={() => setChartCategory(cat)}
-                                style={{
-                                    padding: '8px 16px',
-                                    border: 'none',
-                                    borderRadius: '8px',
-                                    fontSize: '12px',
-                                    fontWeight: '700',
-                                    cursor: 'pointer',
-                                    backgroundColor: chartCategory === cat ? 'white' : 'transparent',
-                                    color: chartCategory === cat ? '#2563eb' : '#64748b',
-                                    boxShadow: chartCategory === cat ? '0 4px 6px -1px rgba(0,0,0,0.05)' : 'none',
-                                    transition: 'all 0.2s'
-                                }}
-                            >
-                                {cat === 'todos' && '🌐 Ver Todos'}
-                                {cat === 'tendencias' && '📈 Tendencias'}
-                                {cat === 'kpis' && '🎯 Estados y KPIs'}
-                                {cat === 'distribucion' && '👥 Carga y Áreas'}
-                            </button>
-                        ))}
-                    </div>
-
-                    {/* Botón para Configuración Avanzada de Visibilidad */}
-                    <button
-                        onClick={() => setShowConfigPanel(!showConfigPanel)}
-                        style={{
-                            padding: '10px 16px',
-                            backgroundColor: showConfigPanel ? '#f1f5f9' : 'transparent',
-                            color: '#475569',
-                            border: '1px solid #cbd5e1',
-                            borderRadius: '8px',
-                            fontSize: '12px',
-                            fontWeight: '700',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '6px',
-                            transition: 'all 0.15s'
-                        }}
-                    >
-                        ⚙️ {showConfigPanel ? 'Ocultar Panel' : 'Configurar Gráficas'}
-                    </button>
+                    )}
                 </div>
-
-                {/* Panel de Checkboxes Detallados */}
-                {showConfigPanel && (
-                    <div style={{
-                        padding: '16px',
-                        backgroundColor: '#f8fafc',
-                        borderRadius: '10px',
-                        border: '1px solid #e2e8f0',
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
-                        gap: '12px'
-                    }}>
-                        {Object.keys(visibleCharts).map((key) => {
-                            const nameMap: { [key: string]: string } = {
-                                creados: '📈 Tickets Creados',
-                                resueltos: '✅ Tickets Resueltos',
-                                backlog: '📊 Backlog (Abiertos vs Cerrados)',
-                                estado: '🍩 Distribución por Estado',
-                                prioridad: '⚠️ Tickets por Prioridad',
-                                area: '🏢 Tickets por Área',
-                                agente: '👥 Carga por Agente',
-                                heatmap: '🔥 Mapa de Calor (Horas Pico)',
-                                antiguedad: '⏳ Antigüedad de Abiertos'
-                            };
-                            return (
-                                <label 
-                                    key={key} 
-                                    style={{ 
-                                        display: 'flex', 
-                                        alignItems: 'center', 
-                                        gap: '8px', 
-                                        fontSize: '13px', 
-                                        fontWeight: '600', 
-                                        color: '#475569',
-                                        cursor: 'pointer',
-                                        padding: '4px'
-                                    }}
-                                >
-                                    <input 
-                                        type="checkbox" 
-                                        checked={visibleCharts[key as keyof typeof visibleCharts]}
-                                        onChange={(e) => setVisibleCharts({
-                                            ...visibleCharts,
-                                            [key]: e.target.checked
-                                        })}
-                                        style={{ width: '16px', height: '16px', cursor: 'pointer' }}
-                                    />
-                                    <span>{nameMap[key] || key}</span>
-                                </label>
-                            );
-                        })}
-                    </div>
-                )}
             </div>
 
             {/* FILTROS INTERACTIVOS LOCALES (CASCADA) */}
-            <div style={{
-                backgroundColor: '#f8fafc',
-                padding: '16px 20px',
-                borderRadius: '12px',
-                border: '1px solid #e2e8f0',
-                display: 'flex',
-                flexWrap: 'wrap',
-                gap: '12px',
-                alignItems: 'center'
-            }}>
-                <span style={{ fontSize: '13px', fontWeight: '800', color: '#64748b', marginRight: '8px', letterSpacing: '0.5px' }}>⚡ FILTRAR EN TIEMPO REAL:</span>
-                
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <label style={{ fontSize: '12px', fontWeight: '700', color: '#64748b' }}>Área:</label>
-                    <select 
-                        value={filterArea}
-                        onChange={(e) => setFilterArea(e.target.value)}
-                        style={{
-                            padding: '8px 14px',
-                            borderRadius: '6px',
-                            border: '1px solid #cbd5e1',
-                            fontSize: '12px',
-                            backgroundColor: 'white',
-                            cursor: 'pointer',
-                            fontWeight: '600'
-                        }}
-                    >
-                        <option value="all">Todas</option>
-                        {uniqueAreas.map((a) => (
-                            <option key={a} value={a}>{a}</option>
-                        ))}
-                    </select>
-                </div>
+            {activeSubTab === 'graficos' && (
+                <div style={{
+                    backgroundColor: '#f8fafc',
+                    padding: '16px 20px',
+                    borderRadius: '12px',
+                    border: '1px solid #e2e8f0',
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    gap: '12px',
+                    alignItems: 'center'
+                }}>
+                    <span style={{ fontSize: '13px', fontWeight: '800', color: '#64748b', marginRight: '8px', letterSpacing: '0.5px' }}>⚡ FILTRAR EN TIEMPO REAL:</span>
+                    
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <label style={{ fontSize: '12px', fontWeight: '700', color: '#64748b' }}>Área:</label>
+                        <select 
+                            value={filterArea}
+                            onChange={(e) => setFilterArea(e.target.value)}
+                            style={{
+                                padding: '8px 14px',
+                                borderRadius: '6px',
+                                border: '1px solid #cbd5e1',
+                                fontSize: '12px',
+                                backgroundColor: 'white',
+                                cursor: 'pointer',
+                                fontWeight: '600'
+                            }}
+                        >
+                            <option value="all">Todas</option>
+                            {uniqueAreas.map((a) => (
+                                <option key={a} value={a}>{a}</option>
+                            ))}
+                        </select>
+                    </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <label style={{ fontSize: '12px', fontWeight: '700', color: '#64748b' }}>Prioridad:</label>
-                    <select 
-                        value={filterPrioridad}
-                        onChange={(e) => setFilterPrioridad(e.target.value)}
-                        style={{
-                            padding: '8px 14px',
-                            borderRadius: '6px',
-                            border: '1px solid #cbd5e1',
-                            fontSize: '12px',
-                            backgroundColor: 'white',
-                            cursor: 'pointer',
-                            fontWeight: '600'
-                        }}
-                    >
-                        <option value="all">Todas</option>
-                        <option value="baja">Baja</option>
-                        <option value="media">Media</option>
-                        <option value="alta">Alta</option>
-                        <option value="critica">Crítica</option>
-                    </select>
-                </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <label style={{ fontSize: '12px', fontWeight: '700', color: '#64748b' }}>Prioridad:</label>
+                        <select 
+                            value={filterPrioridad}
+                            onChange={(e) => setFilterPrioridad(e.target.value)}
+                            style={{
+                                padding: '8px 14px',
+                                borderRadius: '6px',
+                                border: '1px solid #cbd5e1',
+                                fontSize: '12px',
+                                backgroundColor: 'white',
+                                cursor: 'pointer',
+                                fontWeight: '600'
+                            }}
+                        >
+                            <option value="all">Todas</option>
+                            <option value="baja">Baja</option>
+                            <option value="media">Media</option>
+                            <option value="alta">Alta</option>
+                            <option value="critica">Crítica</option>
+                        </select>
+                    </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <label style={{ fontSize: '12px', fontWeight: '700', color: '#64748b' }}>Estado:</label>
-                    <select 
-                        value={filterEstado}
-                        onChange={(e) => setFilterEstado(e.target.value)}
-                        style={{
-                            padding: '8px 14px',
-                            borderRadius: '6px',
-                            border: '1px solid #cbd5e1',
-                            fontSize: '12px',
-                            backgroundColor: 'white',
-                            cursor: 'pointer',
-                            fontWeight: '600'
-                        }}
-                    >
-                        <option value="all">Todos</option>
-                        <option value="pendiente">Pendiente</option>
-                        <option value="abierto">Abierto</option>
-                        <option value="en proceso">En proceso</option>
-                        <option value="resuelto">Resuelto</option>
-                        <option value="cerrado">Cerrado</option>
-                    </select>
-                </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <label style={{ fontSize: '12px', fontWeight: '700', color: '#64748b' }}>Estado:</label>
+                        <select 
+                            value={filterEstado}
+                            onChange={(e) => setFilterEstado(e.target.value)}
+                            style={{
+                                padding: '8px 14px',
+                                borderRadius: '6px',
+                                border: '1px solid #cbd5e1',
+                                fontSize: '12px',
+                                backgroundColor: 'white',
+                                cursor: 'pointer',
+                                fontWeight: '600'
+                            }}
+                        >
+                            <option value="all">Todos</option>
+                            <option value="pendiente">Pendiente</option>
+                            <option value="abierto">Abierto</option>
+                            <option value="en proceso">En proceso</option>
+                            <option value="resuelto">Resuelto</option>
+                            <option value="cerrado">Cerrado</option>
+                        </select>
+                    </div>
 
-                {(filterArea !== 'all' || filterPrioridad !== 'all' || filterEstado !== 'all') && (
-                    <button 
-                        onClick={() => {
-                            setFilterArea('all');
-                            setFilterPrioridad('all');
-                            setFilterEstado('all');
-                        }}
-                        style={{
-                            padding: '6px 12px',
-                            backgroundColor: '#e2e8f0',
-                            color: '#475569',
-                            border: 'none',
-                            borderRadius: '6px',
-                            fontSize: '11px',
-                            fontWeight: 'bold',
-                            cursor: 'pointer',
-                            transition: 'background-color 0.2s'
-                        }}
-                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#cbd5e1'}
-                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#e2e8f0'}
-                    >
-                        Limpiar filtros
-                    </button>
-                )}
-            </div>
+                    {(filterArea !== 'all' || filterPrioridad !== 'all' || filterEstado !== 'all') && (
+                        <button 
+                            onClick={() => {
+                                setFilterArea('all');
+                                setFilterPrioridad('all');
+                                setFilterEstado('all');
+                            }}
+                            style={{
+                                padding: '6px 12px',
+                                backgroundColor: '#e2e8f0',
+                                color: '#475569',
+                                border: 'none',
+                                borderRadius: '6px',
+                                fontSize: '11px',
+                                fontWeight: 'bold',
+                                cursor: 'pointer',
+                                transition: 'background-color 0.2s'
+                            }}
+                            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#cbd5e1'}
+                            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#e2e8f0'}
+                        >
+                            Limpiar filtros
+                        </button>
+                    )}
+                </div>
+            )}
 
             {loading ? (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', alignItems: 'center', justifyContent: 'center', height: '300px' }}>
@@ -1537,7 +1419,9 @@ export const SuperAdminStats: React.FC<SuperAdminStatsProps> = ({ agencias }) =>
                 </div>
             ) : (
                 <>
-                    {/* ============================================
+                    {activeSubTab === 'graficos' && (
+                        <>
+                            {/* ============================================
                     SECCIÓN DE TARJETAS INDICADORES (KPIs) CON ESTILOS GLOW
                     ============================================ */}
                     <div style={{
@@ -1789,9 +1673,11 @@ export const SuperAdminStats: React.FC<SuperAdminStatsProps> = ({ agencias }) =>
                             {renderHeatmap()}
                         </div>
                     )}
+                        </>
+                    )}
 
-                    {/* 10. TIEMPO DE USO Y ACTIVIDAD (SOLO SUPERADMIN) */}
-                    <div style={{
+                    {activeSubTab === 'tiempos' && (
+                        <div style={{
                         backgroundColor: 'white',
                         padding: '24px',
                         borderRadius: '16px',
@@ -1926,8 +1812,9 @@ export const SuperAdminStats: React.FC<SuperAdminStatsProps> = ({ agencias }) =>
                             </div>
                         )}
                     </div>
-                </>
-            )}
+                )}
+            </>
+        )}
         </div>
     );
 };
