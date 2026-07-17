@@ -49,7 +49,8 @@ interface IAgenciaInfo {
 
 interface INotificacion {
     id: number;
-    ticket_id: number;
+    ticket_id: number | null;
+    titulo?: string;
     mensaje: string;
     leido: boolean;
     fecha_creacion: string;
@@ -1427,6 +1428,96 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         onSave={loadAgenciaInfo}
                     />
                 )}
+            {/* 🔥 Modal de Mensajes Directos del SuperAdmin */}
+            {notificaciones.filter(n => !n.leido && n.ticket_id === null).length > 0 && (
+                <div style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    backgroundColor: 'rgba(9, 13, 22, 0.8)',
+                    backdropFilter: 'blur(8px)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    zIndex: 2000
+                }}>
+                    <div style={{
+                        backgroundColor: '#1e293b',
+                        color: 'white',
+                        border: '1px solid rgba(255, 255, 255, 0.1)',
+                        boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)',
+                        borderRadius: '16px',
+                        width: '90%',
+                        maxWidth: '500px',
+                        padding: '24px',
+                        textAlign: 'center',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '16px',
+                        animation: 'fadeInNotif 0.3s ease'
+                    }}>
+                        <div style={{ fontSize: '40px' }}>✉️</div>
+                        <h3 style={{ fontSize: '18px', fontWeight: 'bold', margin: 0 }}>
+                            {notificaciones.find(n => !n.leido && n.ticket_id === null)?.titulo || 'Mensaje de SuperAdmin'}
+                        </h3>
+                        <p style={{ 
+                            fontSize: '14px', 
+                            color: '#cbd5e1', 
+                            lineHeight: '1.6', 
+                            backgroundColor: 'rgba(15, 23, 42, 0.3)',
+                            padding: '16px',
+                            borderRadius: '8px',
+                            border: '1px solid rgba(255,255,255,0.05)',
+                            textAlign: 'left',
+                            whiteSpace: 'pre-wrap'
+                        }}>
+                            {notificaciones.find(n => !n.leido && n.ticket_id === null)?.mensaje}
+                        </p>
+                        <div style={{ display: 'flex', justifyContent: 'center', marginTop: '8px' }}>
+                            <button
+                                onClick={async () => {
+                                    const notif = notificaciones.find(n => !n.leido && n.ticket_id === null);
+                                    if (notif) {
+                                        try {
+                                            await api.put(`/notificaciones/${notif.id}/leer`);
+                                            setNotificaciones(prev => 
+                                                prev.map(n => n.id === notif.id ? { ...n, leido: true } : n)
+                                            );
+                                            toast.success('Mensaje marcado como leído');
+                                        } catch (err) {
+                                            console.error('Error al leer notificación:', err);
+                                        }
+                                    }
+                                }}
+                                style={{
+                                    padding: '10px 24px',
+                                    backgroundColor: '#2563eb',
+                                    color: 'white',
+                                    border: 'none',
+                                    borderRadius: '6px',
+                                    fontWeight: 'bold',
+                                    cursor: 'pointer',
+                                    fontSize: '13px',
+                                    boxShadow: '0 4px 12px rgba(37,99,235,0.25)',
+                                    transition: 'all 0.15s'
+                                }}
+                                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#1d4ed8'}
+                                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#2563eb'}
+                            >
+                                ✓ Mensaje Leído / Cerrar
+                            </button>
+                        </div>
+                    </div>
+                    <style>{`
+                        @keyframes fadeInNotif {
+                            from { opacity: 0; transform: scale(0.95); }
+                            to { opacity: 1; transform: scale(1); }
+                        }
+                    `}</style>
+                </div>
+            )}
             </div>
         </div>
     );

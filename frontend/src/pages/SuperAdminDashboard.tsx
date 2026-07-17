@@ -405,6 +405,10 @@ export const SuperAdminDashboard: React.FC = () => {
         password: '',
         agencia_id: 1
     });
+    const [messagingUser, setMessagingUser] = useState<IUsuario | null>(null);
+    const [showBroadcastModal, setShowBroadcastModal] = useState<boolean>(false);
+    const [directMessageText, setDirectMessageText] = useState<string>('');
+    const [broadcastMessageText, setBroadcastMessageText] = useState<string>('');
 
     // Estados para Bloqueo y Manuales
     const [showBlockModal, setShowBlockModal] = useState(false);
@@ -779,6 +783,37 @@ export const SuperAdminDashboard: React.FC = () => {
             loadAdmins();
         } catch (error: any) {
             toast.error(error.response?.data?.error || '❌ Error al eliminar administrador');
+        }
+    };
+
+    const handleSendDirectMessage = async () => {
+        if (!messagingUser || !directMessageText.trim()) return;
+        try {
+            await api.post('/notificaciones/enviar', {
+                usuario_id: messagingUser.id,
+                titulo: '✉️ Mensaje de SuperAdmin',
+                mensaje: directMessageText
+            });
+            toast.success(`✅ Mensaje enviado a ${messagingUser.nombre}`);
+            setDirectMessageText('');
+            setMessagingUser(null);
+        } catch (error: any) {
+            toast.error(error.response?.data?.error || '❌ Error al enviar mensaje');
+        }
+    };
+
+    const handleSendBroadcastMessage = async () => {
+        if (!broadcastMessageText.trim()) return;
+        try {
+            await api.post('/notificaciones/enviar-todos', {
+                titulo: '📢 Mensaje Global de SuperAdmin',
+                mensaje: broadcastMessageText
+            });
+            toast.success('✅ Mensaje enviado a todos los administradores');
+            setBroadcastMessageText('');
+            setShowBroadcastModal(false);
+        } catch (error: any) {
+            toast.error(error.response?.data?.error || '❌ Error al enviar mensaje global');
         }
     };
 
@@ -1506,18 +1541,14 @@ export const SuperAdminDashboard: React.FC = () => {
                                 backgroundColor: 'rgba(30, 41, 59, 0.45)',
                                 backdropFilter: 'blur(12px)',
                                 borderRadius: '12px',
-                                border: '1px solid rgba(255, 255, 255, 0.08)',
-                                overflow: 'hidden',
-                                boxShadow: '0 8px 32px rgba(0,0,0,0.25)'
-                            }}>
-                                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                                border: '1px solid rgba(255, 255,                                 <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                                     <thead style={{ backgroundColor: 'rgba(15, 23, 42, 0.65)' }}>
                                         <tr style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.08)' }}>
                                             <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: '600', color: '#cbd5e1' }}>Nombre</th>
                                             <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: '600', color: '#cbd5e1' }}>Email</th>
                                             <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: '600', color: '#cbd5e1' }}>Agencia</th>
-                                            <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: '600', color: '#6b7280' }}>Rol</th>
-                                            <th style={{ padding: '12px 16px', textAlign: 'center', fontSize: '12px', fontWeight: '600', color: '#6b7280' }}>Acciones</th>
+                                            <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: '600', color: '#cbd5e1' }}>Rol</th>
+                                            <th style={{ padding: '12px 16px', textAlign: 'center', fontSize: '12px', fontWeight: '600', color: '#cbd5e1' }}>Acciones</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -1529,31 +1560,53 @@ export const SuperAdminDashboard: React.FC = () => {
                                             )
                                             .map((admin) => {
                                             const agencia = agencias.find(a => a.id === admin.agencia_id);
+                                            const initials = ((admin.nombre ? admin.nombre[0] : '') + (admin.apellido ? admin.apellido[0] : '')).toUpperCase();
                                             return (
-                                                <tr key={admin.id} style={{ borderTop: '1px solid #e5e7eb' }}>
+                                                <tr key={admin.id} style={{ borderTop: '1px solid rgba(255, 255, 255, 0.05)' }}>
                                                     <td style={{ padding: '12px 16px' }}>
-                                                        {admin.nombre} {admin.apellido}
-                                                        {admin.id === user.id && (
-                                                            <span style={{
-                                                                marginLeft: '8px',
-                                                                padding: '2px 8px',
-                                                                backgroundColor: '#dbeafe',
-                                                                borderRadius: '4px',
-                                                                fontSize: '10px',
-                                                                color: '#1e40af'
+                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                                            <div style={{
+                                                                width: '32px',
+                                                                height: '32px',
+                                                                borderRadius: '50%',
+                                                                backgroundColor: agencia?.colores_primario || '#2563eb',
+                                                                color: 'white',
+                                                                display: 'flex',
+                                                                alignItems: 'center',
+                                                                justifyContent: 'center',
+                                                                fontSize: '12px',
+                                                                fontWeight: 'bold',
+                                                                boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
                                                             }}>
-                                                                Tú
-                                                            </span>
-                                                        )}
+                                                                {initials}
+                                                            </div>
+                                                            <div>
+                                                                <span style={{ fontWeight: '600', color: '#ffffff' }}>{admin.nombre} {admin.apellido}</span>
+                                                                {admin.id === user.id && (
+                                                                    <span style={{
+                                                                        marginLeft: '8px',
+                                                                        padding: '2px 8px',
+                                                                        backgroundColor: 'rgba(96, 165, 250, 0.15)',
+                                                                        borderRadius: '4px',
+                                                                        fontSize: '10px',
+                                                                        color: '#60a5fa',
+                                                                        fontWeight: 'bold'
+                                                                    }}>
+                                                                        Tú
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        </div>
                                                     </td>
-                                                    <td style={{ padding: '12px 16px', color: '#6b7280' }}>{admin.email}</td>
+                                                    <td style={{ padding: '12px 16px', color: '#94a3b8' }}>{admin.email}</td>
                                                     <td style={{ padding: '12px 16px' }}>
                                                         <span style={{
                                                             padding: '2px 8px',
-                                                            backgroundColor: '#e0e7ff',
+                                                            backgroundColor: 'rgba(99, 102, 241, 0.15)',
                                                             borderRadius: '4px',
                                                             fontSize: '12px',
-                                                            color: '#3730a3'
+                                                            color: '#818cf8',
+                                                            fontWeight: '600'
                                                         }}>
                                                             {agencia?.nombre || 'Sin agencia'}
                                                         </span>
@@ -1561,15 +1614,38 @@ export const SuperAdminDashboard: React.FC = () => {
                                                     <td style={{ padding: '12px 16px' }}>
                                                         <span style={{
                                                             padding: '2px 8px',
-                                                            backgroundColor: admin.rol === 'superadmin' ? '#fef3c7' : '#dbeafe',
+                                                            backgroundColor: admin.rol === 'superadmin' ? 'rgba(245, 158, 11, 0.15)' : 'rgba(59, 130, 246, 0.15)',
                                                             borderRadius: '4px',
                                                             fontSize: '12px',
-                                                            color: admin.rol === 'superadmin' ? '#92400e' : '#1e40af'
+                                                            color: admin.rol === 'superadmin' ? '#fbbf24' : '#60a5fa',
+                                                            fontWeight: '600'
                                                         }}>
                                                             {admin.rol}
                                                         </span>
                                                     </td>
                                                     <td style={{ padding: '12px 16px', textAlign: 'center' }}>
+                                                        {admin.id !== user.id && (
+                                                            <button
+                                                                onClick={() => setMessagingUser(admin)}
+                                                                style={{
+                                                                    padding: '6px 12px',
+                                                                    backgroundColor: 'rgba(96, 165, 250, 0.1)',
+                                                                    border: '1px solid rgba(96, 165, 250, 0.25)',
+                                                                    borderRadius: '4px',
+                                                                    cursor: 'pointer',
+                                                                    marginRight: '6px',
+                                                                    color: '#60a5fa',
+                                                                    fontSize: '12px',
+                                                                    fontWeight: '600',
+                                                                    transition: 'all 0.2s'
+                                                                }}
+                                                                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(96, 165, 250, 0.18)'}
+                                                                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgba(96, 165, 250, 0.1)'}
+                                                                title="Enviar mensaje directo"
+                                                            >
+                                                                ✉️ Mensaje
+                                                            </button>
+                                                        )}
 
                                                         <button
                                                             onClick={() => {
@@ -1584,13 +1660,20 @@ export const SuperAdminDashboard: React.FC = () => {
                                                                 setShowAdminModal(true);
                                                             }}
                                                             style={{
-                                                                padding: '4px 12px',
-                                                                backgroundColor: '#e5e7eb',
-                                                                border: 'none',
+                                                                padding: '6px 12px',
+                                                                backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                                                                border: '1px solid rgba(255, 255, 255, 0.1)',
                                                                 borderRadius: '4px',
                                                                 cursor: 'pointer',
-                                                                marginRight: '4px'
+                                                                marginRight: '6px',
+                                                                color: '#cbd5e1',
+                                                                fontSize: '12px',
+                                                                fontWeight: '600',
+                                                                transition: 'all 0.2s'
                                                             }}
+                                                            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.12)'}
+                                                            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.05)'}
+                                                            title="Editar administrador"
                                                         >
                                                             ✏️
                                                         </button>
@@ -1598,13 +1681,19 @@ export const SuperAdminDashboard: React.FC = () => {
                                                             <button
                                                                 onClick={() => deleteAdmin(admin.id)}
                                                                 style={{
-                                                                    padding: '4px 12px',
-                                                                    backgroundColor: '#fee2e2',
-                                                                    border: 'none',
+                                                                    padding: '6px 12px',
+                                                                    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                                                                    border: '1px solid rgba(239, 68, 68, 0.25)',
                                                                     borderRadius: '4px',
                                                                     cursor: 'pointer',
-                                                                    color: '#dc2626'
+                                                                    color: '#f87171',
+                                                                    fontSize: '12px',
+                                                                    fontWeight: '600',
+                                                                    transition: 'all 0.2s'
                                                                 }}
+                                                                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.18)'}
+                                                                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.1)'}
+                                                                title="Eliminar administrador"
                                                             >
                                                                 🗑️
                                                             </button>
@@ -1617,6 +1706,30 @@ export const SuperAdminDashboard: React.FC = () => {
                                 </table>
                             </div>
                         )}
+                        <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'flex-start' }}>
+                            <button
+                                onClick={() => setShowBroadcastModal(true)}
+                                style={{
+                                    padding: '10px 20px',
+                                    background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)',
+                                    border: '1px solid rgba(255, 255, 255, 0.15)',
+                                    borderRadius: '8px',
+                                    color: '#ffffff',
+                                    fontSize: '13px',
+                                    fontWeight: '700',
+                                    cursor: 'pointer',
+                                    boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                                    transition: 'all 0.2s',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '8px'
+                                }}
+                                onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-1px)'}
+                                onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+                            >
+                                📢 Enviar Mensaje Global a Todos los Admins
+                            </button>
+                        </div>
                     </div>
                 )}
 
@@ -2178,6 +2291,204 @@ export const SuperAdminDashboard: React.FC = () => {
                                 </button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal de Mensaje Directo a Administrador */}
+            {messagingUser && (
+                <div style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    backgroundColor: 'rgba(9, 13, 22, 0.75)',
+                    backdropFilter: 'blur(8px)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    zIndex: 1000
+                }}>
+                    <div style={{
+                        backgroundColor: 'rgba(30, 41, 59, 0.9)',
+                        backdropFilter: 'blur(16px)',
+                        padding: '28px',
+                        borderRadius: '16px',
+                        width: '90%',
+                        maxWidth: '500px',
+                        border: '1px solid rgba(255, 255, 255, 0.12)',
+                        boxShadow: '0 24px 48px rgba(0, 0, 0, 0.45)',
+                        color: 'white'
+                    }}>
+                        <h3 style={{ fontSize: '18px', fontWeight: 'bold', margin: '0 0 16px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            ✉️ Enviar Mensaje a {messagingUser.nombre} {messagingUser.apellido}
+                        </h3>
+                        <p style={{ fontSize: '13px', color: '#94a3b8', marginBottom: '16px' }}>
+                            Este mensaje se le mostrará a este administrador en una notificación destacada en cuanto ingrese a su portal y podrá marcarlo como leído.
+                        </p>
+                        <div style={{ marginBottom: '20px' }}>
+                            <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#cbd5e1', marginBottom: '8px' }}>Mensaje:</label>
+                            <textarea
+                                value={directMessageText}
+                                onChange={(e) => setDirectMessageText(e.target.value)}
+                                placeholder="Escribe el mensaje aquí..."
+                                style={{
+                                    width: '100%',
+                                    height: '120px',
+                                    padding: '12px',
+                                    borderRadius: '8px',
+                                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                                    backgroundColor: '#1e293b',
+                                    color: 'white',
+                                    fontSize: '14px',
+                                    outline: 'none',
+                                    resize: 'none'
+                                }}
+                            />
+                        </div>
+                        <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setMessagingUser(null);
+                                    setDirectMessageText('');
+                                }}
+                                style={{
+                                    padding: '10px 18px',
+                                    backgroundColor: 'transparent',
+                                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                                    borderRadius: '6px',
+                                    color: '#cbd5e1',
+                                    cursor: 'pointer',
+                                    fontSize: '13px',
+                                    fontWeight: '600',
+                                    transition: 'all 0.15s'
+                                }}
+                                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.05)'}
+                                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleSendDirectMessage}
+                                disabled={!directMessageText.trim()}
+                                style={{
+                                    padding: '10px 20px',
+                                    background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)',
+                                    border: '1px solid rgba(255, 255, 255, 0.15)',
+                                    borderRadius: '6px',
+                                    color: 'white',
+                                    cursor: directMessageText.trim() ? 'pointer' : 'not-allowed',
+                                    opacity: directMessageText.trim() ? 1 : 0.5,
+                                    fontSize: '13px',
+                                    fontWeight: '700',
+                                    transition: 'all 0.15s'
+                                }}
+                            >
+                                Enviar Mensaje
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal de Mensaje Global a Todos los Administradores */}
+            {showBroadcastModal && (
+                <div style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    backgroundColor: 'rgba(9, 13, 22, 0.75)',
+                    backdropFilter: 'blur(8px)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    zIndex: 1000
+                }}>
+                    <div style={{
+                        backgroundColor: 'rgba(30, 41, 59, 0.9)',
+                        backdropFilter: 'blur(16px)',
+                        padding: '28px',
+                        borderRadius: '16px',
+                        width: '90%',
+                        maxWidth: '500px',
+                        border: '1px solid rgba(255, 255, 255, 0.12)',
+                        boxShadow: '0 24px 48px rgba(0, 0, 0, 0.45)',
+                        color: 'white'
+                    }}>
+                        <h3 style={{ fontSize: '18px', fontWeight: 'bold', margin: '0 0 16px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            📢 Mensaje Global a Todos los Administradores
+                        </h3>
+                        <p style={{ fontSize: '13px', color: '#94a3b8', marginBottom: '16px' }}>
+                            Este comunicado masivo aparecerá a todos los administradores activos de todas las agencias en cuanto inicien sesión o entren a su panel. Podrán marcarlo como leído individualmente.
+                        </p>
+                        <div style={{ marginBottom: '20px' }}>
+                            <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#cbd5e1', marginBottom: '8px' }}>Mensaje:</label>
+                            <textarea
+                                value={broadcastMessageText}
+                                onChange={(e) => setBroadcastMessageText(e.target.value)}
+                                placeholder="Escribe el comunicado global aquí..."
+                                style={{
+                                    width: '100%',
+                                    height: '120px',
+                                    padding: '12px',
+                                    borderRadius: '8px',
+                                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                                    backgroundColor: '#1e293b',
+                                    color: 'white',
+                                    fontSize: '14px',
+                                    outline: 'none',
+                                    resize: 'none'
+                                }}
+                            />
+                        </div>
+                        <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setShowBroadcastModal(false);
+                                    setBroadcastMessageText('');
+                                }}
+                                style={{
+                                    padding: '10px 18px',
+                                    backgroundColor: 'transparent',
+                                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                                    borderRadius: '6px',
+                                    color: '#cbd5e1',
+                                    cursor: 'pointer',
+                                    fontSize: '13px',
+                                    fontWeight: '600',
+                                    transition: 'all 0.15s'
+                                }}
+                                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.05)'}
+                                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleSendBroadcastMessage}
+                                disabled={!broadcastMessageText.trim()}
+                                style={{
+                                    padding: '10px 20px',
+                                    background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)',
+                                    border: '1px solid rgba(255, 255, 255, 0.15)',
+                                    borderRadius: '6px',
+                                    color: 'white',
+                                    cursor: broadcastMessageText.trim() ? 'pointer' : 'not-allowed',
+                                    opacity: broadcastMessageText.trim() ? 1 : 0.5,
+                                    fontSize: '13px',
+                                    fontWeight: '700',
+                                    transition: 'all 0.15s'
+                                }}
+                            >
+                                Difundir Comunicado
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}
