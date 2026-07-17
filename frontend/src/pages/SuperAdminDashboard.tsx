@@ -195,7 +195,7 @@ const AgenciaCard = React.memo<AgenciaCardProps>(({
                             display: 'flex', 
                             flexDirection: 'column', 
                             gap: '6px', 
-                            maxHeight: '100px', 
+                            maxHeight: '82px', 
                             overflowY: 'auto',
                             paddingRight: '4px'
                         }}>
