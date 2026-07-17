@@ -1866,6 +1866,63 @@ export const SuperAdminStats: React.FC<SuperAdminStatsProps> = ({ agencias }) =>
                                         </tbody>
                                     </table>
                                 </div>
+
+                                <div style={{ marginTop: '24px' }}>
+                                    <h4 style={{ fontSize: '15px', fontWeight: 'bold', color: '#0f172a', marginBottom: '12px' }}>
+                                        👤 Detalle de Uso por Usuario
+                                    </h4>
+                                    <div style={{ overflowX: 'auto', border: '1px solid #e2e8f0', borderRadius: '12px' }}>
+                                        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '14px' }}>
+                                            <thead>
+                                                <tr style={{ backgroundColor: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
+                                                    <th style={{ padding: '12px 16px', fontWeight: '600', color: '#475569' }}>Usuario</th>
+                                                    <th style={{ padding: '12px 16px', fontWeight: '600', color: '#475569' }}>Agencia</th>
+                                                    <th style={{ padding: '12px 16px', fontWeight: '600', color: '#475569' }}>Rol</th>
+                                                    <th style={{ padding: '12px 16px', fontWeight: '600', color: '#475569' }}>Última Actividad</th>
+                                                    <th style={{ padding: '12px 16px', fontWeight: '600', color: '#475569', textAlign: 'right' }}>Tiempo de Uso</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {usageStats.uso_por_usuario && usageStats.uso_por_usuario.length > 0 ? (
+                                                    usageStats.uso_por_usuario.map((userItem: any, idx: number) => (
+                                                        <tr key={userItem.usuario_id || idx} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                                                            <td style={{ padding: '12px 16px' }}>
+                                                                <div style={{ fontWeight: '500', color: '#0f172a' }}>{userItem.nombre} {userItem.apellido}</div>
+                                                                <div style={{ fontSize: '12px', color: '#64748b' }}>{userItem.email}</div>
+                                                            </td>
+                                                            <td style={{ padding: '12px 16px', color: '#334155' }}>{userItem.agencia_nombre}</td>
+                                                            <td style={{ padding: '12px 16px' }}>
+                                                                <span style={{
+                                                                    fontSize: '11px',
+                                                                    padding: '2px 8px',
+                                                                    borderRadius: '12px',
+                                                                    fontWeight: 'bold',
+                                                                    backgroundColor: userItem.rol === 'admin' ? '#dbeafe' : '#f1f5f9',
+                                                                    color: userItem.rol === 'admin' ? '#1e40af' : '#475569',
+                                                                    textTransform: 'uppercase'
+                                                                }}>
+                                                                    {userItem.rol}
+                                                                </span>
+                                                            </td>
+                                                            <td style={{ padding: '12px 16px', color: '#64748b' }}>
+                                                                {userItem.ultima_fecha ? new Date(userItem.ultima_fecha).toLocaleDateString() : 'N/A'}
+                                                            </td>
+                                                            <td style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 'bold', color: '#2563eb' }}>
+                                                                {formatSeconds(userItem.total_segundos)}
+                                                            </td>
+                                                        </tr>
+                                                    ))
+                                                ) : (
+                                                    <tr>
+                                                        <td colSpan={5} style={{ padding: '16px', textAlign: 'center', color: '#94a3b8' }}>
+                                                            No hay registros de usuarios en este periodo.
+                                                        </td>
+                                                    </tr>
+                                                )}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
                             </div>
                         )}
                     </div>

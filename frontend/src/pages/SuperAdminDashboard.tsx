@@ -188,10 +188,17 @@ const AgenciaCard = React.memo<AgenciaCardProps>(({
                         color: '#14532d',
                         marginBottom: '10px'
                     }}>
-                        <div style={{ fontWeight: '600', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                            <span>🟢 En línea ahora:</span>
+                        <div style={{ fontWeight: '600', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <span>🟢 En línea ahora ({agencia.usuarios_activos.length}):</span>
                         </div>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <div style={{ 
+                            display: 'flex', 
+                            flexDirection: 'column', 
+                            gap: '6px', 
+                            maxHeight: '100px', 
+                            overflowY: 'auto',
+                            paddingRight: '4px'
+                        }}>
                             {agencia.usuarios_activos.map((u) => (
                                 <div key={u.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                     <span>👤 {u.nombre} {u.apellido}</span>

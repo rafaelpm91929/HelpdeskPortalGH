@@ -342,22 +342,25 @@ router.get('/usage-stats', authMiddleware, async (req: any, res: any) => {
 
         const pool = await getConnection();
         
-        let filterSql = '';
+        let filterSql = " AND u.rol != 'superadmin' ";
         const request1 = pool.request();
         const request2 = pool.request();
         const request3 = pool.request();
+        const request4 = pool.request();
 
         if (fecha_inicio) {
             filterSql += ' AND ut.fecha >= @fecha_inicio ';
             request1.input('fecha_inicio', fecha_inicio.split('T')[0]);
             request2.input('fecha_inicio', fecha_inicio.split('T')[0]);
             request3.input('fecha_inicio', fecha_inicio.split('T')[0]);
+            request4.input('fecha_inicio', fecha_inicio.split('T')[0]);
         }
         if (fecha_fin) {
             filterSql += ' AND ut.fecha <= @fecha_fin ';
             request1.input('fecha_fin', fecha_fin.split('T')[0]);
             request2.input('fecha_fin', fecha_fin.split('T')[0]);
             request3.input('fecha_fin', fecha_fin.split('T')[0]);
+            request4.input('fecha_fin', fecha_fin.split('T')[0]);
         }
         if (agencia_ids && agencia_ids !== 'all') {
             const ids = String(agencia_ids).split(',')
@@ -369,6 +372,7 @@ router.get('/usage-stats', authMiddleware, async (req: any, res: any) => {
                     request1.input(paramName, id);
                     request2.input(paramName, id);
                     request3.input(paramName, id);
+                    request4.input(paramName, id);
                     return `@${paramName}`;
                 }).join(', ');
                 filterSql += ` AND u.agencia_id IN (${idPlaceholders}) `;
@@ -377,12 +381,12 @@ router.get('/usage-stats', authMiddleware, async (req: any, res: any) => {
 
         const queryRol = `
             SELECT 
-                CASE WHEN u.rol IN ('admin', 'superadmin') THEN 'admin' ELSE 'usuario' END AS rol_grupo,
+                CASE WHEN u.rol = 'admin' THEN 'admin' ELSE 'usuario' END AS rol_grupo,
                 SUM(ut.segundos_uso) as total_segundos
             FROM tbl_uso_tiempo ut
             INNER JOIN tbl_usuarios u ON ut.usuario_id = u.id
             WHERE 1=1 ${filterSql}
-            GROUP BY CASE WHEN u.rol IN ('admin', 'superadmin') THEN 'admin' ELSE 'usuario' END
+            GROUP BY CASE WHEN u.rol = 'admin' THEN 'admin' ELSE 'usuario' END
         `;
         const resRol = await request1.query(queryRol);
 
@@ -390,35 +394,55 @@ router.get('/usage-stats', authMiddleware, async (req: any, res: any) => {
             SELECT 
                 ag.id as agencia_id,
                 ag.nombre as agencia_nombre,
-                CASE WHEN u.rol IN ('admin', 'superadmin') THEN 'admin' ELSE 'usuario' END AS rol_grupo,
+                CASE WHEN u.rol = 'admin' THEN 'admin' ELSE 'usuario' END AS rol_grupo,
                 SUM(ut.segundos_uso) as total_segundos
             FROM tbl_uso_tiempo ut
             INNER JOIN tbl_usuarios u ON ut.usuario_id = u.id
             INNER JOIN tbl_agencias ag ON u.agencia_id = ag.id
             WHERE 1=1 ${filterSql}
-            GROUP BY ag.id, ag.nombre, CASE WHEN u.rol IN ('admin', 'superadmin') THEN 'admin' ELSE 'usuario' END
+            GROUP BY ag.id, ag.nombre, CASE WHEN u.rol = 'admin' THEN 'admin' ELSE 'usuario' END
         `;
         const resAgencia = await request2.query(queryAgencia);
 
         const queryDiario = `
             SELECT 
                 ut.fecha,
-                CASE WHEN u.rol IN ('admin', 'superadmin') THEN 'admin' ELSE 'usuario' END AS rol_grupo,
+                CASE WHEN u.rol = 'admin' THEN 'admin' ELSE 'usuario' END AS rol_grupo,
                 SUM(ut.segundos_uso) as total_segundos
             FROM tbl_uso_tiempo ut
             INNER JOIN tbl_usuarios u ON ut.usuario_id = u.id
             WHERE 1=1 ${filterSql}
-            GROUP BY ut.fecha, CASE WHEN u.rol IN ('admin', 'superadmin') THEN 'admin' ELSE 'usuario' END
+            GROUP BY ut.fecha, CASE WHEN u.rol = 'admin' THEN 'admin' ELSE 'usuario' END
             ORDER BY ut.fecha ASC
         `;
         const resDiario = await request3.query(queryDiario);
+
+        const queryUsuarios = `
+            SELECT 
+                u.id as usuario_id,
+                u.nombre,
+                u.apellido,
+                u.email,
+                u.rol,
+                ag.nombre as agencia_nombre,
+                SUM(ut.segundos_uso) as total_segundos,
+                MAX(ut.fecha) as ultima_fecha
+            FROM tbl_uso_tiempo ut
+            INNER JOIN tbl_usuarios u ON ut.usuario_id = u.id
+            INNER JOIN tbl_agencias ag ON u.agencia_id = ag.id
+            WHERE 1=1 ${filterSql}
+            GROUP BY u.id, u.nombre, u.apellido, u.email, u.rol, ag.nombre
+            ORDER BY total_segundos DESC
+        `;
+        const resUsuarios = await request4.query(queryUsuarios);
 
         res.json({
             success: true,
             data: {
                 uso_por_rol: resRol.recordset,
                 uso_por_agencia: resAgencia.recordset,
-                uso_diario: resDiario.recordset
+                uso_diario: resDiario.recordset,
+                uso_por_usuario: resUsuarios.recordset
             }
         });
 
