@@ -28,6 +28,8 @@ interface IAgencia {
         email: string;
         rol: string;
     }[];
+    total_usuarios?: number;
+    admin_info?: string | null;
 }
 
 interface IUsuario {
@@ -793,13 +795,14 @@ export const SuperAdminDashboard: React.FC = () => {
         }}>
             {/* Navbar */}
             <nav style={{
-                backgroundColor: 'white',
+                backgroundColor: 'rgba(15, 23, 42, 0.65)',
+                backdropFilter: 'blur(12px)',
                 padding: '12px 24px',
-                boxShadow: '0 2px 4px rgba(0,0,0,0.08)',
+                boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
-                borderBottom: '1px solid #e5e7eb'
+                borderBottom: '1px solid rgba(255, 255, 255, 0.08)'
             }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                     {/* GH Logo container */}
@@ -811,7 +814,7 @@ export const SuperAdminDashboard: React.FC = () => {
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        border: '1px solid #e5e7eb'
+                        border: '1px solid rgba(255, 255, 255, 0.1)'
                     }}>
                         <img 
                             src="/logo_gh.jpg" 
@@ -822,12 +825,12 @@ export const SuperAdminDashboard: React.FC = () => {
                             }}
                         />
                     </div>
-                    <h1 style={{ fontSize: '20px', fontWeight: 'bold', color: '#0f172a', margin: 0 }}>
+                    <h1 style={{ fontSize: '20px', fontWeight: 'bold', color: '#ffffff', margin: 0 }}>
                         Super Admin Dashboard
                     </h1>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                    <span style={{ fontSize: '14px', color: '#374151', fontWeight: '500' }}>
+                    <span style={{ fontSize: '14px', color: '#f8fafc', fontWeight: '500' }}>
                         {user?.nombre} {user?.apellido}
                     </span>
                     <button
@@ -836,13 +839,23 @@ export const SuperAdminDashboard: React.FC = () => {
                             logout();
                         }}
                         style={{
-                            padding: '8px 16px',
-                            color: '#dc2626',
+                            padding: '6px 14px',
+                            color: '#ef4444',
                             background: 'none',
-                            border: 'none',
+                            border: '1px solid rgba(239, 68, 68, 0.3)',
+                            borderRadius: '6px',
                             cursor: 'pointer',
-                            fontSize: '14px',
-                            fontWeight: '600'
+                            fontSize: '13px',
+                            fontWeight: '600',
+                            transition: 'all 0.2s'
+                        }}
+                        onMouseEnter={(e) => {
+                            e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.1)';
+                            e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.6)';
+                        }}
+                        onMouseLeave={(e) => {
+                            e.currentTarget.style.backgroundColor = 'transparent';
+                            e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.3)';
                         }}
                     >
                         Cerrar sesión
@@ -857,104 +870,75 @@ export const SuperAdminDashboard: React.FC = () => {
                     <div style={{
                         display: 'flex',
                         gap: '8px',
-                        backgroundColor: 'white',
-                        padding: '8px',
-                        borderRadius: '8px',
+                        backgroundColor: 'rgba(15, 23, 42, 0.55)',
+                        backdropFilter: 'blur(8px)',
+                        padding: '6px',
+                        borderRadius: '10px',
                         marginBottom: '24px',
-                        boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
+                        border: '1px solid rgba(255, 255, 255, 0.06)',
+                        boxShadow: '0 4px 15px rgba(0,0,0,0.15)'
                     }}>
                         <button
                             onClick={() => setActiveTab('menu')}
                             style={{
                                 padding: '10px 20px',
                                 backgroundColor: 'transparent',
-                                color: '#475569',
+                                color: '#94a3b8',
                                 border: 'none',
                                 borderRadius: '6px',
                                 cursor: 'pointer',
                                 fontWeight: '600',
                                 display: 'flex',
                                 alignItems: 'center',
-                                gap: '6px'
+                                gap: '6px',
+                                transition: 'color 0.2s'
                             }}
+                            onMouseEnter={(e) => e.currentTarget.style.color = '#ffffff'}
+                            onMouseLeave={(e) => e.currentTarget.style.color = '#94a3b8'}
                         >
                             ⬅️ Menú Principal
                         </button>
-                        <button
-                            onClick={() => setActiveTab('agencias')}
-                            style={{
-                                flex: 1,
-                                padding: '10px',
-                                backgroundColor: activeTab === 'agencias' ? '#2563eb' : 'transparent',
-                                color: activeTab === 'agencias' ? 'white' : '#374151',
-                                border: 'none',
-                                borderRadius: '6px',
-                                cursor: 'pointer',
-                                fontWeight: '500'
-                            }}
-                        >
-                            🏢 Agencias
-                        </button>
-                        <button
-                            onClick={() => setActiveTab('admins')}
-                            style={{
-                                flex: 1,
-                                padding: '10px',
-                                backgroundColor: activeTab === 'admins' ? '#2563eb' : 'transparent',
-                                color: activeTab === 'admins' ? 'white' : '#374151',
-                                border: 'none',
-                                borderRadius: '6px',
-                                cursor: 'pointer',
-                                fontWeight: '500'
-                            }}
-                        >
-                            👥 Administradores
-                        </button>
-                        <button
-                            onClick={() => setActiveTab('manuales')}
-                            style={{
-                                flex: 1,
-                                padding: '10px',
-                                backgroundColor: activeTab === 'manuales' ? '#2563eb' : 'transparent',
-                                color: activeTab === 'manuales' ? 'white' : '#374151',
-                                border: 'none',
-                                borderRadius: '6px',
-                                cursor: 'pointer',
-                                fontWeight: '500'
-                            }}
-                        >
-                            📄 Manuales
-                        </button>
-                        <button
-                            onClick={() => setActiveTab('licencias')}
-                            style={{
-                                flex: 1,
-                                padding: '10px',
-                                backgroundColor: activeTab === 'licencias' ? '#2563eb' : 'transparent',
-                                color: activeTab === 'licencias' ? 'white' : '#374151',
-                                border: 'none',
-                                borderRadius: '6px',
-                                cursor: 'pointer',
-                                fontWeight: '500'
-                            }}
-                        >
-                            📅 Licencias
-                        </button>
-                        <button
-                            onClick={() => setActiveTab('estadisticas')}
-                            style={{
-                                flex: 1,
-                                padding: '10px',
-                                backgroundColor: activeTab === 'estadisticas' ? '#2563eb' : 'transparent',
-                                color: activeTab === 'estadisticas' ? 'white' : '#374151',
-                                border: 'none',
-                                borderRadius: '6px',
-                                cursor: 'pointer',
-                                fontWeight: '500'
-                            }}
-                        >
-                            📈 Estadísticas
-                        </button>
+                        {(['agencias', 'admins', 'manuales', 'licencias', 'estadisticas'] as const).map((tab) => {
+                            const isActive = activeTab === tab;
+                            const labels: Record<string, string> = {
+                                agencias: '🏢 Agencias',
+                                admins: '👥 Administradores',
+                                manuales: '📄 Manuales',
+                                licencias: '📅 Licencias',
+                                estadisticas: '📈 Estadísticas'
+                            };
+                            return (
+                                <button
+                                    key={tab}
+                                    onClick={() => setActiveTab(tab)}
+                                    style={{
+                                        flex: 1,
+                                        padding: '10px',
+                                        border: isActive ? '1px solid rgba(59, 130, 246, 0.3)' : '1px solid transparent',
+                                        borderRadius: '8px',
+                                        cursor: 'pointer',
+                                        fontWeight: isActive ? '600' : '500',
+                                        backgroundColor: isActive ? 'rgba(59, 130, 246, 0.15)' : 'transparent',
+                                        color: isActive ? '#60a5fa' : '#cbd5e1',
+                                        transition: 'all 0.2s'
+                                    }}
+                                    onMouseEnter={(e) => {
+                                        if (!isActive) {
+                                            e.currentTarget.style.color = '#ffffff';
+                                            e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.05)';
+                                        }
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        if (!isActive) {
+                                            e.currentTarget.style.color = '#cbd5e1';
+                                            e.currentTarget.style.backgroundColor = 'transparent';
+                                        }
+                                    }}
+                                >
+                                    {labels[tab]}
+                                </button>
+                            );
+                        })}
                     </div>
                 )}
 
@@ -968,265 +952,101 @@ export const SuperAdminDashboard: React.FC = () => {
                         gap: '24px',
                         marginTop: '10px'
                     }}>
-                        {/* Card Agencias */}
-                        <div 
-                            onClick={() => setActiveTab('agencias')}
-                            style={{
-                                backgroundColor: 'white',
-                                borderRadius: '12px',
-                                padding: '32px 24px',
-                                textAlign: 'center',
-                                cursor: 'pointer',
-                                boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03)',
-                                border: '1px solid #e2e8f0',
-                                transition: 'all 0.2s ease-in-out',
-                                display: 'flex',
-                                flexDirection: 'column',
-                                alignItems: 'center',
-                                gap: '16px'
-                            }}
-                            onMouseEnter={(e) => {
-                                e.currentTarget.style.transform = 'translateY(-4px)';
-                                e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05)';
-                                e.currentTarget.style.borderColor = '#3b82f6';
-                            }}
-                            onMouseLeave={(e) => {
-                                e.currentTarget.style.transform = 'translateY(0)';
-                                e.currentTarget.style.boxShadow = '0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03)';
-                                e.currentTarget.style.borderColor = '#e2e8f0';
-                            }}
-                        >
-                            <div style={{ fontSize: '48px' }}>🏢</div>
-                            <div>
-                                <h3 style={{ fontSize: '20px', fontWeight: 'bold', color: '#0f172a', marginBottom: '8px' }}>
-                                    Agencias
-                                </h3>
-                                <p style={{ fontSize: '14px', color: '#64748b', lineHeight: '1.5' }}>
-                                    Administra y configura las agencias registradas, carga de logos y personaliza colores.
-                                </p>
+                        {[
+                            {
+                                tab: 'agencias' as const,
+                                icon: '🏢',
+                                title: 'Agencias',
+                                description: 'Administra y configura las agencias registradas, carga de logos y personaliza colores.'
+                            },
+                            {
+                                tab: 'admins' as const,
+                                icon: '👥',
+                                title: 'Administradores',
+                                description: 'Gestiona las cuentas de administradores de cada agencia de soporte.'
+                            },
+                            {
+                                tab: 'manuales' as const,
+                                icon: '📄',
+                                title: 'Manuales',
+                                description: 'Sube y gestiona la documentación y manuales de ayuda para los usuarios.'
+                            },
+                            {
+                                tab: 'licencias' as const,
+                                icon: '📅',
+                                title: 'Licencias',
+                                description: 'Controla el estado y vencimiento de las licencias de las agencias.'
+                            },
+                            {
+                                tab: 'estadisticas' as const,
+                                icon: '📈',
+                                title: 'Estadísticas',
+                                description: 'Analiza el volumen de tickets, tiempos de respuesta, carga por agente y tendencias de soporte.'
+                            }
+                        ].map((item) => (
+                            <div 
+                                key={item.tab}
+                                onClick={() => setActiveTab(item.tab)}
+                                style={{
+                                    backgroundColor: 'rgba(30, 41, 59, 0.45)',
+                                    backdropFilter: 'blur(12px)',
+                                    borderRadius: '16px',
+                                    padding: '32px 24px',
+                                    textAlign: 'center',
+                                    cursor: 'pointer',
+                                    border: '1px solid rgba(255, 255, 255, 0.08)',
+                                    boxShadow: '0 8px 32px rgba(0, 0, 0, 0.25)',
+                                    transition: 'all 0.2s ease-in-out',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    alignItems: 'center',
+                                    gap: '16px'
+                                }}
+                                onMouseEnter={(e) => {
+                                    e.currentTarget.style.transform = 'translateY(-4px)';
+                                    e.currentTarget.style.boxShadow = '0 12px 40px rgba(0,0,0,0.4)';
+                                    e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.4)';
+                                }}
+                                onMouseLeave={(e) => {
+                                    e.currentTarget.style.transform = 'translateY(0)';
+                                    e.currentTarget.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.25)';
+                                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.08)';
+                                }}
+                            >
+                                <div style={{ fontSize: '48px' }}>{item.icon}</div>
+                                <div>
+                                    <h3 style={{ fontSize: '20px', fontWeight: 'bold', color: '#ffffff', marginBottom: '8px' }}>
+                                        {item.title}
+                                    </h3>
+                                    <p style={{ fontSize: '14px', color: '#cbd5e1', lineHeight: '1.5' }}>
+                                        {item.description}
+                                    </p>
+                                </div>
+                                <button style={{
+                                    marginTop: 'auto',
+                                    padding: '10px 20px',
+                                    background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)',
+                                    border: '1px solid rgba(255, 255, 255, 0.15)',
+                                    color: 'white',
+                                    borderRadius: '8px',
+                                    fontWeight: '600',
+                                    cursor: 'pointer',
+                                    width: '100%',
+                                    transition: 'all 0.2s'
+                                }}
+                                onMouseEnter={(e) => {
+                                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.3)';
+                                    e.currentTarget.style.transform = 'translateY(-1px)';
+                                }}
+                                onMouseLeave={(e) => {
+                                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.15)';
+                                    e.currentTarget.style.transform = 'translateY(0)';
+                                }}
+                                >
+                                    Ingresar
+                                </button>
                             </div>
-                            <button style={{
-                                marginTop: 'auto',
-                                padding: '10px 20px',
-                                backgroundColor: '#3b82f6',
-                                color: 'white',
-                                border: 'none',
-                                borderRadius: '6px',
-                                fontWeight: '600',
-                                cursor: 'pointer',
-                                width: '100%'
-                            }}>
-                                Ingresar
-                            </button>
-                        </div>
-
-                        {/* Card Administradores */}
-                        <div 
-                            onClick={() => setActiveTab('admins')}
-                            style={{
-                                backgroundColor: 'white',
-                                borderRadius: '12px',
-                                padding: '32px 24px',
-                                textAlign: 'center',
-                                cursor: 'pointer',
-                                boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03)',
-                                border: '1px solid #e2e8f0',
-                                transition: 'all 0.2s ease-in-out',
-                                display: 'flex',
-                                flexDirection: 'column',
-                                alignItems: 'center',
-                                gap: '16px'
-                            }}
-                            onMouseEnter={(e) => {
-                                e.currentTarget.style.transform = 'translateY(-4px)';
-                                e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05)';
-                                e.currentTarget.style.borderColor = '#3b82f6';
-                            }}
-                            onMouseLeave={(e) => {
-                                e.currentTarget.style.transform = 'translateY(0)';
-                                e.currentTarget.style.boxShadow = '0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03)';
-                                e.currentTarget.style.borderColor = '#e2e8f0';
-                            }}
-                        >
-                            <div style={{ fontSize: '48px' }}>👥</div>
-                            <div>
-                                <h3 style={{ fontSize: '20px', fontWeight: 'bold', color: '#0f172a', marginBottom: '8px' }}>
-                                    Administradores
-                                </h3>
-                                <p style={{ fontSize: '14px', color: '#64748b', lineHeight: '1.5' }}>
-                                    Crea y edita usuarios administradores asignados para gestionar soporte técnico de las agencias.
-                                </p>
-                            </div>
-                            <button style={{
-                                marginTop: 'auto',
-                                padding: '10px 20px',
-                                backgroundColor: '#3b82f6',
-                                color: 'white',
-                                border: 'none',
-                                borderRadius: '6px',
-                                fontWeight: '600',
-                                cursor: 'pointer',
-                                width: '100%'
-                            }}>
-                                Ingresar
-                            </button>
-                        </div>
-
-                        {/* Card Manuales */}
-                        <div 
-                            onClick={() => setActiveTab('manuales')}
-                            style={{
-                                backgroundColor: 'white',
-                                borderRadius: '12px',
-                                padding: '32px 24px',
-                                textAlign: 'center',
-                                cursor: 'pointer',
-                                boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03)',
-                                border: '1px solid #e2e8f0',
-                                transition: 'all 0.2s ease-in-out',
-                                display: 'flex',
-                                flexDirection: 'column',
-                                alignItems: 'center',
-                                gap: '16px'
-                            }}
-                            onMouseEnter={(e) => {
-                                e.currentTarget.style.transform = 'translateY(-4px)';
-                                e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05)';
-                                e.currentTarget.style.borderColor = '#3b82f6';
-                            }}
-                            onMouseLeave={(e) => {
-                                e.currentTarget.style.transform = 'translateY(0)';
-                                e.currentTarget.style.boxShadow = '0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03)';
-                                e.currentTarget.style.borderColor = '#e2e8f0';
-                            }}
-                        >
-                            <div style={{ fontSize: '48px' }}>📄</div>
-                            <div>
-                                <h3 style={{ fontSize: '20px', fontWeight: 'bold', color: '#0f172a', marginBottom: '8px' }}>
-                                    Manuales
-                                </h3>
-                                <p style={{ fontSize: '14px', color: '#64748b', lineHeight: '1.5' }}>
-                                    Sube, descarga y administra los manuales de usuario y guías técnicas en formato PDF.
-                                </p>
-                            </div>
-                            <button style={{
-                                marginTop: 'auto',
-                                padding: '10px 20px',
-                                backgroundColor: '#3b82f6',
-                                color: 'white',
-                                border: 'none',
-                                borderRadius: '6px',
-                                fontWeight: '600',
-                                cursor: 'pointer',
-                                width: '100%'
-                            }}>
-                                Ingresar
-                            </button>
-                        </div>
-
-                        {/* Card Licencias */}
-                        <div 
-                            onClick={() => setActiveTab('licencias')}
-                            style={{
-                                backgroundColor: 'white',
-                                borderRadius: '12px',
-                                padding: '32px 24px',
-                                textAlign: 'center',
-                                cursor: 'pointer',
-                                boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03)',
-                                border: '1px solid #e2e8f0',
-                                transition: 'all 0.2s ease-in-out',
-                                display: 'flex',
-                                flexDirection: 'column',
-                                alignItems: 'center',
-                                gap: '16px'
-                            }}
-                            onMouseEnter={(e) => {
-                                e.currentTarget.style.transform = 'translateY(-4px)';
-                                e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05)';
-                                e.currentTarget.style.borderColor = '#3b82f6';
-                            }}
-                            onMouseLeave={(e) => {
-                                e.currentTarget.style.transform = 'translateY(0)';
-                                e.currentTarget.style.boxShadow = '0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03)';
-                                e.currentTarget.style.borderColor = '#e2e8f0';
-                            }}
-                        >
-                            <div style={{ fontSize: '48px' }}>📅</div>
-                            <div>
-                                <h3 style={{ fontSize: '20px', fontWeight: 'bold', color: '#0f172a', marginBottom: '8px' }}>
-                                    Licencias
-                                </h3>
-                                <p style={{ fontSize: '14px', color: '#64748b', lineHeight: '1.5' }}>
-                                    Administra el vencimiento de licencias de cada portal de ayuda y suspende accesos vencidos.
-                                </p>
-                            </div>
-                            <button style={{
-                                marginTop: 'auto',
-                                padding: '10px 20px',
-                                backgroundColor: '#3b82f6',
-                                color: 'white',
-                                border: 'none',
-                                borderRadius: '6px',
-                                fontWeight: '600',
-                                cursor: 'pointer',
-                                width: '100%'
-                            }}>
-                                Ingresar
-                            </button>
-                        </div>
-
-                        {/* Card Estadísticas */}
-                        <div 
-                            onClick={() => setActiveTab('estadisticas')}
-                            style={{
-                                backgroundColor: 'white',
-                                borderRadius: '12px',
-                                padding: '32px 24px',
-                                textAlign: 'center',
-                                cursor: 'pointer',
-                                boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03)',
-                                border: '1px solid #e2e8f0',
-                                transition: 'all 0.2s ease-in-out',
-                                display: 'flex',
-                                flexDirection: 'column',
-                                alignItems: 'center',
-                                gap: '16px'
-                            }}
-                            onMouseEnter={(e) => {
-                                e.currentTarget.style.transform = 'translateY(-4px)';
-                                e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05)';
-                                e.currentTarget.style.borderColor = '#3b82f6';
-                            }}
-                            onMouseLeave={(e) => {
-                                e.currentTarget.style.transform = 'translateY(0)';
-                                e.currentTarget.style.boxShadow = '0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03)';
-                                e.currentTarget.style.borderColor = '#e2e8f0';
-                            }}
-                        >
-                            <div style={{ fontSize: '48px' }}>📈</div>
-                            <div>
-                                <h3 style={{ fontSize: '20px', fontWeight: 'bold', color: '#0f172a', marginBottom: '8px' }}>
-                                    Estadísticas
-                                </h3>
-                                <p style={{ fontSize: '14px', color: '#64748b', lineHeight: '1.5' }}>
-                                    Analiza el volumen de tickets, tiempos de respuesta, carga por agente y tendencias de soporte.
-                                </p>
-                            </div>
-                            <button style={{
-                                marginTop: 'auto',
-                                padding: '10px 20px',
-                                backgroundColor: '#3b82f6',
-                                color: 'white',
-                                border: 'none',
-                                borderRadius: '6px',
-                                fontWeight: '600',
-                                cursor: 'pointer',
-                                width: '100%'
-                            }}>
-                                Ingresar
-                            </button>
-                        </div>
+                        ))}
                     </div>
                 )}
 
@@ -1252,11 +1072,22 @@ export const SuperAdminDashboard: React.FC = () => {
                                 }}
                                 style={{
                                     padding: '10px 20px',
-                                    backgroundColor: '#2563eb',
+                                    background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)',
+                                    border: '1px solid rgba(255, 255, 255, 0.15)',
                                     color: 'white',
-                                    border: 'none',
-                                    borderRadius: '6px',
-                                    cursor: 'pointer'
+                                    borderRadius: '8px',
+                                    fontWeight: '600',
+                                    cursor: 'pointer',
+                                    boxShadow: '0 4px 12px rgba(0,0,0,0.25)',
+                                    transition: 'all 0.2s'
+                                }}
+                                onMouseEnter={(e) => {
+                                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.3)';
+                                    e.currentTarget.style.transform = 'translateY(-1px)';
+                                }}
+                                onMouseLeave={(e) => {
+                                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.15)';
+                                    e.currentTarget.style.transform = 'translateY(0)';
                                 }}
                             >
                                 + Nueva Agencia
@@ -1476,6 +1307,101 @@ export const SuperAdminDashboard: React.FC = () => {
                                         ))}
                                     </div>
                                 )}
+                                {/* Tabla Resumen de todas las Agencias */}
+                                <div style={{ marginTop: '30px', width: '100%' }}>
+                                    <h3 style={{ fontSize: '15px', fontWeight: 'bold', color: '#ffffff', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        📋 Resumen General de Agencias ({filteredAgencias.length})
+                                    </h3>
+                                    <div style={{
+                                        maxHeight: '260px',
+                                        overflowY: 'auto',
+                                        border: '1px solid rgba(255, 255, 255, 0.08)',
+                                        borderRadius: '12px',
+                                        backgroundColor: 'rgba(30, 41, 59, 0.25)',
+                                        backdropFilter: 'blur(10px)'
+                                    }}>
+                                        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '13px' }}>
+                                            <thead>
+                                                <tr style={{ backgroundColor: 'rgba(15, 23, 42, 0.65)', borderBottom: '1px solid rgba(255, 255, 255, 0.08)', position: 'sticky', top: 0, zIndex: 10 }}>
+                                                    <th style={{ padding: '10px 14px', fontWeight: '600', color: '#cbd5e1' }}>Nombre</th>
+                                                    <th style={{ padding: '10px 14px', fontWeight: '600', color: '#cbd5e1', textAlign: 'center' }}>Logo</th>
+                                                    <th style={{ padding: '10px 14px', fontWeight: '600', color: '#cbd5e1', textAlign: 'center' }}>Usuarios</th>
+                                                    <th style={{ padding: '10px 14px', fontWeight: '600', color: '#cbd5e1', textAlign: 'center' }}>En Línea</th>
+                                                    <th style={{ padding: '10px 14px', fontWeight: '600', color: '#cbd5e1' }}>Administrador</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {filteredAgencias.map((ag) => (
+                                                    <tr 
+                                                        key={ag.id} 
+                                                        onClick={() => {
+                                                            const originalIndex = filteredAgencias.findIndex(x => x.id === ag.id);
+                                                            if (originalIndex !== -1) {
+                                                                setCurrentAgenciaIndex(originalIndex);
+                                                            }
+                                                        }}
+                                                        style={{ 
+                                                            borderBottom: '1px solid rgba(255, 255, 255, 0.05)', 
+                                                            cursor: 'pointer',
+                                                            transition: 'background-color 0.2s'
+                                                        }}
+                                                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.03)'}
+                                                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                                                    >
+                                                        <td style={{ padding: '10px 14px' }}>
+                                                            <div style={{ fontWeight: '600', color: '#ffffff' }}>{ag.nombre}</div>
+                                                            <div style={{ fontSize: '11px', color: '#94a3b8' }}>{ag.subdominio}.grupohuerta.com</div>
+                                                        </td>
+                                                        <td style={{ padding: '10px 14px', display: 'flex', justifyContent: 'center' }}>
+                                                            <div style={{
+                                                                width: '30px',
+                                                                height: '30px',
+                                                                borderRadius: '6px',
+                                                                backgroundColor: ag.colores_primario || '#1e3a8a',
+                                                                color: 'white',
+                                                                display: 'flex',
+                                                                alignItems: 'center',
+                                                                justifyContent: 'center',
+                                                                fontWeight: 'bold',
+                                                                fontSize: '11px',
+                                                                border: '1px solid rgba(255,255,255,0.1)'
+                                                            }}>
+                                                                {ag.nombre.substring(0, 2).toUpperCase()}
+                                                            </div>
+                                                        </td>
+                                                        <td style={{ padding: '10px 14px', textAlign: 'center', fontWeight: 'bold', color: '#e2e8f0' }}>
+                                                            {ag.total_usuarios ?? 0}
+                                                        </td>
+                                                        <td style={{ padding: '10px 14px', textAlign: 'center' }}>
+                                                            <span style={{
+                                                                display: 'inline-flex',
+                                                                alignItems: 'center',
+                                                                gap: '4px',
+                                                                padding: '2px 8px',
+                                                                borderRadius: '10px',
+                                                                fontSize: '11px',
+                                                                fontWeight: 'bold',
+                                                                backgroundColor: (ag.usuarios_activos?.length || 0) > 0 ? 'rgba(34, 197, 94, 0.15)' : 'rgba(255, 255, 255, 0.05)',
+                                                                color: (ag.usuarios_activos?.length || 0) > 0 ? '#4ade80' : '#94a3b8'
+                                                            }}>
+                                                                <span style={{
+                                                                    width: '6px',
+                                                                    height: '6px',
+                                                                    borderRadius: '50%',
+                                                                    backgroundColor: (ag.usuarios_activos?.length || 0) > 0 ? '#22c55e' : '#94a3b8'
+                                                                }} />
+                                                                {ag.usuarios_activos?.length || 0}
+                                                            </span>
+                                                        </td>
+                                                        <td style={{ padding: '10px 14px', color: '#cbd5e1', fontSize: '12px' }}>
+                                                            {ag.admin_info || <span style={{ color: '#64748b', fontStyle: 'italic' }}>Sin asignar</span>}
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
                             </div>
                         )}
                     </div>
@@ -1509,11 +1435,22 @@ export const SuperAdminDashboard: React.FC = () => {
                                 }}
                                 style={{
                                     padding: '10px 20px',
-                                    backgroundColor: '#7c3aed',
+                                    background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)',
+                                    border: '1px solid rgba(255, 255, 255, 0.15)',
                                     color: 'white',
-                                    border: 'none',
-                                    borderRadius: '6px',
-                                    cursor: 'pointer'
+                                    borderRadius: '8px',
+                                    fontWeight: '600',
+                                    cursor: 'pointer',
+                                    boxShadow: '0 4px 12px rgba(0,0,0,0.25)',
+                                    transition: 'all 0.2s'
+                                }}
+                                onMouseEnter={(e) => {
+                                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.3)';
+                                    e.currentTarget.style.transform = 'translateY(-1px)';
+                                }}
+                                onMouseLeave={(e) => {
+                                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.15)';
+                                    e.currentTarget.style.transform = 'translateY(0)';
                                 }}
                             >
                                 + Nuevo Admin
@@ -1545,17 +1482,19 @@ export const SuperAdminDashboard: React.FC = () => {
                             <p style={{ color: '#f8fafc' }}>Cargando...</p>
                         ) : (
                             <div style={{
-                                backgroundColor: 'white',
-                                borderRadius: '8px',
+                                backgroundColor: 'rgba(30, 41, 59, 0.45)',
+                                backdropFilter: 'blur(12px)',
+                                borderRadius: '12px',
+                                border: '1px solid rgba(255, 255, 255, 0.08)',
                                 overflow: 'hidden',
-                                boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
+                                boxShadow: '0 8px 32px rgba(0,0,0,0.25)'
                             }}>
                                 <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                                    <thead style={{ backgroundColor: '#f9fafb' }}>
-                                        <tr>
-                                            <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: '600', color: '#6b7280' }}>Nombre</th>
-                                            <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: '600', color: '#6b7280' }}>Email</th>
-                                            <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: '600', color: '#6b7280' }}>Agencia</th>
+                                    <thead style={{ backgroundColor: 'rgba(15, 23, 42, 0.65)' }}>
+                                        <tr style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.08)' }}>
+                                            <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: '600', color: '#cbd5e1' }}>Nombre</th>
+                                            <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: '600', color: '#cbd5e1' }}>Email</th>
+                                            <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: '600', color: '#cbd5e1' }}>Agencia</th>
                                             <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: '600', color: '#6b7280' }}>Rol</th>
                                             <th style={{ padding: '12px 16px', textAlign: 'center', fontSize: '12px', fontWeight: '600', color: '#6b7280' }}>Acciones</th>
                                         </tr>
@@ -1714,11 +1653,12 @@ export const SuperAdminDashboard: React.FC = () => {
                                 ) : (
                                     manuales.map((m) => (
                                         <div key={m.id} style={{
-                                            backgroundColor: 'white',
+                                            backgroundColor: 'rgba(30, 41, 59, 0.45)',
+                                            backdropFilter: 'blur(12px)',
                                             padding: '20px',
                                             borderRadius: '12px',
-                                            boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)',
-                                            border: '1px solid #e2e8f0',
+                                            boxShadow: '0 8px 32px rgba(0,0,0,0.25)',
+                                            border: '1px solid rgba(255, 255, 255, 0.08)',
                                             display: 'flex',
                                             flexDirection: 'column',
                                             justifyContent: 'space-between'
@@ -1726,15 +1666,15 @@ export const SuperAdminDashboard: React.FC = () => {
                                             <div>
                                                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
                                                     <span style={{ fontSize: '32px' }}>📕</span>
-                                                    <h3 style={{ fontWeight: 'bold', color: '#0f172a', fontSize: '16px', margin: 0 }}>
+                                                    <h3 style={{ fontWeight: 'bold', color: '#ffffff', fontSize: '16px', margin: 0 }}>
                                                         {m.nombre}
                                                     </h3>
                                                 </div>
-                                                <p style={{ fontSize: '12px', color: '#64748b', margin: '0 0 16px 0' }}>
+                                                <p style={{ fontSize: '12px', color: '#94a3b8', margin: '0 0 16px 0' }}>
                                                     Subido el {new Date(m.fecha_creacion).toLocaleDateString()}
                                                 </p>
                                             </div>
-                                            <div style={{ display: 'flex', gap: '8px', borderTop: '1px solid #f1f5f9', paddingTop: '12px' }}>
+                                            <div style={{ display: 'flex', gap: '8px', borderTop: '1px solid rgba(255, 255, 255, 0.08)', paddingTop: '12px' }}>
                                                 <a
                                                     href={m.ruta.startsWith('http') ? m.ruta : `${IMAGE_BASE_URL}${m.ruta}`}
                                                     target="_blank"
@@ -1742,15 +1682,19 @@ export const SuperAdminDashboard: React.FC = () => {
                                                     style={{
                                                         flex: 1,
                                                         padding: '8px',
-                                                        backgroundColor: '#eff6ff',
-                                                        color: '#2563eb',
+                                                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                                                        color: '#60a5fa',
+                                                        border: '1px solid rgba(59, 130, 246, 0.25)',
                                                         textAlign: 'center',
                                                         textDecoration: 'none',
                                                         borderRadius: '6px',
                                                         fontSize: '13px',
                                                         fontWeight: '600',
-                                                        display: 'inline-block'
+                                                        display: 'inline-block',
+                                                        transition: 'all 0.2s'
                                                     }}
+                                                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(59, 130, 246, 0.18)'}
+                                                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgba(59, 130, 246, 0.1)'}
                                                 >
                                                     ⬇️ Descargar PDF
                                                 </a>
@@ -1758,14 +1702,17 @@ export const SuperAdminDashboard: React.FC = () => {
                                                     onClick={() => deleteManual(m.id)}
                                                     style={{
                                                         padding: '8px 12px',
-                                                        backgroundColor: '#fee2e2',
-                                                        color: '#b91c1c',
-                                                        border: 'none',
+                                                        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                                                        color: '#ef4444',
+                                                        border: '1px solid rgba(239, 68, 68, 0.25)',
                                                         borderRadius: '6px',
                                                         cursor: 'pointer',
                                                         fontSize: '13px',
-                                                        fontWeight: '600'
+                                                        fontWeight: '600',
+                                                        transition: 'all 0.2s'
                                                     }}
+                                                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.18)'}
+                                                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.1)'}
                                                 >
                                                     🗑️ Borrar
                                                 </button>
@@ -1807,7 +1754,6 @@ export const SuperAdminDashboard: React.FC = () => {
                                     padding: '10px 14px',
                                     borderRadius: '8px',
                                     border: '1px solid rgba(255, 255, 255, 0.1)',
-                                    backgroundColor: '#1e293b',
                                     color: 'white',
                                     fontSize: '14px',
                                     outline: 'none'
@@ -1816,20 +1762,21 @@ export const SuperAdminDashboard: React.FC = () => {
                         </div>
 
                         <div style={{
-                            backgroundColor: 'white',
+                            backgroundColor: 'rgba(30, 41, 59, 0.45)',
+                            backdropFilter: 'blur(12px)',
                             borderRadius: '12px',
-                            boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)',
-                            border: '1px solid #e2e8f0',
-                            overflow: 'hidden'
+                            border: '1px solid rgba(255, 255, 255, 0.08)',
+                            overflow: 'hidden',
+                            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.25)'
                         }}>
                             <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
                                 <thead>
-                                    <tr style={{ backgroundColor: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
-                                        <th style={{ padding: '16px', color: '#475569', fontWeight: '600' }}>Agencia</th>
-                                        <th style={{ padding: '16px', color: '#475569', fontWeight: '600' }}>Subdominio</th>
-                                        <th style={{ padding: '16px', color: '#475569', fontWeight: '600' }}>Expiración de Licencia</th>
-                                        <th style={{ padding: '16px', color: '#475569', fontWeight: '600' }}>Estado</th>
-                                        <th style={{ padding: '16px', color: '#475569', fontWeight: '600', textAlign: 'center' }}>Acciones</th>
+                                    <tr style={{ backgroundColor: 'rgba(15, 23, 42, 0.65)', borderBottom: '1px solid rgba(255, 255, 255, 0.08)' }}>
+                                        <th style={{ padding: '16px', color: '#cbd5e1', fontWeight: '600' }}>Agencia</th>
+                                        <th style={{ padding: '16px', color: '#cbd5e1', fontWeight: '600' }}>Subdominio</th>
+                                        <th style={{ padding: '16px', color: '#cbd5e1', fontWeight: '600' }}>Expiración de Licencia</th>
+                                        <th style={{ padding: '16px', color: '#cbd5e1', fontWeight: '600' }}>Estado</th>
+                                        <th style={{ padding: '16px', color: '#cbd5e1', fontWeight: '600', textAlign: 'center' }}>Acciones</th>
                                     </tr>
                                 </thead>
                                 <tbody>

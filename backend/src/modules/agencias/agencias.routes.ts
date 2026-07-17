@@ -178,15 +178,17 @@ router.get('/', async (req: any, res: any) => {
         const currentUser = req.user;
         const pool = await getConnection();
         const result = await pool.request().query(`
-            SELECT id, nombre, subdominio, logo_url, 
-                   colores_primario, colores_secundario, 
-                   colores_fondo, colores_texto,
-                   activo, fecha_creacion, 
-                   CASE WHEN bloqueada = 1 OR (fecha_licencia IS NOT NULL AND fecha_licencia < GETDATE()) THEN 1 ELSE 0 END AS bloqueada,
-                   CASE WHEN fecha_licencia IS NOT NULL AND fecha_licencia < GETDATE() THEN 'Licencia expirada' ELSE mensaje_bloqueo END AS mensaje_bloqueo,
-                   fecha_licencia
-            FROM tbl_agencias 
-            ORDER BY fecha_creacion DESC
+            SELECT a.id, a.nombre, a.subdominio, a.logo_url, 
+                   a.colores_primario, a.colores_secundario, 
+                   a.colores_fondo, a.colores_texto,
+                   a.activo, a.fecha_creacion, 
+                   CASE WHEN a.bloqueada = 1 OR (a.fecha_licencia IS NOT NULL AND a.fecha_licencia < GETDATE()) THEN 1 ELSE 0 END AS bloqueada,
+                   CASE WHEN a.fecha_licencia IS NOT NULL AND a.fecha_licencia < GETDATE() THEN 'Licencia expirada' ELSE a.mensaje_bloqueo END AS mensaje_bloqueo,
+                   a.fecha_licencia,
+                   (SELECT COUNT(*) FROM tbl_usuarios u WHERE u.agencia_id = a.id AND u.rol != 'superadmin') AS total_usuarios,
+                   (SELECT TOP 1 (u.nombre + ' ' + u.apellido + ' (' + u.email + ')') FROM tbl_usuarios u WHERE u.agencia_id = a.id AND u.rol = 'admin' ORDER BY u.id ASC) AS admin_info
+            FROM tbl_agencias a
+            ORDER BY a.fecha_creacion DESC
         `);
         
         let agencias = result.recordset;
