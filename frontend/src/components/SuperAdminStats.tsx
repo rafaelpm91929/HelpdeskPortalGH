@@ -1791,7 +1791,13 @@ export const SuperAdminStats: React.FC<SuperAdminStatsProps> = ({ agencias }) =>
                             onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
                         >
                             <h3 style={{ fontSize: '16px', fontWeight: 'bold', color: '#ffffff', marginBottom: '20px' }}>🔥 Mapa de Calor: Flujo de Incidencias por Hora (Picos)</h3>
-                               {activeSubTab === 'tiempos' && (
+                            {renderHeatmap()}
+                        </div>
+                    )}
+                    </>
+                )}
+
+                {activeSubTab === 'tiempos' && (
                         <div style={{
                             backgroundColor: 'rgba(30, 41, 59, 0.45)',
                             backdropFilter: 'blur(12px)',
