@@ -963,7 +963,7 @@ export const SuperAdminStats: React.FC<SuperAdminStatsProps> = ({ agencias }) =>
         const width = 500;
         const barHeight = 26;
         const barSpacing = 14;
-        const paddingLeft = 120;
+        const paddingLeft = 160;
         const paddingRight = 45;
         const height = data.length * (barHeight + barSpacing) + 20;
 
@@ -995,13 +995,13 @@ export const SuperAdminStats: React.FC<SuperAdminStatsProps> = ({ agencias }) =>
                             <text 
                                 x={paddingLeft - 12} 
                                 y={y + barHeight / 2 + 4} 
-                                fill="#475569" 
+                                fill="#cbd5e1" 
                                 fontSize="11" 
                                 textAnchor="end"
                                 fontFamily="system-ui"
                                 fontWeight="600"
                             >
-                                {d.label.length > 17 ? d.label.substring(0, 15) + '..' : d.label}
+                                {d.label.length > 24 ? d.label.substring(0, 22) + '..' : d.label}
                             </text>
 
                             {/* Rectángulo de sombra / fondo */}
@@ -1010,8 +1010,8 @@ export const SuperAdminStats: React.FC<SuperAdminStatsProps> = ({ agencias }) =>
                                 y={y} 
                                 width={maxBarWidth} 
                                 height={barHeight} 
-                                fill="#f8fafc" 
-                                stroke="#f1f5f9"
+                                fill="rgba(255, 255, 255, 0.04)" 
+                                stroke="rgba(255, 255, 255, 0.08)"
                                 strokeWidth="1"
                                 rx="5"
                             />
@@ -1030,7 +1030,7 @@ export const SuperAdminStats: React.FC<SuperAdminStatsProps> = ({ agencias }) =>
                             <text 
                                 x={paddingLeft + Math.max(barWidth, 4) + 10} 
                                 y={y + barHeight / 2 + 4} 
-                                fill="#0f172a" 
+                                fill="#ffffff" 
                                 fontSize="11" 
                                 fontWeight="800"
                                 fontFamily="system-ui"
