@@ -173,8 +173,9 @@ router.get('/:id', async (req, res) => {
 router.use(authMiddleware);
 
 // GET /api/agencias - Listar todas las agencias
-router.get('/', async (req, res) => {
+router.get('/', async (req: any, res: any) => {
     try {
+        const currentUser = req.user;
         const pool = await getConnection();
         const result = await pool.request().query(`
             SELECT id, nombre, subdominio, logo_url, 
@@ -187,9 +188,28 @@ router.get('/', async (req, res) => {
             FROM tbl_agencias 
             ORDER BY fecha_creacion DESC
         `);
+        
+        let agencias = result.recordset;
+
+        // Si es superadmin, obtener usuarios activos en tiempo real (último ping hace menos de 60 segundos)
+        if (currentUser && currentUser.rol === 'superadmin') {
+            const activeUsersResult = await pool.request().query(`
+                SELECT id, nombre, apellido, email, rol, agencia_id, ultimo_ping
+                FROM tbl_usuarios
+                WHERE ultimo_ping >= DATEADD(second, -60, GETDATE())
+            `);
+            
+            const activeUsers = activeUsersResult.recordset;
+            
+            agencias = agencias.map((agencia: any) => ({
+                ...agencia,
+                usuarios_activos: activeUsers.filter((user: any) => user.agencia_id === agencia.id)
+            }));
+        }
+
         res.json({
             success: true,
-            data: result.recordset
+            data: agencias
         });
     } catch (error: any) {
         console.error('Error al listar agencias:', error);

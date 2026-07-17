@@ -554,6 +554,56 @@ export class AuthController {
         }
     }
 
+    static async heartbeat(req: any, res: Response) {
+        try {
+            const currentUser = req.user;
+            if (!currentUser) {
+                return res.status(401).json({
+                    success: false,
+                    error: 'No autenticado'
+                });
+            }
+
+            const pool = await getConnection();
+            
+            // 1. Actualizar ultimo_ping en tbl_usuarios
+            await pool.request()
+                .input('id', currentUser.id)
+                .query('UPDATE tbl_usuarios SET ultimo_ping = GETDATE() WHERE id = @id');
+
+            // 2. Incrementar/insertar tiempo de uso en tbl_uso_tiempo
+            const interval = 30;
+            await pool.request()
+                .input('usuario_id', currentUser.id)
+                .input('intervalo', interval)
+                .query(`
+                    DECLARE @hoy DATE = CAST(GETDATE() AS DATE);
+                    IF EXISTS (SELECT 1 FROM tbl_uso_tiempo WHERE usuario_id = @usuario_id AND fecha = @hoy)
+                    BEGIN
+                        UPDATE tbl_uso_tiempo 
+                        SET segundos_uso = segundos_uso + @intervalo 
+                        WHERE usuario_id = @usuario_id AND fecha = @hoy;
+                    END
+                    ELSE
+                    BEGIN
+                        INSERT INTO tbl_uso_tiempo (usuario_id, fecha, segundos_uso) 
+                        VALUES (@usuario_id, @hoy, @intervalo);
+                    END
+                `);
+
+            res.json({
+                success: true,
+                message: 'Heartbeat registrado con éxito'
+            });
+        } catch (error: any) {
+            console.error('Error en heartbeat:', error);
+            res.status(500).json({
+                success: false,
+                error: error.message
+            });
+        }
+    }
+
     static async getCurrentUser(req: any, res: Response) {
         try {
             const currentUser = req.user;

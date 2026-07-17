@@ -18,6 +18,10 @@ export const SuperAdminStats: React.FC<SuperAdminStatsProps> = ({ agencias }) =>
     const [tickets, setTickets] = useState<any[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
 
+    // Tiempo de Uso (Estadísticas SuperAdmin)
+    const [usageStats, setUsageStats] = useState<any>(null);
+    const [loadingUsage, setLoadingUsage] = useState<boolean>(true);
+
     // Filtros interactivos del cliente (en cascada)
     const [filterArea, setFilterArea] = useState<string>('all');
     const [filterPrioridad, setFilterPrioridad] = useState<string>('all');
@@ -107,9 +111,42 @@ export const SuperAdminStats: React.FC<SuperAdminStatsProps> = ({ agencias }) =>
         }
     };
 
+    // Función para cargar estadísticas de tiempo de uso de la app
+    const loadUsageStats = async () => {
+        try {
+            setLoadingUsage(true);
+            const params: any = {};
+            if (!selectedAgencias.includes('all') && selectedAgencias.length > 0) {
+                params.agencia_ids = selectedAgencias.join(',');
+            }
+            if (fechaInicio) params.fecha_inicio = `${fechaInicio}T00:00:00`;
+            if (fechaFin) params.fecha_fin = `${fechaFin}T23:59:59`;
+
+            const response = await api.get('/tickets/usage-stats', { params });
+            if (response.data.success) {
+                setUsageStats(response.data.data);
+            }
+        } catch (error) {
+            console.error('Error al cargar estadísticas de uso de tiempo:', error);
+        } finally {
+            setLoadingUsage(false);
+        }
+    };
+
+    const formatSeconds = (seconds: number): string => {
+        if (!seconds || seconds <= 0) return '0m';
+        const hours = Math.floor(seconds / 3600);
+        const minutes = Math.floor((seconds % 3600) / 60);
+        if (hours > 0) {
+            return `${hours}h ${minutes}m`;
+        }
+        return `${minutes}m`;
+    };
+
     // Recargar datos cuando cambien los filtros principales de la API
     useEffect(() => {
         loadStatsData();
+        loadUsageStats();
     }, [selectedAgencias, fechaInicio, fechaFin]);
 
     // Manejar selección de agencias
@@ -1752,6 +1789,86 @@ export const SuperAdminStats: React.FC<SuperAdminStatsProps> = ({ agencias }) =>
                             {renderHeatmap()}
                         </div>
                     )}
+
+                    {/* 10. TIEMPO DE USO Y ACTIVIDAD (SOLO SUPERADMIN) */}
+                    <div style={{
+                        backgroundColor: 'white',
+                        padding: '24px',
+                        borderRadius: '16px',
+                        border: '1px solid #e2e8f0',
+                        boxShadow: '0 10px 25px -5px rgba(0,0,0,0.03)',
+                        marginTop: '24px'
+                    }}>
+                        <h3 style={{ fontSize: '16px', fontWeight: 'bold', color: '#0f172a', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            ⏱️ Tiempo de Uso y Actividad (SuperAdmin)
+                        </h3>
+
+                        {loadingUsage ? (
+                            <p style={{ color: '#64748b' }}>Cargando estadísticas de tiempo...</p>
+                        ) : !usageStats ? (
+                            <p style={{ color: '#64748b' }}>No se registraron actividades de uso en el periodo seleccionado.</p>
+                        ) : (
+                            <div>
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', marginBottom: '24px' }}>
+                                    <div style={{ padding: '16px', borderRadius: '12px', backgroundColor: '#eff6ff', border: '1px solid #bfdbfe' }}>
+                                        <span style={{ fontSize: '13px', color: '#1e3a8a', fontWeight: '600' }}>👑 Tiempo Total Admins</span>
+                                        <h2 style={{ fontSize: '24px', fontWeight: 'bold', color: '#1e40af', margin: '8px 0 0 0' }}>
+                                            {formatSeconds(usageStats.uso_por_rol?.find((r: any) => r.rol_grupo === 'admin')?.total_segundos || 0)}
+                                        </h2>
+                                    </div>
+                                    <div style={{ padding: '16px', borderRadius: '12px', backgroundColor: '#f0fdf4', border: '1px solid #bbf7d0' }}>
+                                        <span style={{ fontSize: '13px', color: '#14532d', fontWeight: '600' }}>👤 Tiempo Total Usuarios</span>
+                                        <h2 style={{ fontSize: '24px', fontWeight: 'bold', color: '#166534', margin: '8px 0 0 0' }}>
+                                            {formatSeconds(usageStats.uso_por_rol?.find((r: any) => r.rol_grupo === 'usuario')?.total_segundos || 0)}
+                                        </h2>
+                                    </div>
+                                </div>
+
+                                <div style={{ overflowX: 'auto', border: '1px solid #e2e8f0', borderRadius: '12px' }}>
+                                    <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '14px' }}>
+                                        <thead>
+                                            <tr style={{ backgroundColor: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
+                                                <th style={{ padding: '12px 16px', fontWeight: '600', color: '#475569' }}>Agencia</th>
+                                                <th style={{ padding: '12px 16px', fontWeight: '600', color: '#475569' }}>Rol</th>
+                                                <th style={{ padding: '12px 16px', fontWeight: '600', color: '#475569', textAlign: 'right' }}>Tiempo de Uso</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {usageStats.uso_por_agencia && usageStats.uso_por_agencia.length > 0 ? (
+                                                usageStats.uso_por_agencia.map((item: any, idx: number) => (
+                                                    <tr key={idx} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                                                        <td style={{ padding: '12px 16px', fontWeight: '500', color: '#0f172a' }}>{item.agencia_nombre}</td>
+                                                        <td style={{ padding: '12px 16px' }}>
+                                                            <span style={{
+                                                                fontSize: '11px',
+                                                                padding: '2px 8px',
+                                                                borderRadius: '12px',
+                                                                fontWeight: 'bold',
+                                                                backgroundColor: item.rol_grupo === 'admin' ? '#dbeafe' : '#f1f5f9',
+                                                                color: item.rol_grupo === 'admin' ? '#1e40af' : '#475569',
+                                                                textTransform: 'uppercase'
+                                                            }}>
+                                                                {item.rol_grupo}
+                                                            </span>
+                                                        </td>
+                                                        <td style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 'bold', color: '#334155' }}>
+                                                            {formatSeconds(item.total_segundos)}
+                                                        </td>
+                                                    </tr>
+                                                ))
+                                            ) : (
+                                                <tr>
+                                                    <td colSpan={3} style={{ padding: '16px', textAlign: 'center', color: '#94a3b8' }}>
+                                                        No hay registros de tiempo en este periodo.
+                                                    </td>
+                                                </tr>
+                                            )}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        )}
+                    </div>
                 </>
             )}
         </div>

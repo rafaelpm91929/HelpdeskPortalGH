@@ -8,7 +8,8 @@
     "build": "tsc",
     "start": "node dist/app.js",
     "clean": "rmdir /s /q dist",
-    "alter-db": "ts-node src/alter-database.ts"
+    "alter-db": "ts-node src/alter-database.ts",
+    "setup-usage": "ts-node src/setup-usage-tracking.ts"
   },
   "keywords": [],
   "author": "",

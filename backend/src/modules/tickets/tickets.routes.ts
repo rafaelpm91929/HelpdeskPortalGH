@@ -326,6 +326,112 @@ router.get('/stats', authMiddleware, async (req: any, res: any) => {
 });
 
 // ============================================
+// GET /api/tickets/usage-stats
+// ============================================
+router.get('/usage-stats', authMiddleware, async (req: any, res: any) => {
+    try {
+        const currentUser = req.user;
+        if (!currentUser || currentUser.rol !== 'superadmin') {
+            return res.status(403).json({
+                success: false,
+                error: 'No tienes permiso para ver estadísticas de uso'
+            });
+        }
+
+        const { fecha_inicio, fecha_fin, agencia_ids } = req.query;
+
+        const pool = await getConnection();
+        
+        let filterSql = '';
+        const request1 = pool.request();
+        const request2 = pool.request();
+        const request3 = pool.request();
+
+        if (fecha_inicio) {
+            filterSql += ' AND ut.fecha >= @fecha_inicio ';
+            request1.input('fecha_inicio', fecha_inicio.split('T')[0]);
+            request2.input('fecha_inicio', fecha_inicio.split('T')[0]);
+            request3.input('fecha_inicio', fecha_inicio.split('T')[0]);
+        }
+        if (fecha_fin) {
+            filterSql += ' AND ut.fecha <= @fecha_fin ';
+            request1.input('fecha_fin', fecha_fin.split('T')[0]);
+            request2.input('fecha_fin', fecha_fin.split('T')[0]);
+            request3.input('fecha_fin', fecha_fin.split('T')[0]);
+        }
+        if (agencia_ids && agencia_ids !== 'all') {
+            const ids = String(agencia_ids).split(',')
+                .map(id => parseInt(id.trim()))
+                .filter(id => !isNaN(id));
+            if (ids.length > 0) {
+                const idPlaceholders = ids.map((id, index) => {
+                    const paramName = `ag_id_${index}`;
+                    request1.input(paramName, id);
+                    request2.input(paramName, id);
+                    request3.input(paramName, id);
+                    return `@${paramName}`;
+                }).join(', ');
+                filterSql += ` AND u.agencia_id IN (${idPlaceholders}) `;
+            }
+        }
+
+        const queryRol = `
+            SELECT 
+                CASE WHEN u.rol IN ('admin', 'superadmin') THEN 'admin' ELSE 'usuario' END AS rol_grupo,
+                SUM(ut.segundos_uso) as total_segundos
+            FROM tbl_uso_tiempo ut
+            INNER JOIN tbl_usuarios u ON ut.usuario_id = u.id
+            WHERE 1=1 ${filterSql}
+            GROUP BY CASE WHEN u.rol IN ('admin', 'superadmin') THEN 'admin' ELSE 'usuario' END
+        `;
+        const resRol = await request1.query(queryRol);
+
+        const queryAgencia = `
+            SELECT 
+                ag.id as agencia_id,
+                ag.nombre as agencia_nombre,
+                CASE WHEN u.rol IN ('admin', 'superadmin') THEN 'admin' ELSE 'usuario' END AS rol_grupo,
+                SUM(ut.segundos_uso) as total_segundos
+            FROM tbl_uso_tiempo ut
+            INNER JOIN tbl_usuarios u ON ut.usuario_id = u.id
+            INNER JOIN tbl_agencias ag ON u.agencia_id = ag.id
+            WHERE 1=1 ${filterSql}
+            GROUP BY ag.id, ag.nombre, CASE WHEN u.rol IN ('admin', 'superadmin') THEN 'admin' ELSE 'usuario' END
+        `;
+        const resAgencia = await request2.query(queryAgencia);
+
+        const queryDiario = `
+            SELECT 
+                ut.fecha,
+                CASE WHEN u.rol IN ('admin', 'superadmin') THEN 'admin' ELSE 'usuario' END AS rol_grupo,
+                SUM(ut.segundos_uso) as total_segundos
+            FROM tbl_uso_tiempo ut
+            INNER JOIN tbl_usuarios u ON ut.usuario_id = u.id
+            WHERE 1=1 ${filterSql}
+            GROUP BY ut.fecha, CASE WHEN u.rol IN ('admin', 'superadmin') THEN 'admin' ELSE 'usuario' END
+            ORDER BY ut.fecha ASC
+        `;
+        const resDiario = await request3.query(queryDiario);
+
+        res.json({
+            success: true,
+            data: {
+                uso_por_rol: resRol.recordset,
+                uso_por_agencia: resAgencia.recordset,
+                uso_diario: resDiario.recordset
+            }
+        });
+
+    } catch (error: any) {
+        console.error('❌ Error al obtener estadísticas de uso de tiempo:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// ============================================
 // GET /api/tickets/agencia/:agencia_id
 // ============================================
 router.get('/agencia/:agencia_id', authMiddleware, async (req: any, res: any) => {

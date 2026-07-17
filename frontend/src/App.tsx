@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { api } from './api/axios.config';
 import { LoginPage } from './pages/LoginPage';
 import { LandingPage } from './pages/LandingPage';
 import { DashboardPage } from './pages/DashboardPage';
@@ -15,6 +16,24 @@ const PUBLIC_IP = '201.149.60.82';
 const AppRouter: React.FC = () => {
     const { user, isLoading } = useAuth();
     
+    // 🔥 Latido de actividad periódica del usuario
+    React.useEffect(() => {
+        if (!user) return;
+
+        const sendHeartbeat = async () => {
+            try {
+                await api.post('/auth/heartbeat');
+            } catch (error) {
+                console.error('Error al enviar heartbeat:', error);
+            }
+        };
+
+        sendHeartbeat();
+        const intervalId = setInterval(sendHeartbeat, 30000);
+
+        return () => clearInterval(intervalId);
+    }, [user]);
+
     const location = useLocation();
     const hostname = window.location.hostname;
     const pathname = location.pathname;

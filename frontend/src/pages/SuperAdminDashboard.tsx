@@ -21,6 +21,13 @@ interface IAgencia {
     bloqueada?: boolean;
     mensaje_bloqueo?: string;
     fecha_licencia?: string | null;
+    usuarios_activos?: {
+        id: number;
+        nombre: string;
+        apellido: string;
+        email: string;
+        rol: string;
+    }[];
 }
 
 interface IUsuario {
@@ -433,6 +440,17 @@ export const SuperAdminDashboard: React.FC = () => {
             loadAdmins();
         }
     }, [agencias]);
+
+    // 🔥 Polling periódico cuando se visualizan las agencias (para actualización en tiempo real)
+    useEffect(() => {
+        if (activeTab !== 'agencias') return;
+
+        const intervalId = setInterval(() => {
+            loadAgencias();
+        }, 15000);
+
+        return () => clearInterval(intervalId);
+    }, [activeTab]);
 
     // ============================================
     // RENDER
@@ -937,9 +955,7 @@ export const SuperAdminDashboard: React.FC = () => {
                         </div>
 
                         {loadingAgencias ? (
-                            <p style={{ color: '#f8fafc' }}>Cargando...</p>
-                        ) : (
-                            <div style={{
+                                   <div style={{
                                 display: 'grid',
                                 gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))',
                                 gap: '16px'
@@ -954,8 +970,12 @@ export const SuperAdminDashboard: React.FC = () => {
                                         backgroundColor: 'white',
                                         padding: '24px',
                                         borderRadius: '12px',
-                                        boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03)',
-                                        border: '1px solid #e2e8f0',
+                                        boxShadow: agencia.usuarios_activos && agencia.usuarios_activos.length > 0
+                                            ? '0 0 15px rgba(34, 197, 94, 0.25), 0 4px 6px -1px rgba(34, 197, 94, 0.1)'
+                                            : '0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03)',
+                                        border: agencia.usuarios_activos && agencia.usuarios_activos.length > 0
+                                            ? '2px solid #22c55e'
+                                            : '1px solid #e2e8f0',
                                         borderLeft: `5px solid ${agencia.colores_primario || '#2563eb'}`,
                                         display: 'flex',
                                         flexDirection: 'column',
@@ -964,11 +984,15 @@ export const SuperAdminDashboard: React.FC = () => {
                                     }}
                                     onMouseEnter={(e) => {
                                         e.currentTarget.style.transform = 'translateY(-2px)';
-                                        e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0,0,0,0.05), 0 4px 6px -2px rgba(0,0,0,0.02)';
+                                        e.currentTarget.style.boxShadow = agencia.usuarios_activos && agencia.usuarios_activos.length > 0
+                                            ? '0 0 20px rgba(34, 197, 94, 0.4), 0 10px 15px -3px rgba(34, 197, 94, 0.15)'
+                                            : '0 10px 15px -3px rgba(0,0,0,0.05), 0 4px 6px -2px rgba(0,0,0,0.02)';
                                     }}
                                     onMouseLeave={(e) => {
                                         e.currentTarget.style.transform = 'translateY(0)';
-                                        e.currentTarget.style.boxShadow = '0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03)';
+                                        e.currentTarget.style.boxShadow = agencia.usuarios_activos && agencia.usuarios_activos.length > 0
+                                            ? '0 0 15px rgba(34, 197, 94, 0.25), 0 4px 6px -1px rgba(34, 197, 94, 0.1)'
+                                            : '0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03)';
                                     }}>
                                         <div>
                                             <div style={{ display: 'flex', gap: '16px', alignItems: 'center', marginBottom: '16px' }}>
@@ -1009,7 +1033,8 @@ export const SuperAdminDashboard: React.FC = () => {
                                                         margin: 0,
                                                         display: 'flex',
                                                         alignItems: 'center',
-                                                        gap: '8px'
+                                                        gap: '8px',
+                                                        flexWrap: 'wrap'
                                                     }}>
                                                         {agencia.nombre}
                                                         {!!agencia.bloqueada && (
@@ -1024,17 +1049,75 @@ export const SuperAdminDashboard: React.FC = () => {
                                                                 🚫 Bloqueada
                                                             </span>
                                                         )}
+                                                        {agencia.usuarios_activos && agencia.usuarios_activos.length > 0 && (
+                                                            <span style={{
+                                                                fontSize: '11px',
+                                                                backgroundColor: '#dcfce7',
+                                                                color: '#15803d',
+                                                                padding: '2px 8px',
+                                                                borderRadius: '12px',
+                                                                fontWeight: 'bold',
+                                                                display: 'flex',
+                                                                alignItems: 'center',
+                                                                gap: '4px'
+                                                            }}>
+                                                                <span style={{
+                                                                    width: '6px',
+                                                                    height: '6px',
+                                                                    borderRadius: '50%',
+                                                                    backgroundColor: '#22c55e',
+                                                                    display: 'inline-block'
+                                                                }}></span>
+                                                                Activo
+                                                            </span>
+                                                        )}
                                                     </h3>
                                                     <p style={{ fontSize: '14px', color: '#64748b', margin: '2px 0 0 0' }}>
                                                         Subdominio: <strong style={{ color: '#0f172a' }}>{agencia.subdominio}</strong>
                                                     </p>
                                                 </div>
                                             </div>
-
-                                            <div style={{ fontSize: '12px', color: '#94a3b8', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+ 
+                                            <div style={{ fontSize: '12px', color: '#94a3b8', display: 'flex', flexDirection: 'column', gap: '4px', marginBottom: '10px' }}>
                                                 <span>📅 Creada el {new Date(agencia.fecha_creacion).toLocaleDateString()}</span>
                                                 <span>🔗 {`${window.location.protocol}//${window.location.hostname}${window.location.port ? ':' + window.location.port : ''}/?agencia=${agencia.subdominio}`}</span>
                                             </div>
+
+                                            {/* Renglón de usuarios activos */}
+                                            {agencia.usuarios_activos && agencia.usuarios_activos.length > 0 && (
+                                                <div style={{
+                                                    marginTop: '12px',
+                                                    padding: '10px 12px',
+                                                    backgroundColor: '#f0fdf4',
+                                                    border: '1px solid #bbf7d0',
+                                                    borderRadius: '8px',
+                                                    fontSize: '13px',
+                                                    color: '#14532d',
+                                                    marginBottom: '10px'
+                                                }}>
+                                                    <div style={{ fontWeight: '600', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                                        <span>🟢 En línea ahora:</span>
+                                                    </div>
+                                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                                        {agencia.usuarios_activos.map((u) => (
+                                                            <div key={u.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                                <span>👤 {u.nombre} {u.apellido}</span>
+                                                                <span style={{ 
+                                                                    fontSize: '11px', 
+                                                                    backgroundColor: u.rol === 'admin' || u.rol === 'superadmin' ? '#dbeafe' : '#f1f5f9',
+                                                                    color: u.rol === 'admin' || u.rol === 'superadmin' ? '#1e40af' : '#475569',
+                                                                    padding: '1px 6px',
+                                                                    borderRadius: '4px',
+                                                                    fontWeight: '600',
+                                                                    textTransform: 'uppercase'
+                                                                }}>
+                                                                    {u.rol}
+                                                                </span>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
                                         </div>
 
                                         {/* Botones de acción mejorados */}

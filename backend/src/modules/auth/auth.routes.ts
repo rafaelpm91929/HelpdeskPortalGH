@@ -21,6 +21,9 @@ router.post('/register-first-admin', AuthController.registerFirstAdmin);
 // 🔥 Obtener perfil del usuario autenticado actual
 router.get('/me', authMiddleware, AuthController.getCurrentUser);
 
+// 🔥 Heartbeat para actualizar la actividad y tiempo de uso del usuario
+router.post('/heartbeat', authMiddleware, AuthController.heartbeat);
+
 // 🔥 Obtener todos los administradores (solo superadmin)
 router.get('/users/all', authMiddleware, AuthController.getAllAdmins);
 
