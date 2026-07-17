@@ -500,14 +500,14 @@ export const SuperAdminStats: React.FC<SuperAdminStatsProps> = ({ agencias }) =>
                         y1={line.y} 
                         x2={width - paddingRight} 
                         y2={line.y} 
-                        stroke="#f1f5f9" 
+                        stroke="rgba(255, 255, 255, 0.08)" 
                         strokeWidth="1.2" 
                         strokeDasharray="4 4"
                     />
                     <text 
                         x={paddingLeft - 12} 
                         y={line.y + 4} 
-                        fill="#64748b" 
+                        fill="#cbd5e1" 
                         fontSize="11" 
                         fontWeight="600"
                         textAnchor="end"
@@ -643,7 +643,7 @@ export const SuperAdminStats: React.FC<SuperAdminStatsProps> = ({ agencias }) =>
                             key={idx} 
                             x={p.x} 
                             y={height - paddingBottom + 22} 
-                            fill="#64748b" 
+                            fill="#cbd5e1" 
                             fontSize="10" 
                             fontWeight="600"
                             textAnchor="middle"
@@ -773,7 +773,7 @@ export const SuperAdminStats: React.FC<SuperAdminStatsProps> = ({ agencias }) =>
                                 <text 
                                     x={x + barWidth / 2} 
                                     y={height - paddingBottom + 22} 
-                                    fill="#64748b" 
+                                    fill="#cbd5e1" 
                                     fontSize="10" 
                                     fontWeight="600"
                                     textAnchor="middle"
@@ -1558,7 +1558,7 @@ export const SuperAdminStats: React.FC<SuperAdminStatsProps> = ({ agencias }) =>
                                     📊 Volumen Comparativo por Agencia (Tickets de Soporte)
                                 </h3>
                                 <div style={{ height: '300px' }}>
-                                    <SVGHorizontalBarChart data={ticketsPorAgenciaData} color="#3b82f6" />
+                                    <SVGBarChart data={ticketsPorAgenciaData} defaultColor="#3b82f6" gradientId="agencyBarGrad" />
                                 </div>
                             </div>
                         )}
@@ -1667,7 +1667,7 @@ export const SuperAdminStats: React.FC<SuperAdminStatsProps> = ({ agencias }) =>
                                 onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
                             >
                                 <h3 style={{ fontSize: '16px', fontWeight: 'bold', color: '#ffffff', marginBottom: '20px' }}>📊 Backlog Comparativo</h3>
-                                <SVGHorizontalBarChart data={abiertosVsCerradosData} color="#3b82f6" />
+                                <SVGBarChart data={abiertosVsCerradosData} defaultColor="#3b82f6" gradientId="blueBarGrad" />
                             </div>
                         )}
 
@@ -1709,7 +1709,7 @@ export const SuperAdminStats: React.FC<SuperAdminStatsProps> = ({ agencias }) =>
                                 onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
                             >
                                 <h3 style={{ fontSize: '16px', fontWeight: 'bold', color: '#ffffff', marginBottom: '20px' }}>⚠️ Criticidad de Tickets</h3>
-                                <SVGHorizontalBarChart data={prioridadChartData} color="#f59e0b" />
+                                <SVGBarChart data={prioridadChartData} defaultColor="#f59e0b" gradientId="orangeBarGrad" />
                             </div>
                         )}
 
@@ -1729,7 +1729,7 @@ export const SuperAdminStats: React.FC<SuperAdminStatsProps> = ({ agencias }) =>
                                 onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
                             >
                                 <h3 style={{ fontSize: '16px', fontWeight: 'bold', color: '#ffffff', marginBottom: '20px' }}>🏢 Frecuencia por Área</h3>
-                                <SVGHorizontalBarChart data={areaChartData} color="#8b5cf6" />
+                                <SVGBarChart data={areaChartData} defaultColor="#8b5cf6" gradientId="purpleBarGrad" />
                             </div>
                         )}
 
@@ -1749,7 +1749,7 @@ export const SuperAdminStats: React.FC<SuperAdminStatsProps> = ({ agencias }) =>
                                 onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
                             >
                                 <h3 style={{ fontSize: '16px', fontWeight: 'bold', color: '#ffffff', marginBottom: '20px' }}>👥 Carga de Trabajo por Agente</h3>
-                                <SVGHorizontalBarChart data={agenteChartData} color="#06b6d4" />
+                                <SVGBarChart data={agenteChartData} defaultColor="#06b6d4" gradientId="cyanBarGrad" />
                             </div>
                         )}
 
@@ -1769,7 +1769,7 @@ export const SuperAdminStats: React.FC<SuperAdminStatsProps> = ({ agencias }) =>
                                 onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
                             >
                                 <h3 style={{ fontSize: '16px', fontWeight: 'bold', color: '#ffffff', marginBottom: '20px' }}>⏳ Antigüedad de Tickets Pendientes</h3>
-                                <SVGHorizontalBarChart data={antiguedadData} color="#f87171" />
+                                <SVGBarChart data={antiguedadData} defaultColor="#f87171" gradientId="redBarGrad" />
                             </div>
                         )}
                     </div>
