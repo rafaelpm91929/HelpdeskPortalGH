@@ -367,6 +367,8 @@ export const SuperAdminDashboard: React.FC = () => {
         colores_primario: '#2563eb',
         colores_secundario: '#3b82f6'
     });
+    const [currentAgenciaIndex, setCurrentAgenciaIndex] = useState(0);
+
 
     // Estados para Admins
     const [admins, setAdmins] = useState<IUsuario[]>([]);
@@ -407,6 +409,19 @@ export const SuperAdminDashboard: React.FC = () => {
     const [searchAgencia, setSearchAgencia] = useState('');
     const [searchAdmin, setSearchAdmin] = useState('');
     const [searchLicencia, setSearchLicencia] = useState('');
+
+    const filteredAgencias = useMemo(() => {
+        return agencias.filter(agencia => 
+            agencia.nombre.toLowerCase().includes(searchAgencia.toLowerCase()) ||
+            agencia.subdominio.toLowerCase().includes(searchAgencia.toLowerCase())
+        );
+    }, [agencias, searchAgencia]);
+
+    useEffect(() => {
+        if (currentAgenciaIndex >= filteredAgencias.length) {
+            setCurrentAgenciaIndex(0);
+        }
+    }, [filteredAgencias.length, currentAgenciaIndex]);
 
     const [showAgenciaInfoModal, setShowAgenciaInfoModal] = useState(false);
     const [loadingAgenciaInfo, setLoadingAgenciaInfo] = useState(false);
@@ -1273,26 +1288,194 @@ export const SuperAdminDashboard: React.FC = () => {
                             <p style={{ color: '#f8fafc' }}>Cargando...</p>
                         ) : (
                             <div style={{
-                                display: 'grid',
-                                gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))',
-                                gap: '16px'
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                width: '100%',
+                                position: 'relative',
+                                margin: '20px 0 40px 0'
                             }}>
-                                {agencias
-                                    .filter(agencia => 
-                                        agencia.nombre.toLowerCase().includes(searchAgencia.toLowerCase()) ||
-                                        agencia.subdominio.toLowerCase().includes(searchAgencia.toLowerCase())
-                                    )
-                                    .map((agencia) => (
-                                        <AgenciaCard 
-                                            key={agencia.id}
-                                            agencia={agencia}
-                                            openAgenciaInfoModal={openAgenciaInfoModal}
-                                            deleteAgencia={deleteAgencia}
-                                            toggleLockAgencia={toggleLockAgencia}
-                                            openLicenseModal={openLicenseModal}
-                                            onEditAgencia={onEditAgencia}
-                                        />
-                                    ))}
+                                <div style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    position: 'relative',
+                                    width: '100%',
+                                    height: '420px',
+                                    perspective: '1000px',
+                                    transformStyle: 'preserve-3d',
+                                    overflow: 'hidden'
+                                }}>
+                                    {/* Botón Flecha Izquierda */}
+                                    {filteredAgencias.length > 1 && (
+                                        <button
+                                            onClick={() => setCurrentAgenciaIndex(prev => (prev === 0 ? Math.max(filteredAgencias.length - 1, 0) : prev - 1))}
+                                            style={{
+                                                position: 'absolute',
+                                                left: '20px',
+                                                zIndex: 30,
+                                                width: '48px',
+                                                height: '48px',
+                                                borderRadius: '50%',
+                                                border: '1px solid rgba(255, 255, 255, 0.15)',
+                                                backgroundColor: 'rgba(30, 41, 59, 0.75)',
+                                                color: 'white',
+                                                fontSize: '20px',
+                                                cursor: 'pointer',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                backdropFilter: 'blur(8px)',
+                                                boxShadow: '0 4px 12px rgba(0,0,0,0.4)',
+                                                transition: 'all 0.2s',
+                                                userSelect: 'none'
+                                            }}
+                                            onMouseEnter={(e) => {
+                                                e.currentTarget.style.backgroundColor = '#2563eb';
+                                                e.currentTarget.style.transform = 'scale(1.05)';
+                                            }}
+                                            onMouseLeave={(e) => {
+                                                e.currentTarget.style.backgroundColor = 'rgba(30, 41, 59, 0.75)';
+                                                e.currentTarget.style.transform = 'scale(1)';
+                                            }}
+                                        >
+                                            ◀
+                                        </button>
+                                    )}
+
+                                    {/* Contenedor de Tarjetas 3D */}
+                                    <div style={{
+                                        position: 'relative',
+                                        width: '100%',
+                                        maxWidth: '420px',
+                                        height: '340px',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        transformStyle: 'preserve-3d'
+                                    }}>
+                                        {filteredAgencias.length === 0 ? (
+                                            <p style={{ color: '#94a3b8', fontSize: '15px' }}>No hay agencias disponibles</p>
+                                        ) : (
+                                            filteredAgencias.map((agencia, idx) => {
+                                                let diff = idx - currentAgenciaIndex;
+                                                const len = filteredAgencias.length;
+                                                if (len > 2) {
+                                                    if (diff > len / 2) diff -= len;
+                                                    if (diff < -len / 2) diff += len;
+                                                }
+                                                const absDiff = Math.abs(diff);
+                                                
+                                                let transformStr = '';
+                                                let opacity = 1;
+                                                let zIndex = 10 - absDiff;
+                                                let pointerEvents: 'auto' | 'none' = 'none';
+
+                                                if (absDiff === 0) {
+                                                    transformStr = 'translateX(0) scale(1) translateZ(0) rotateY(0deg)';
+                                                    opacity = 1;
+                                                    pointerEvents = 'auto';
+                                                } else if (diff === -1 || (diff > 0 && len === 2 && currentAgenciaIndex === 1)) {
+                                                    transformStr = 'translateX(-280px) scale(0.78) translateZ(-150px) rotateY(28deg)';
+                                                    opacity = 0.5;
+                                                } else if (diff === 1 || (diff < 0 && len === 2 && currentAgenciaIndex === 0)) {
+                                                    transformStr = 'translateX(280px) scale(0.78) translateZ(-150px) rotateY(-28deg)';
+                                                    opacity = 0.5;
+                                                } else {
+                                                    transformStr = diff < 0 
+                                                        ? 'translateX(-500px) scale(0.6) translateZ(-300px) rotateY(40deg)'
+                                                        : 'translateX(500px) scale(0.6) translateZ(-300px) rotateY(-40deg)';
+                                                    opacity = 0;
+                                                }
+
+                                                return (
+                                                    <div
+                                                        key={agencia.id}
+                                                        style={{
+                                                            position: 'absolute',
+                                                            width: '100%',
+                                                            maxWidth: '380px',
+                                                            transform: transformStr,
+                                                            opacity: opacity,
+                                                            zIndex: zIndex,
+                                                            pointerEvents: pointerEvents,
+                                                            transition: 'all 0.5s cubic-bezier(0.25, 0.8, 0.25, 1)',
+                                                            transformStyle: 'preserve-3d'
+                                                        }}
+                                                    >
+                                                        <AgenciaCard 
+                                                            agencia={agencia}
+                                                            openAgenciaInfoModal={openAgenciaInfoModal}
+                                                            deleteAgencia={deleteAgencia}
+                                                            toggleLockAgencia={toggleLockAgencia}
+                                                            openLicenseModal={openLicenseModal}
+                                                            onEditAgencia={onEditAgencia}
+                                                        />
+                                                    </div>
+                                                );
+                                            })
+                                        )}
+                                    </div>
+
+                                    {/* Botón Flecha Derecha */}
+                                    {filteredAgencias.length > 1 && (
+                                        <button
+                                            onClick={() => setCurrentAgenciaIndex(prev => (prev === Math.max(filteredAgencias.length - 1, 0) ? 0 : prev + 1))}
+                                            style={{
+                                                position: 'absolute',
+                                                right: '20px',
+                                                zIndex: 30,
+                                                width: '48px',
+                                                height: '48px',
+                                                borderRadius: '50%',
+                                                border: '1px solid rgba(255, 255, 255, 0.15)',
+                                                backgroundColor: 'rgba(30, 41, 59, 0.75)',
+                                                color: 'white',
+                                                fontSize: '20px',
+                                                cursor: 'pointer',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                backdropFilter: 'blur(8px)',
+                                                boxShadow: '0 4px 12px rgba(0,0,0,0.4)',
+                                                transition: 'all 0.2s',
+                                                userSelect: 'none'
+                                            }}
+                                            onMouseEnter={(e) => {
+                                                e.currentTarget.style.backgroundColor = '#2563eb';
+                                                e.currentTarget.style.transform = 'scale(1.05)';
+                                            }}
+                                            onMouseLeave={(e) => {
+                                                e.currentTarget.style.backgroundColor = 'rgba(30, 41, 59, 0.75)';
+                                                e.currentTarget.style.transform = 'scale(1)';
+                                            }}
+                                        >
+                                            ▶
+                                        </button>
+                                    )}
+                                </div>
+
+                                {/* Indicadores de Puntos */}
+                                {filteredAgencias.length > 1 && (
+                                    <div style={{ display: 'flex', gap: '8px', marginTop: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
+                                        {filteredAgencias.map((_, idx) => (
+                                            <button
+                                                key={idx}
+                                                onClick={() => setCurrentAgenciaIndex(idx)}
+                                                style={{
+                                                    width: idx === currentAgenciaIndex ? '24px' : '8px',
+                                                    height: '8px',
+                                                    borderRadius: '4px',
+                                                    backgroundColor: idx === currentAgenciaIndex ? '#2563eb' : 'rgba(255, 255, 255, 0.3)',
+                                                    border: 'none',
+                                                    cursor: 'pointer',
+                                                    transition: 'all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)'
+                                                }}
+                                            />
+                                        ))}
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>
