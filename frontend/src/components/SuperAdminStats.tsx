@@ -50,6 +50,7 @@ export const SuperAdminStats: React.FC<SuperAdminStatsProps> = ({ agencias }) =>
 
     // Toggle del panel de configuración de gráficos
     const [showConfigPanel, setShowConfigPanel] = useState<boolean>(false);
+    const [expandedChart, setExpandedChart] = useState<string | null>(null);
 
     // Estado para Tooltips personalizados en SVG
     const [tooltip, setTooltip] = useState<{
@@ -85,6 +86,20 @@ export const SuperAdminStats: React.FC<SuperAdminStatsProps> = ({ agencias }) =>
             setFechaFin('');
         }
     }, [datePreset]);
+
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') {
+                setExpandedChart(null);
+            }
+        };
+        if (expandedChart) {
+            window.addEventListener('keydown', handleKeyDown);
+        }
+        return () => {
+            window.removeEventListener('keydown', handleKeyDown);
+        };
+    }, [expandedChart]);
 
     // Función para cargar estadísticas del backend
     const loadStatsData = async () => {
@@ -1541,6 +1556,8 @@ export const SuperAdminStats: React.FC<SuperAdminStatsProps> = ({ agencias }) =>
                         {/* 0. COMPARATIVA ENTRE AGENCIAS (VISTA COMPARATIVA) */}
                         {displayCharts.comparativo && (
                             <div 
+                                onDoubleClick={() => setExpandedChart('comparativo')}
+                                title="Doble clic para ampliar gráfico"
                                 style={{
                                     backgroundColor: 'rgba(30, 41, 59, 0.45)',
                                     backdropFilter: 'blur(12px)',
@@ -1548,8 +1565,9 @@ export const SuperAdminStats: React.FC<SuperAdminStatsProps> = ({ agencias }) =>
                                     boxShadow: '0 12px 40px rgba(0, 0, 0, 0.25)',
                                     borderRadius: '16px',
                                     padding: '24px',
-                                    transition: 'transform 0.2s',
-                                    gridColumn: '1 / -1'
+                                    transition: 'all 0.2s',
+                                    gridColumn: '1 / -1',
+                                    cursor: 'zoom-in'
                                 }}
                                 onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
                                 onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
@@ -1566,6 +1584,8 @@ export const SuperAdminStats: React.FC<SuperAdminStatsProps> = ({ agencias }) =>
                         {/* 1. TICKETS CREADOS */}
                         {displayCharts.creados && (
                             <div 
+                                onDoubleClick={() => setExpandedChart('creados')}
+                                title="Doble clic para ampliar gráfico"
                                 style={{
                                     backgroundColor: 'rgba(30, 41, 59, 0.45)',
                                     backdropFilter: 'blur(12px)',
@@ -1573,7 +1593,8 @@ export const SuperAdminStats: React.FC<SuperAdminStatsProps> = ({ agencias }) =>
                                     boxShadow: '0 12px 40px rgba(0, 0, 0, 0.25)',
                                     borderRadius: '16px',
                                     padding: '24px',
-                                    transition: 'transform 0.2s'
+                                    transition: 'all 0.2s',
+                                    cursor: 'zoom-in'
                                 }}
                                 onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
                                 onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
@@ -1610,6 +1631,8 @@ export const SuperAdminStats: React.FC<SuperAdminStatsProps> = ({ agencias }) =>
                         {/* 2. TICKETS RESUELTOS */}
                         {displayCharts.resueltos && (
                             <div 
+                                onDoubleClick={() => setExpandedChart('resueltos')}
+                                title="Doble clic para ampliar gráfico"
                                 style={{
                                     backgroundColor: 'rgba(30, 41, 59, 0.45)',
                                     backdropFilter: 'blur(12px)',
@@ -1617,7 +1640,8 @@ export const SuperAdminStats: React.FC<SuperAdminStatsProps> = ({ agencias }) =>
                                     boxShadow: '0 12px 40px rgba(0, 0, 0, 0.25)',
                                     borderRadius: '16px',
                                     padding: '24px',
-                                    transition: 'transform 0.2s'
+                                    transition: 'all 0.2s',
+                                    cursor: 'zoom-in'
                                 }}
                                 onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
                                 onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
@@ -1654,6 +1678,8 @@ export const SuperAdminStats: React.FC<SuperAdminStatsProps> = ({ agencias }) =>
                         {/* 3. ABIERTOS VS CERRADOS */}
                         {displayCharts.backlog && (
                             <div 
+                                onDoubleClick={() => setExpandedChart('backlog')}
+                                title="Doble clic para ampliar gráfico"
                                 style={{
                                     backgroundColor: 'rgba(30, 41, 59, 0.45)',
                                     backdropFilter: 'blur(12px)',
@@ -1661,7 +1687,8 @@ export const SuperAdminStats: React.FC<SuperAdminStatsProps> = ({ agencias }) =>
                                     boxShadow: '0 12px 40px rgba(0, 0, 0, 0.25)',
                                     borderRadius: '16px',
                                     padding: '24px',
-                                    transition: 'transform 0.2s'
+                                    transition: 'all 0.2s',
+                                    cursor: 'zoom-in'
                                 }}
                                 onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
                                 onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
@@ -1674,6 +1701,8 @@ export const SuperAdminStats: React.FC<SuperAdminStatsProps> = ({ agencias }) =>
                         {/* 4. ESTADO DE TICKETS */}
                         {displayCharts.estado && (
                             <div 
+                                onDoubleClick={() => setExpandedChart('estado')}
+                                title="Doble clic para ampliar gráfico"
                                 style={{
                                     backgroundColor: 'rgba(30, 41, 59, 0.45)',
                                     backdropFilter: 'blur(12px)',
@@ -1681,7 +1710,8 @@ export const SuperAdminStats: React.FC<SuperAdminStatsProps> = ({ agencias }) =>
                                     boxShadow: '0 12px 40px rgba(0, 0, 0, 0.25)',
                                     borderRadius: '16px',
                                     padding: '24px',
-                                    transition: 'transform 0.2s'
+                                    transition: 'all 0.2s',
+                                    cursor: 'zoom-in'
                                 }}
                                 onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
                                 onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
@@ -1696,6 +1726,8 @@ export const SuperAdminStats: React.FC<SuperAdminStatsProps> = ({ agencias }) =>
                         {/* 5. PRIORIDAD */}
                         {displayCharts.prioridad && (
                             <div 
+                                onDoubleClick={() => setExpandedChart('prioridad')}
+                                title="Doble clic para ampliar gráfico"
                                 style={{
                                     backgroundColor: 'rgba(30, 41, 59, 0.45)',
                                     backdropFilter: 'blur(12px)',
@@ -1703,7 +1735,8 @@ export const SuperAdminStats: React.FC<SuperAdminStatsProps> = ({ agencias }) =>
                                     boxShadow: '0 12px 40px rgba(0, 0, 0, 0.25)',
                                     borderRadius: '16px',
                                     padding: '24px',
-                                    transition: 'transform 0.2s'
+                                    transition: 'all 0.2s',
+                                    cursor: 'zoom-in'
                                 }}
                                 onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
                                 onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
@@ -1716,6 +1749,8 @@ export const SuperAdminStats: React.FC<SuperAdminStatsProps> = ({ agencias }) =>
                         {/* 6. TICKETS POR AREA */}
                         {displayCharts.area && (
                             <div 
+                                onDoubleClick={() => setExpandedChart('area')}
+                                title="Doble clic para ampliar gráfico"
                                 style={{
                                     backgroundColor: 'rgba(30, 41, 59, 0.45)',
                                     backdropFilter: 'blur(12px)',
@@ -1723,7 +1758,8 @@ export const SuperAdminStats: React.FC<SuperAdminStatsProps> = ({ agencias }) =>
                                     boxShadow: '0 12px 40px rgba(0, 0, 0, 0.25)',
                                     borderRadius: '16px',
                                     padding: '24px',
-                                    transition: 'transform 0.2s'
+                                    transition: 'all 0.2s',
+                                    cursor: 'zoom-in'
                                 }}
                                 onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
                                 onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
@@ -1736,6 +1772,8 @@ export const SuperAdminStats: React.FC<SuperAdminStatsProps> = ({ agencias }) =>
                         {/* 7. TICKETS POR AGENTE */}
                         {displayCharts.agente && (
                             <div 
+                                onDoubleClick={() => setExpandedChart('agente')}
+                                title="Doble clic para ampliar gráfico"
                                 style={{
                                     backgroundColor: 'rgba(30, 41, 59, 0.45)',
                                     backdropFilter: 'blur(12px)',
@@ -1743,7 +1781,8 @@ export const SuperAdminStats: React.FC<SuperAdminStatsProps> = ({ agencias }) =>
                                     boxShadow: '0 12px 40px rgba(0, 0, 0, 0.25)',
                                     borderRadius: '16px',
                                     padding: '24px',
-                                    transition: 'transform 0.2s'
+                                    transition: 'all 0.2s',
+                                    cursor: 'zoom-in'
                                 }}
                                 onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
                                 onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
@@ -1756,6 +1795,8 @@ export const SuperAdminStats: React.FC<SuperAdminStatsProps> = ({ agencias }) =>
                         {/* 9. ANTIGÜEDAD HISTOGRAMA */}
                         {displayCharts.antiguedad && (
                             <div 
+                                onDoubleClick={() => setExpandedChart('antiguedad')}
+                                title="Doble clic para ampliar gráfico"
                                 style={{
                                     backgroundColor: 'rgba(30, 41, 59, 0.45)',
                                     backdropFilter: 'blur(12px)',
@@ -1763,7 +1804,8 @@ export const SuperAdminStats: React.FC<SuperAdminStatsProps> = ({ agencias }) =>
                                     boxShadow: '0 12px 40px rgba(0, 0, 0, 0.25)',
                                     borderRadius: '16px',
                                     padding: '24px',
-                                    transition: 'transform 0.2s'
+                                    transition: 'all 0.2s',
+                                    cursor: 'zoom-in'
                                 }}
                                 onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
                                 onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
@@ -1777,6 +1819,8 @@ export const SuperAdminStats: React.FC<SuperAdminStatsProps> = ({ agencias }) =>
                     {/* 8. HEATMAP: TENDENCIA POR HORA DEL DÍA */}
                     {displayCharts.heatmap && (
                         <div 
+                            onDoubleClick={() => setExpandedChart('heatmap')}
+                            title="Doble clic para ampliar gráfico"
                             style={{
                                 backgroundColor: 'rgba(30, 41, 59, 0.45)',
                                 backdropFilter: 'blur(12px)',
@@ -1784,8 +1828,9 @@ export const SuperAdminStats: React.FC<SuperAdminStatsProps> = ({ agencias }) =>
                                 boxShadow: '0 12px 40px rgba(0, 0, 0, 0.25)',
                                 borderRadius: '16px',
                                 padding: '24px',
-                                transition: 'transform 0.2s',
-                                marginTop: '24px'
+                                transition: 'all 0.2s',
+                                marginTop: '24px',
+                                cursor: 'zoom-in'
                             }}
                             onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
                             onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
@@ -1966,6 +2011,140 @@ export const SuperAdminStats: React.FC<SuperAdminStatsProps> = ({ agencias }) =>
                         </div>
                     )}
                 </>
+            )}
+
+            {/* Modal de Gráfico Ampliado (Doble clic) */}
+            {expandedChart && (
+                <div 
+                    onClick={() => setExpandedChart(null)}
+                    style={{
+                        position: 'fixed',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        backgroundColor: 'rgba(9, 13, 22, 0.85)',
+                        backdropFilter: 'blur(16px)',
+                        zIndex: 1000,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        padding: '24px',
+                        animation: 'fadeIn 0.25s ease'
+                    }}
+                >
+                    <div 
+                        onClick={(e) => e.stopPropagation()}
+                        style={{
+                            width: '100%',
+                            maxWidth: '900px',
+                            backgroundColor: 'rgba(30, 41, 59, 0.75)',
+                            backdropFilter: 'blur(20px)',
+                            borderRadius: '24px',
+                            border: '1px solid rgba(255, 255, 255, 0.12)',
+                            boxShadow: '0 20px 50px rgba(0, 0, 0, 0.4)',
+                            padding: '32px',
+                            position: 'relative',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '20px'
+                        }}
+                    >
+                        {/* Botón de Cerrar */}
+                        <button 
+                            onClick={() => setExpandedChart(null)}
+                            style={{
+                                position: 'absolute',
+                                top: '20px',
+                                right: '20px',
+                                width: '36px',
+                                height: '36px',
+                                borderRadius: '50%',
+                                border: '1px solid rgba(255, 255, 255, 0.15)',
+                                backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                                color: '#ffffff',
+                                fontSize: '18px',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                transition: 'all 0.15s'
+                            }}
+                            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.2)'}
+                            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.05)'}
+                        >
+                            ✕
+                        </button>
+
+                        {/* Título de Gráfico */}
+                        <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: '#ffffff', margin: 0, paddingRight: '40px' }}>
+                            {expandedChart === 'comparativo' && '📊 Volumen Comparativo por Agencia (Tickets de Soporte)'}
+                            {expandedChart === 'creados' && '📈 Tendencia de Tickets Creados'}
+                            {expandedChart === 'resueltos' && '✅ Tickets Resueltos y Cerrados'}
+                            {expandedChart === 'backlog' && '📊 Backlog Comparativo'}
+                            {expandedChart === 'estado' && '🍩 Distribución por Estado'}
+                            {expandedChart === 'prioridad' && '⚠️ Criticidad de Tickets'}
+                            {expandedChart === 'area' && '🏢 Frecuencia por Área'}
+                            {expandedChart === 'agente' && '👥 Carga de Trabajo por Agente'}
+                            {expandedChart === 'antiguedad' && '⏳ Antigüedad de Tickets Pendientes'}
+                            {expandedChart === 'heatmap' && '🔥 Mapa de Calor: Flujo de Incidencias por Hora'}
+                        </h2>
+
+                        {/* Gráfico Renderizado a Gran Escala */}
+                        <div style={{ 
+                            width: '100%', 
+                            height: '420px', 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            justifyContent: 'center',
+                            backgroundColor: 'rgba(15, 23, 42, 0.3)',
+                            borderRadius: '16px',
+                            padding: '20px',
+                            border: '1px solid rgba(255, 255, 255, 0.04)',
+                            overflow: 'visible'
+                        }}>
+                            {expandedChart === 'comparativo' && (
+                                <SVGBarChart data={ticketsPorAgenciaData} defaultColor="#3b82f6" gradientId="agencyBarGradModal" />
+                            )}
+                            {expandedChart === 'creados' && (
+                                <SVGLineChart data={creadosChartData} color="#2563eb" gradientId="creadosGradModal" />
+                            )}
+                            {expandedChart === 'resueltos' && (
+                                <SVGLineChart data={resueltosChartData} color="#10b981" gradientId="resueltosGradModal" />
+                            )}
+                            {expandedChart === 'backlog' && (
+                                <SVGBarChart data={abiertosVsCerradosData} defaultColor="#3b82f6" gradientId="blueBarGradModal" />
+                            )}
+                            {expandedChart === 'estado' && (
+                                <SVGDoughnutChart data={estadoChartData} />
+                            )}
+                            {expandedChart === 'prioridad' && (
+                                <SVGBarChart data={prioridadChartData} defaultColor="#f59e0b" gradientId="orangeBarGradModal" />
+                            )}
+                            {expandedChart === 'area' && (
+                                <SVGBarChart data={areaChartData} defaultColor="#8b5cf6" gradientId="purpleBarGradModal" />
+                            )}
+                            {expandedChart === 'agente' && (
+                                <SVGBarChart data={agenteChartData} defaultColor="#06b6d4" gradientId="cyanBarGradModal" />
+                            )}
+                            {expandedChart === 'antiguedad' && (
+                                <SVGBarChart data={antiguedadData} defaultColor="#f87171" gradientId="redBarGradModal" />
+                            )}
+                            {expandedChart === 'heatmap' && (
+                                <div style={{ width: '100%' }}>{renderHeatmap()}</div>
+                            )}
+                        </div>
+                        <div style={{ fontSize: '12px', color: '#94a3b8', textAlign: 'center', marginTop: '-10px' }}>
+                            💡 Presiona ESC o haz clic afuera para cerrar la vista ampliada.
+                        </div>
+                    </div>
+                    <style>{`
+                        @keyframes fadeIn {
+                            from { opacity: 0; transform: scale(0.98); }
+                            to { opacity: 1; transform: scale(1); }
+                        }
+                    `}</style>
+                </div>
             )}
         </div>
     );
