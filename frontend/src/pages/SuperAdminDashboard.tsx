@@ -1541,7 +1541,11 @@ export const SuperAdminDashboard: React.FC = () => {
                                 backgroundColor: 'rgba(30, 41, 59, 0.45)',
                                 backdropFilter: 'blur(12px)',
                                 borderRadius: '12px',
-                                border: '1px solid rgba(255, 255,                                 <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                                border: '1px solid rgba(255, 255, 255, 0.08)',
+                                overflow: 'hidden',
+                                boxShadow: '0 8px 32px rgba(0,0,0,0.25)'
+                            }}>
+                                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                                     <thead style={{ backgroundColor: 'rgba(15, 23, 42, 0.65)' }}>
                                         <tr style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.08)' }}>
                                             <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: '600', color: '#cbd5e1' }}>Nombre</th>
