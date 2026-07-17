@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../api/axios.config';
 import toast from 'react-hot-toast';
@@ -40,6 +40,299 @@ interface IUsuario {
     activo: boolean;
     fecha_creacion: string;
 }
+
+interface AgenciaCardProps {
+    agencia: IAgencia;
+    openAgenciaInfoModal: (id: number, nombre: string) => void;
+    deleteAgencia: (id: number) => void;
+    toggleLockAgencia: (agencia: IAgencia) => void;
+    openLicenseModal: (agencia: IAgencia) => void;
+    onEditAgencia: (agencia: IAgencia) => void;
+}
+
+const AgenciaCard = React.memo<AgenciaCardProps>(({ 
+    agencia, 
+    openAgenciaInfoModal, 
+    deleteAgencia, 
+    toggleLockAgencia, 
+    openLicenseModal,
+    onEditAgencia
+}) => {
+    return (
+        <div style={{
+            backgroundColor: 'white',
+            padding: '24px',
+            borderRadius: '12px',
+            boxShadow: agencia.usuarios_activos && agencia.usuarios_activos.length > 0
+                ? '0 0 15px rgba(34, 197, 94, 0.25), 0 4px 6px -1px rgba(34, 197, 94, 0.1)'
+                : '0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03)',
+            border: agencia.usuarios_activos && agencia.usuarios_activos.length > 0
+                ? '2px solid #22c55e'
+                : '1px solid #e2e8f0',
+            borderLeft: `5px solid ${agencia.colores_primario || '#2563eb'}`,
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
+            transition: 'transform 0.2s ease, box-shadow 0.2s ease'
+        }}
+        onMouseEnter={(e) => {
+            e.currentTarget.style.transform = 'translateY(-2px)';
+            e.currentTarget.style.boxShadow = agencia.usuarios_activos && agencia.usuarios_activos.length > 0
+                ? '0 0 20px rgba(34, 197, 94, 0.4), 0 10px 15px -3px rgba(34, 197, 94, 0.15)'
+                : '0 10px 15px -3px rgba(0,0,0,0.05), 0 4px 6px -2px rgba(0,0,0,0.02)';
+        }}
+        onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'translateY(0)';
+            e.currentTarget.style.boxShadow = agencia.usuarios_activos && agencia.usuarios_activos.length > 0
+                ? '0 0 15px rgba(34, 197, 94, 0.25), 0 4px 6px -1px rgba(34, 197, 94, 0.1)'
+                : '0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03)';
+        }}>
+            <div>
+                <div style={{ display: 'flex', gap: '16px', alignItems: 'center', marginBottom: '16px' }}>
+                    {/* Contenedor del logo de la agencia */}
+                    <div style={{
+                        width: '50px',
+                        height: '50px',
+                        borderRadius: '8px',
+                        backgroundColor: '#f8fafc',
+                        border: '1px solid #e2e8f0',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        overflow: 'hidden'
+                    }}>
+                        {agencia.logo_url ? (
+                            <img 
+                                src={agencia.logo_url} 
+                                alt={agencia.nombre} 
+                                style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
+                                onError={(e) => {
+                                    e.currentTarget.style.display = 'none';
+                                    const parent = e.currentTarget.parentElement;
+                                    if (parent) {
+                                        parent.innerHTML = '<span style="font-size:24px">🏢</span>';
+                                    }
+                                }}
+                            />
+                        ) : (
+                            <span style={{ fontSize: '24px' }}>🏢</span>
+                        )}
+                    </div>
+                    <div>
+                        <h3 style={{ 
+                            fontWeight: 'bold', 
+                            color: '#0f172a', 
+                            fontSize: '18px', 
+                            margin: 0,
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            flexWrap: 'wrap'
+                        }}>
+                            {agencia.nombre}
+                            {!!agencia.bloqueada && (
+                                <span style={{
+                                    fontSize: '11px',
+                                    backgroundColor: '#fee2e2',
+                                    color: '#b91c1c',
+                                    padding: '2px 8px',
+                                    borderRadius: '12px',
+                                    fontWeight: 'bold'
+                                }}>
+                                    🚫 Bloqueada
+                                </span>
+                            )}
+                            {agencia.usuarios_activos && agencia.usuarios_activos.length > 0 && (
+                                <span style={{
+                                    fontSize: '11px',
+                                    backgroundColor: '#dcfce7',
+                                    color: '#15803d',
+                                    padding: '2px 8px',
+                                    borderRadius: '12px',
+                                    fontWeight: 'bold',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '4px'
+                                }}>
+                                    <span style={{
+                                        width: '6px',
+                                        height: '6px',
+                                        borderRadius: '50%',
+                                        backgroundColor: '#22c55e',
+                                        display: 'inline-block'
+                                    }}></span>
+                                    Activo
+                                </span>
+                            )}
+                        </h3>
+                        <p style={{ fontSize: '14px', color: '#64748b', margin: '2px 0 0 0' }}>
+                            Subdominio: <strong style={{ color: '#0f172a' }}>{agencia.subdominio}</strong>
+                        </p>
+                    </div>
+                </div>
+
+                <div style={{ fontSize: '12px', color: '#94a3b8', display: 'flex', flexDirection: 'column', gap: '4px', marginBottom: '10px' }}>
+                    <span>📅 Creada el {new Date(agencia.fecha_creacion).toLocaleDateString()}</span>
+                    <span>🔗 {`${window.location.protocol}//${window.location.hostname}${window.location.port ? ':' + window.location.port : ''}/?agencia=${agencia.subdominio}`}</span>
+                </div>
+
+                {/* Renglón de usuarios activos */}
+                {agencia.usuarios_activos && agencia.usuarios_activos.length > 0 && (
+                    <div style={{
+                        marginTop: '12px',
+                        padding: '10px 12px',
+                        backgroundColor: '#f0fdf4',
+                        border: '1px solid #bbf7d0',
+                        borderRadius: '8px',
+                        fontSize: '13px',
+                        color: '#14532d',
+                        marginBottom: '10px'
+                    }}>
+                        <div style={{ fontWeight: '600', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <span>🟢 En línea ahora:</span>
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                            {agencia.usuarios_activos.map((u) => (
+                                <div key={u.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <span>👤 {u.nombre} {u.apellido}</span>
+                                    <span style={{ 
+                                        fontSize: '11px', 
+                                        backgroundColor: u.rol === 'admin' || u.rol === 'superadmin' ? '#dbeafe' : '#f1f5f9',
+                                        color: u.rol === 'admin' || u.rol === 'superadmin' ? '#1e40af' : '#475569',
+                                        padding: '1px 6px',
+                                        borderRadius: '4px',
+                                        fontWeight: '600',
+                                        textTransform: 'uppercase'
+                                    }}>
+                                        {u.rol}
+                                    </span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+            </div>
+
+            {/* Botones de acción mejorados */}
+            <div style={{ 
+                display: 'flex', 
+                gap: '10px', 
+                marginTop: '20px', 
+                paddingTop: '16px', 
+                borderTop: '1px solid #f1f5f9',
+                justifyContent: 'flex-end',
+                flexWrap: 'wrap'
+            }}>
+                <button
+                    onClick={() => openAgenciaInfoModal(agencia.id, agencia.nombre)}
+                    style={{
+                        padding: '8px 16px',
+                        background: 'linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        fontSize: '13px',
+                        fontWeight: '600',
+                        boxShadow: '0 2px 4px rgba(2, 132, 199, 0.2)',
+                        transition: 'all 0.2s'
+                    }}
+                    title="Ver estadísticas e información de la agencia"
+                >
+                    ℹ️ Info
+                </button>
+                <button
+                    onClick={() => {
+                        const url = `/?agencia=${agencia.subdominio}&superadmin=true`;
+                        window.location.href = url;
+                    }}
+                    style={{
+                        padding: '8px 16px',
+                        background: 'linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%)',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        fontSize: '13px',
+                        fontWeight: '600',
+                        boxShadow: '0 2px 4px rgba(109, 40, 217, 0.2)',
+                        transition: 'all 0.2s'
+                    }}
+                    title="Entrar como Administrador de esta agencia"
+                >
+                    👑 Entrar como Admin
+                </button>
+
+                <button
+                    onClick={() => toggleLockAgencia(agencia)}
+                    style={{
+                        padding: '8px 16px',
+                        background: agencia.bloqueada 
+                            ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
+                            : 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        fontSize: '13px',
+                        fontWeight: '600',
+                        transition: 'all 0.2s'
+                    }}
+                >
+                    {agencia.bloqueada ? '🔓 Desbloquear' : '🔒 Bloquear'}
+                </button>
+
+                <button
+                    onClick={() => onEditAgencia(agencia)}
+                    style={{
+                        padding: '8px 16px',
+                        background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)',
+                        border: '1px solid #cbd5e1',
+                        color: '#475569',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        fontSize: '13px',
+                        fontWeight: '500',
+                        transition: 'all 0.2s'
+                    }}
+                >
+                    ✏️ Editar
+                </button>
+
+                <button
+                    onClick={() => deleteAgencia(agencia.id)}
+                    style={{
+                        padding: '8px 16px',
+                        background: 'linear-gradient(135deg, #fee2e2 0%, #fca5a5 100%)',
+                        border: '1px solid #fca5a5',
+                        color: '#b91c1c',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        fontSize: '13px',
+                        fontWeight: '600',
+                        transition: 'all 0.2s'
+                    }}
+                >
+                    🗑️ Eliminar
+                </button>
+            </div>
+        </div>
+    );
+}, (prevProps, nextProps) => {
+    return (
+        prevProps.agencia.id === nextProps.agencia.id &&
+        prevProps.agencia.nombre === nextProps.agencia.nombre &&
+        prevProps.agencia.subdominio === nextProps.agencia.subdominio &&
+        prevProps.agencia.logo_url === nextProps.agencia.logo_url &&
+        prevProps.agencia.colores_primario === nextProps.agencia.colores_primario &&
+        prevProps.agencia.colores_secundario === nextProps.agencia.colores_secundario &&
+        prevProps.agencia.activo === nextProps.agencia.activo &&
+        prevProps.agencia.bloqueada === nextProps.agencia.bloqueada &&
+        prevProps.agencia.mensaje_bloqueo === nextProps.agencia.mensaje_bloqueo &&
+        prevProps.agencia.fecha_licencia === nextProps.agencia.fecha_licencia &&
+        JSON.stringify(prevProps.agencia.usuarios_activos) === JSON.stringify(nextProps.agencia.usuarios_activos)
+    );
+});
 
 // ============================================
 // COMPONENTE PRINCIPAL
@@ -119,7 +412,7 @@ export const SuperAdminDashboard: React.FC = () => {
         ticketsAbiertos: number;
     } | null>(null);
 
-    const openAgenciaInfoModal = async (agenciaId: number, agenciaNombre: string) => {
+    const openAgenciaInfoModal = useCallback(async (agenciaId: number, agenciaNombre: string) => {
         setSelectedAgenciaName(agenciaNombre);
         setLoadingAgenciaInfo(true);
         setShowAgenciaInfoModal(true);
@@ -136,7 +429,7 @@ export const SuperAdminDashboard: React.FC = () => {
         } finally {
             setLoadingAgenciaInfo(false);
         }
-    };
+    }, []);
 
     // ============================================
     // VERIFICAR PERMISOS
@@ -153,11 +446,11 @@ export const SuperAdminDashboard: React.FC = () => {
     // ============================================
     // MÉTODOS PARA BLOQUEAR, MANUALES Y LICENCIAS
     // ============================================
-    const openLicenseModal = (agencia: IAgencia) => {
+    const openLicenseModal = useCallback((agencia: IAgencia) => {
         setLicensingAgencia(agencia);
         setLicenseDate(agencia.fecha_licencia ? new Date(agencia.fecha_licencia).toISOString().split('T')[0] : '');
         setShowLicenseModal(true);
-    };
+    }, []);
 
     const submitLicenseDate = async () => {
         if (!licensingAgencia) return;
@@ -202,7 +495,7 @@ export const SuperAdminDashboard: React.FC = () => {
         }
     };
 
-    const toggleLockAgencia = async (agencia: IAgencia) => {
+    const toggleLockAgencia = useCallback(async (agencia: IAgencia) => {
         if (agencia.bloqueada) {
             try {
                 const response = await api.put(`/agencias/${agencia.id}/bloquear`, { bloqueada: false });
@@ -218,7 +511,7 @@ export const SuperAdminDashboard: React.FC = () => {
             setBlockMessage('');
             setShowBlockModal(true);
         }
-    };
+    }, [loadAgencias]);
 
     const submitBlockAgencia = async () => {
         if (!blockingAgencia) return;
@@ -349,7 +642,7 @@ export const SuperAdminDashboard: React.FC = () => {
         }
     };
 
-    const deleteAgencia = async (id: number) => {
+    const deleteAgencia = useCallback(async (id: number) => {
         if (!confirm('¿Estás seguro de eliminar esta agencia?')) return;
         try {
             await api.delete(`/agencias/${id}`);
@@ -359,7 +652,18 @@ export const SuperAdminDashboard: React.FC = () => {
         } catch (error: any) {
             toast.error(error.response?.data?.error || '❌ Error al eliminar agencia');
         }
-    };
+    }, [loadAgencias]);
+
+    const onEditAgencia = useCallback((agencia: IAgencia) => {
+        setEditingAgencia(agencia);
+        setAgenciaForm({
+            nombre: agencia.nombre,
+            subdominio: agencia.subdominio,
+            colores_primario: agencia.colores_primario || '#2563eb',
+            colores_secundario: agencia.colores_secundario || '#3b82f6'
+        });
+        setShowAgenciaModal(true);
+    }, []);
 
     // ============================================
     // CRUD ADMINS
@@ -974,274 +1278,16 @@ export const SuperAdminDashboard: React.FC = () => {
                                         agencia.subdominio.toLowerCase().includes(searchAgencia.toLowerCase())
                                     )
                                     .map((agencia) => (
-                                    <div key={agencia.id} style={{
-                                        backgroundColor: 'white',
-                                        padding: '24px',
-                                        borderRadius: '12px',
-                                        boxShadow: agencia.usuarios_activos && agencia.usuarios_activos.length > 0
-                                            ? '0 0 15px rgba(34, 197, 94, 0.25), 0 4px 6px -1px rgba(34, 197, 94, 0.1)'
-                                            : '0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03)',
-                                        border: agencia.usuarios_activos && agencia.usuarios_activos.length > 0
-                                            ? '2px solid #22c55e'
-                                            : '1px solid #e2e8f0',
-                                        borderLeft: `5px solid ${agencia.colores_primario || '#2563eb'}`,
-                                        display: 'flex',
-                                        flexDirection: 'column',
-                                        justifyContent: 'space-between',
-                                        transition: 'transform 0.2s ease, box-shadow 0.2s ease'
-                                    }}
-                                    onMouseEnter={(e) => {
-                                        e.currentTarget.style.transform = 'translateY(-2px)';
-                                        e.currentTarget.style.boxShadow = agencia.usuarios_activos && agencia.usuarios_activos.length > 0
-                                            ? '0 0 20px rgba(34, 197, 94, 0.4), 0 10px 15px -3px rgba(34, 197, 94, 0.15)'
-                                            : '0 10px 15px -3px rgba(0,0,0,0.05), 0 4px 6px -2px rgba(0,0,0,0.02)';
-                                    }}
-                                    onMouseLeave={(e) => {
-                                        e.currentTarget.style.transform = 'translateY(0)';
-                                        e.currentTarget.style.boxShadow = agencia.usuarios_activos && agencia.usuarios_activos.length > 0
-                                            ? '0 0 15px rgba(34, 197, 94, 0.25), 0 4px 6px -1px rgba(34, 197, 94, 0.1)'
-                                            : '0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03)';
-                                    }}>
-                                        <div>
-                                            <div style={{ display: 'flex', gap: '16px', alignItems: 'center', marginBottom: '16px' }}>
-                                                {/* Contenedor del logo de la agencia */}
-                                                <div style={{
-                                                    width: '50px',
-                                                    height: '50px',
-                                                    borderRadius: '8px',
-                                                    backgroundColor: '#f8fafc',
-                                                    border: '1px solid #e2e8f0',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center',
-                                                    overflow: 'hidden'
-                                                }}>
-                                                    {agencia.logo_url ? (
-                                                        <img 
-                                                            src={agencia.logo_url} 
-                                                            alt={agencia.nombre} 
-                                                            style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
-                                                            onError={(e) => {
-                                                                e.currentTarget.style.display = 'none';
-                                                                const parent = e.currentTarget.parentElement;
-                                                                if (parent) {
-                                                                    parent.innerHTML = '<span style="font-size:24px">🏢</span>';
-                                                                }
-                                                            }}
-                                                        />
-                                                    ) : (
-                                                        <span style={{ fontSize: '24px' }}>🏢</span>
-                                                    )}
-                                                </div>
-                                                <div>
-                                                    <h3 style={{ 
-                                                        fontWeight: 'bold', 
-                                                        color: '#0f172a', 
-                                                        fontSize: '18px', 
-                                                        margin: 0,
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        gap: '8px',
-                                                        flexWrap: 'wrap'
-                                                    }}>
-                                                        {agencia.nombre}
-                                                        {!!agencia.bloqueada && (
-                                                            <span style={{
-                                                                fontSize: '11px',
-                                                                backgroundColor: '#fee2e2',
-                                                                color: '#b91c1c',
-                                                                padding: '2px 8px',
-                                                                borderRadius: '12px',
-                                                                fontWeight: 'bold'
-                                                            }}>
-                                                                🚫 Bloqueada
-                                                            </span>
-                                                        )}
-                                                        {agencia.usuarios_activos && agencia.usuarios_activos.length > 0 && (
-                                                            <span style={{
-                                                                fontSize: '11px',
-                                                                backgroundColor: '#dcfce7',
-                                                                color: '#15803d',
-                                                                padding: '2px 8px',
-                                                                borderRadius: '12px',
-                                                                fontWeight: 'bold',
-                                                                display: 'flex',
-                                                                alignItems: 'center',
-                                                                gap: '4px'
-                                                            }}>
-                                                                <span style={{
-                                                                    width: '6px',
-                                                                    height: '6px',
-                                                                    borderRadius: '50%',
-                                                                    backgroundColor: '#22c55e',
-                                                                    display: 'inline-block'
-                                                                }}></span>
-                                                                Activo
-                                                            </span>
-                                                        )}
-                                                    </h3>
-                                                    <p style={{ fontSize: '14px', color: '#64748b', margin: '2px 0 0 0' }}>
-                                                        Subdominio: <strong style={{ color: '#0f172a' }}>{agencia.subdominio}</strong>
-                                                    </p>
-                                                </div>
-                                            </div>
- 
-                                            <div style={{ fontSize: '12px', color: '#94a3b8', display: 'flex', flexDirection: 'column', gap: '4px', marginBottom: '10px' }}>
-                                                <span>📅 Creada el {new Date(agencia.fecha_creacion).toLocaleDateString()}</span>
-                                                <span>🔗 {`${window.location.protocol}//${window.location.hostname}${window.location.port ? ':' + window.location.port : ''}/?agencia=${agencia.subdominio}`}</span>
-                                            </div>
-
-                                            {/* Renglón de usuarios activos */}
-                                            {agencia.usuarios_activos && agencia.usuarios_activos.length > 0 && (
-                                                <div style={{
-                                                    marginTop: '12px',
-                                                    padding: '10px 12px',
-                                                    backgroundColor: '#f0fdf4',
-                                                    border: '1px solid #bbf7d0',
-                                                    borderRadius: '8px',
-                                                    fontSize: '13px',
-                                                    color: '#14532d',
-                                                    marginBottom: '10px'
-                                                }}>
-                                                    <div style={{ fontWeight: '600', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                                        <span>🟢 En línea ahora:</span>
-                                                    </div>
-                                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                                        {agencia.usuarios_activos.map((u) => (
-                                                            <div key={u.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                                <span>👤 {u.nombre} {u.apellido}</span>
-                                                                <span style={{ 
-                                                                    fontSize: '11px', 
-                                                                    backgroundColor: u.rol === 'admin' || u.rol === 'superadmin' ? '#dbeafe' : '#f1f5f9',
-                                                                    color: u.rol === 'admin' || u.rol === 'superadmin' ? '#1e40af' : '#475569',
-                                                                    padding: '1px 6px',
-                                                                    borderRadius: '4px',
-                                                                    fontWeight: '600',
-                                                                    textTransform: 'uppercase'
-                                                                }}>
-                                                                    {u.rol}
-                                                                </span>
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </div>
-
-                                        {/* Botones de acción mejorados */}
-                                        <div style={{ 
-                                            display: 'flex', 
-                                            gap: '10px', 
-                                            marginTop: '20px', 
-                                            paddingTop: '16px', 
-                                            borderTop: '1px solid #f1f5f9',
-                                            justifyContent: 'flex-end',
-                                            flexWrap: 'wrap'
-                                        }}>
-                                            <button
-                                                onClick={() => openAgenciaInfoModal(agencia.id, agencia.nombre)}
-                                                style={{
-                                                    padding: '8px 16px',
-                                                    background: 'linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)',
-                                                    color: 'white',
-                                                    border: 'none',
-                                                    borderRadius: '6px',
-                                                    cursor: 'pointer',
-                                                    fontSize: '13px',
-                                                    fontWeight: '600',
-                                                    boxShadow: '0 2px 4px rgba(2, 132, 199, 0.2)',
-                                                    transition: 'all 0.2s'
-                                                }}
-                                                title="Ver estadísticas e información de la agencia"
-                                            >
-                                                ℹ️ Info
-                                            </button>
-                                            <button
-                                                onClick={() => {
-                                                    const url = `/?agencia=${agencia.subdominio}&superadmin=true`;
-                                                    window.location.href = url;
-                                                }}
-                                                style={{
-                                                    padding: '8px 16px',
-                                                    background: 'linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%)',
-                                                    color: 'white',
-                                                    border: 'none',
-                                                    borderRadius: '6px',
-                                                    cursor: 'pointer',
-                                                    fontSize: '13px',
-                                                    fontWeight: '600',
-                                                    boxShadow: '0 2px 4px rgba(109, 40, 217, 0.2)',
-                                                    transition: 'all 0.2s'
-                                                }}
-                                                title="Entrar como Administrador de esta agencia"
-                                            >
-                                                👑 Entrar como Admin
-                                            </button>
-
-                                            <button
-                                                onClick={() => toggleLockAgencia(agencia)}
-                                                style={{
-                                                    padding: '8px 16px',
-                                                    background: agencia.bloqueada 
-                                                        ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
-                                                        : 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
-                                                    color: 'white',
-                                                    border: 'none',
-                                                    borderRadius: '6px',
-                                                    cursor: 'pointer',
-                                                    fontSize: '13px',
-                                                    fontWeight: '600',
-                                                    transition: 'all 0.2s'
-                                                }}
-                                            >
-                                                {agencia.bloqueada ? '🔓 Desbloquear' : '🔒 Bloquear'}
-                                            </button>
-
-                                            <button
-                                                onClick={() => {
-                                                    setEditingAgencia(agencia);
-                                                    setAgenciaForm({
-                                                        nombre: agencia.nombre,
-                                                        subdominio: agencia.subdominio,
-                                                        colores_primario: agencia.colores_primario,
-                                                        colores_secundario: agencia.colores_secundario
-                                                    });
-                                                    setShowAgenciaModal(true);
-                                                }}
-                                                style={{
-                                                    padding: '8px 16px',
-                                                    background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)',
-                                                    border: '1px solid #cbd5e1',
-                                                    color: '#475569',
-                                                    borderRadius: '6px',
-                                                    cursor: 'pointer',
-                                                    fontSize: '13px',
-                                                    fontWeight: '500',
-                                                    transition: 'all 0.2s'
-                                                }}
-                                            >
-                                                ✏️ Editar
-                                            </button>
-
-                                            <button
-                                                onClick={() => deleteAgencia(agencia.id)}
-                                                style={{
-                                                    padding: '8px 16px',
-                                                    background: 'linear-gradient(135deg, #fee2e2 0%, #fca5a5 100%)',
-                                                    border: '1px solid #fca5a5',
-                                                    color: '#b91c1c',
-                                                    borderRadius: '6px',
-                                                    cursor: 'pointer',
-                                                    fontSize: '13px',
-                                                    fontWeight: '600',
-                                                    transition: 'all 0.2s'
-                                                }}
-                                            >
-                                                🗑️ Eliminar
-                                            </button>
-                                        </div>
-                                    </div>
-                                ))}
+                                        <AgenciaCard 
+                                            key={agencia.id}
+                                            agencia={agencia}
+                                            openAgenciaInfoModal={openAgenciaInfoModal}
+                                            deleteAgencia={deleteAgencia}
+                                            toggleLockAgencia={toggleLockAgencia}
+                                            openLicenseModal={openLicenseModal}
+                                            onEditAgencia={onEditAgencia}
+                                        />
+                                    ))}
                             </div>
                         )}
                     </div>
