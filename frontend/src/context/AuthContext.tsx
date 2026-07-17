@@ -78,6 +78,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             clearTimeout(timeoutRef.current);
         }
         if (token) {
+            // Si el usuario es superadmin, no iniciar temporizador de inactividad
+            if (user?.rol === 'superadmin') {
+                return;
+            }
             timeoutRef.current = setTimeout(() => {
                 console.log('⏰ Sesión expirada por inactividad');
                 logout();
@@ -117,7 +121,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 window.removeEventListener(event, handleActivity);
             });
         };
-    }, [token]);
+    }, [token, user]);
 
     const login = async (email: string, password: string, agenciaId?: number) => {
         try {
