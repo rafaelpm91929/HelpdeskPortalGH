@@ -1459,12 +1459,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         animation: 'fadeInNotif 0.3s ease'
                     }}>
                         <div style={{ fontSize: '40px' }}>✉️</div>
-                        <h3 style={{ fontSize: '18px', fontWeight: 'bold', margin: 0 }}>
-                            {notificaciones.find(n => !n.leido && n.ticket_id === null)?.titulo || 'Mensaje de SuperAdmin'}
+                        <h3 style={{ fontSize: '20px', fontWeight: 'bold', margin: 0 }}>
+                            Mensaje
                         </h3>
                         <p style={{ 
-                            fontSize: '14px', 
-                            color: '#cbd5e1', 
+                            fontSize: '17px', 
+                            color: '#ffffff', 
                             lineHeight: '1.6', 
                             backgroundColor: 'rgba(15, 23, 42, 0.3)',
                             padding: '16px',

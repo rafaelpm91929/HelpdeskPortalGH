@@ -1542,7 +1542,9 @@ export const SuperAdminDashboard: React.FC = () => {
                                 backdropFilter: 'blur(12px)',
                                 borderRadius: '12px',
                                 border: '1px solid rgba(255, 255, 255, 0.08)',
-                                overflow: 'hidden',
+                                overflowY: 'auto',
+                                overflowX: 'auto',
+                                maxHeight: '320px',
                                 boxShadow: '0 8px 32px rgba(0,0,0,0.25)'
                             }}>
                                 <table style={{ width: '100%', borderCollapse: 'collapse' }}>
