@@ -60,17 +60,20 @@ const AgenciaCard = React.memo<AgenciaCardProps>(({
     openLicenseModal,
     onEditAgencia
 }) => {
+    const hasActiveUsers = agencia.usuarios_activos && agencia.usuarios_activos.length > 0;
+
     return (
         <div style={{
-            backgroundColor: 'white',
+            backgroundColor: 'rgba(30, 41, 59, 0.45)',
+            backdropFilter: 'blur(12px)',
             padding: '24px',
             borderRadius: '12px',
-            boxShadow: agencia.usuarios_activos && agencia.usuarios_activos.length > 0
-                ? '0 0 15px rgba(34, 197, 94, 0.25), 0 4px 6px -1px rgba(34, 197, 94, 0.1)'
-                : '0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03)',
-            border: agencia.usuarios_activos && agencia.usuarios_activos.length > 0
-                ? '2px solid #22c55e'
-                : '1px solid #e2e8f0',
+            boxShadow: hasActiveUsers
+                ? '0 0 20px rgba(34, 197, 94, 0.2), 0 4px 12px rgba(0, 0, 0, 0.2)'
+                : '0 8px 32px rgba(0, 0, 0, 0.25)',
+            border: hasActiveUsers
+                ? '1px solid rgba(34, 197, 94, 0.4)'
+                : '1px solid rgba(255, 255, 255, 0.08)',
             borderLeft: `5px solid ${agencia.colores_primario || '#2563eb'}`,
             display: 'flex',
             flexDirection: 'column',
@@ -79,15 +82,15 @@ const AgenciaCard = React.memo<AgenciaCardProps>(({
         }}
         onMouseEnter={(e) => {
             e.currentTarget.style.transform = 'translateY(-2px)';
-            e.currentTarget.style.boxShadow = agencia.usuarios_activos && agencia.usuarios_activos.length > 0
-                ? '0 0 20px rgba(34, 197, 94, 0.4), 0 10px 15px -3px rgba(34, 197, 94, 0.15)'
-                : '0 10px 15px -3px rgba(0,0,0,0.05), 0 4px 6px -2px rgba(0,0,0,0.02)';
+            e.currentTarget.style.boxShadow = hasActiveUsers
+                ? '0 0 25px rgba(34, 197, 94, 0.35), 0 10px 20px rgba(0, 0, 0, 0.25)'
+                : '0 12px 40px rgba(0, 0, 0, 0.35)';
         }}
         onMouseLeave={(e) => {
             e.currentTarget.style.transform = 'translateY(0)';
-            e.currentTarget.style.boxShadow = agencia.usuarios_activos && agencia.usuarios_activos.length > 0
-                ? '0 0 15px rgba(34, 197, 94, 0.25), 0 4px 6px -1px rgba(34, 197, 94, 0.1)'
-                : '0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03)';
+            e.currentTarget.style.boxShadow = hasActiveUsers
+                ? '0 0 20px rgba(34, 197, 94, 0.2), 0 4px 12px rgba(0, 0, 0, 0.2)'
+                : '0 8px 32px rgba(0, 0, 0, 0.25)';
         }}>
             <div>
                 <div style={{ display: 'flex', gap: '16px', alignItems: 'center', marginBottom: '16px' }}>
@@ -96,8 +99,8 @@ const AgenciaCard = React.memo<AgenciaCardProps>(({
                         width: '50px',
                         height: '50px',
                         borderRadius: '8px',
-                        backgroundColor: '#f8fafc',
-                        border: '1px solid #e2e8f0',
+                        backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                        border: '1px solid rgba(255, 255, 255, 0.08)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -123,7 +126,7 @@ const AgenciaCard = React.memo<AgenciaCardProps>(({
                     <div>
                         <h3 style={{ 
                             fontWeight: 'bold', 
-                            color: '#0f172a', 
+                            color: '#ffffff', 
                             fontSize: '18px', 
                             margin: 0,
                             display: 'flex',
@@ -135,8 +138,8 @@ const AgenciaCard = React.memo<AgenciaCardProps>(({
                             {!!agencia.bloqueada && (
                                 <span style={{
                                     fontSize: '11px',
-                                    backgroundColor: '#fee2e2',
-                                    color: '#b91c1c',
+                                    backgroundColor: 'rgba(239, 68, 68, 0.2)',
+                                    color: '#ef4444',
                                     padding: '2px 8px',
                                     borderRadius: '12px',
                                     fontWeight: 'bold'
@@ -144,11 +147,11 @@ const AgenciaCard = React.memo<AgenciaCardProps>(({
                                     🚫 Bloqueada
                                 </span>
                             )}
-                            {agencia.usuarios_activos && agencia.usuarios_activos.length > 0 && (
+                            {hasActiveUsers && (
                                 <span style={{
                                     fontSize: '11px',
-                                    backgroundColor: '#dcfce7',
-                                    color: '#15803d',
+                                    backgroundColor: 'rgba(34, 197, 94, 0.2)',
+                                    color: '#4ade80',
                                     padding: '2px 8px',
                                     borderRadius: '12px',
                                     fontWeight: 'bold',
@@ -167,8 +170,8 @@ const AgenciaCard = React.memo<AgenciaCardProps>(({
                                 </span>
                             )}
                         </h3>
-                        <p style={{ fontSize: '14px', color: '#64748b', margin: '2px 0 0 0' }}>
-                            Subdominio: <strong style={{ color: '#0f172a' }}>{agencia.subdominio}</strong>
+                        <p style={{ fontSize: '14px', color: '#94a3b8', margin: '2px 0 0 0' }}>
+                            Subdominio: <strong style={{ color: '#f8fafc' }}>{agencia.subdominio}</strong>
                         </p>
                     </div>
                 </div>
@@ -183,11 +186,11 @@ const AgenciaCard = React.memo<AgenciaCardProps>(({
                     <div style={{
                         marginTop: '12px',
                         padding: '10px 12px',
-                        backgroundColor: '#f0fdf4',
-                        border: '1px solid #bbf7d0',
+                        backgroundColor: 'rgba(34, 197, 94, 0.08)',
+                        border: '1px solid rgba(34, 197, 94, 0.25)',
                         borderRadius: '8px',
                         fontSize: '13px',
-                        color: '#14532d',
+                        color: '#4ade80',
                         marginBottom: '10px'
                     }}>
                         <div style={{ fontWeight: '600', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -206,8 +209,8 @@ const AgenciaCard = React.memo<AgenciaCardProps>(({
                                     <span>👤 {u.nombre} {u.apellido}</span>
                                     <span style={{ 
                                         fontSize: '11px', 
-                                        backgroundColor: u.rol === 'admin' || u.rol === 'superadmin' ? '#dbeafe' : '#f1f5f9',
-                                        color: u.rol === 'admin' || u.rol === 'superadmin' ? '#1e40af' : '#475569',
+                                        backgroundColor: 'rgba(96, 165, 250, 0.15)',
+                                        color: '#60a5fa',
                                         padding: '1px 6px',
                                         borderRadius: '4px',
                                         fontWeight: '600',
@@ -228,24 +231,25 @@ const AgenciaCard = React.memo<AgenciaCardProps>(({
                 gap: '10px', 
                 marginTop: '20px', 
                 paddingTop: '16px', 
-                borderTop: '1px solid #f1f5f9',
+                borderTop: '1px solid rgba(255, 255, 255, 0.08)',
                 justifyContent: 'flex-end',
                 flexWrap: 'wrap'
             }}>
                 <button
                     onClick={() => openAgenciaInfoModal(agencia.id, agencia.nombre)}
                     style={{
-                        padding: '8px 16px',
-                        background: 'linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)',
-                        color: 'white',
-                        border: 'none',
+                        padding: '8px 14px',
+                        backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                        color: '#e2e8f0',
+                        border: '1px solid rgba(255, 255, 255, 0.1)',
                         borderRadius: '6px',
                         cursor: 'pointer',
-                        fontSize: '13px',
+                        fontSize: '12px',
                         fontWeight: '600',
-                        boxShadow: '0 2px 4px rgba(2, 132, 199, 0.2)',
                         transition: 'all 0.2s'
                     }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.12)'}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.05)'}
                     title="Ver estadísticas e información de la agencia"
                 >
                     ℹ️ Info
@@ -256,36 +260,49 @@ const AgenciaCard = React.memo<AgenciaCardProps>(({
                         window.location.href = url;
                     }}
                     style={{
-                        padding: '8px 16px',
-                        background: 'linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%)',
-                        color: 'white',
-                        border: 'none',
+                        padding: '8px 14px',
+                        backgroundColor: 'rgba(96, 165, 250, 0.1)',
+                        color: '#60a5fa',
+                        border: '1px solid rgba(96, 165, 250, 0.25)',
                         borderRadius: '6px',
                         cursor: 'pointer',
-                        fontSize: '13px',
+                        fontSize: '12px',
                         fontWeight: '600',
-                        boxShadow: '0 2px 4px rgba(109, 40, 217, 0.2)',
                         transition: 'all 0.2s'
                     }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(96, 165, 250, 0.18)'}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgba(96, 165, 250, 0.1)'}
                     title="Entrar como Administrador de esta agencia"
                 >
-                    👑 Entrar como Admin
+                    👑 Entrar
                 </button>
 
                 <button
                     onClick={() => toggleLockAgencia(agencia)}
                     style={{
-                        padding: '8px 16px',
-                        background: agencia.bloqueada 
-                            ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
-                            : 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
-                        color: 'white',
-                        border: 'none',
+                        padding: '8px 14px',
+                        backgroundColor: agencia.bloqueada 
+                            ? 'rgba(34, 197, 94, 0.1)'
+                            : 'rgba(245, 158, 11, 0.1)',
+                        color: agencia.bloqueada ? '#4ade80' : '#fbbf24',
+                        border: agencia.bloqueada 
+                            ? '1px solid rgba(34, 197, 94, 0.25)'
+                            : '1px solid rgba(245, 158, 11, 0.25)',
                         borderRadius: '6px',
                         cursor: 'pointer',
-                        fontSize: '13px',
+                        fontSize: '12px',
                         fontWeight: '600',
                         transition: 'all 0.2s'
+                    }}
+                    onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = agencia.bloqueada 
+                            ? 'rgba(34, 197, 94, 0.18)'
+                            : 'rgba(245, 158, 11, 0.18)';
+                    }}
+                    onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = agencia.bloqueada 
+                            ? 'rgba(34, 197, 94, 0.1)'
+                            : 'rgba(245, 158, 11, 0.1)';
                     }}
                 >
                     {agencia.bloqueada ? '🔓 Desbloquear' : '🔒 Bloquear'}
@@ -294,16 +311,18 @@ const AgenciaCard = React.memo<AgenciaCardProps>(({
                 <button
                     onClick={() => onEditAgencia(agencia)}
                     style={{
-                        padding: '8px 16px',
-                        background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)',
-                        border: '1px solid #cbd5e1',
-                        color: '#475569',
+                        padding: '8px 14px',
+                        backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                        color: '#cbd5e1',
+                        border: '1px solid rgba(255, 255, 255, 0.1)',
                         borderRadius: '6px',
                         cursor: 'pointer',
-                        fontSize: '13px',
-                        fontWeight: '500',
+                        fontSize: '12px',
+                        fontWeight: '600',
                         transition: 'all 0.2s'
                     }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.12)'}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.05)'}
                 >
                     ✏️ Editar
                 </button>
@@ -311,16 +330,18 @@ const AgenciaCard = React.memo<AgenciaCardProps>(({
                 <button
                     onClick={() => deleteAgencia(agencia.id)}
                     style={{
-                        padding: '8px 16px',
-                        background: 'linear-gradient(135deg, #fee2e2 0%, #fca5a5 100%)',
-                        border: '1px solid #fca5a5',
-                        color: '#b91c1c',
+                        padding: '8px 14px',
+                        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                        color: '#f87171',
+                        border: '1px solid rgba(239, 68, 68, 0.25)',
                         borderRadius: '6px',
                         cursor: 'pointer',
-                        fontSize: '13px',
+                        fontSize: '12px',
                         fontWeight: '600',
                         transition: 'all 0.2s'
                     }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.18)'}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.1)'}
                 >
                     🗑️ Eliminar
                 </button>
