@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
@@ -20,6 +20,133 @@ export const LoginPage: React.FC = () => {
     // Refs para el efecto de olas
     const containerRef = useRef<HTMLDivElement>(null);
     const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+
+    // --- SMARTY INTERACTIVO ---
+    const [smartyPos, setSmartyPos] = useState({ x: 100, y: 150 });
+    const [smartyAngle, setSmartyAngle] = useState(0);
+    const [bubbleText, setBubbleText] = useState('🤖 ¡Hola! Soy Smarty');
+    const [showBubble, setShowBubble] = useState(true);
+
+    const smartyPosRef = useRef({ x: 100, y: 150 });
+    const bubbleTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const angleTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+    // Sincronizar el Ref de posición
+    useEffect(() => {
+        smartyPosRef.current = smartyPos;
+    }, [smartyPos]);
+
+    // Establecer la posición inicial de Smarty
+    useEffect(() => {
+        const initialX = window.innerWidth - 200;
+        const initialY = 120;
+        setSmartyPos({ x: initialX, y: initialY });
+
+        const timer = setTimeout(() => {
+            setShowBubble(false);
+        }, 3500);
+
+        return () => {
+            clearTimeout(timer);
+            if (bubbleTimeoutRef.current) clearTimeout(bubbleTimeoutRef.current);
+            if (angleTimeoutRef.current) clearTimeout(angleTimeoutRef.current);
+        };
+    }, []);
+
+    // Función para hacer que Smarty escape del mouse
+    const escapeSmarty = useCallback((mouseX: number, mouseY: number) => {
+        const smartyWidth = 120;
+        const smartyHeight = 120;
+        const padding = 80;
+
+        const phrases = [
+            '¡Casi! ⚡',
+            '¡Por aquí no! 🤖',
+            '¡Muy lento! 💨',
+            '¡Ups! 🚀',
+            '¡Inténtalo de nuevo! 🎮',
+            '¡Sigue intentando! 🌟',
+            '¡Atrápame si puedes! 🏃\u200d♂️',
+            '¡Esquiva veloz! 👾',
+            '¡Demasiado cerca! 🛑'
+        ];
+
+        const randomPhrase = phrases[Math.floor(Math.random() * phrases.length)];
+        setBubbleText(randomPhrase);
+        setShowBubble(true);
+
+        if (bubbleTimeoutRef.current) clearTimeout(bubbleTimeoutRef.current);
+        bubbleTimeoutRef.current = setTimeout(() => {
+            setShowBubble(false);
+        }, 1500);
+
+        const maxX = window.innerWidth - smartyWidth - padding;
+        const maxY = window.innerHeight - smartyHeight - padding;
+
+        let newX = 0;
+        let newY = 0;
+        let attempts = 0;
+        let valid = false;
+
+        while (!valid && attempts < 30) {
+            newX = padding + Math.random() * (maxX - padding);
+            newY = padding + Math.random() * (maxY - padding);
+
+            const distFromMouse = Math.sqrt(
+                Math.pow(newX + smartyWidth / 2 - mouseX, 2) +
+                Math.pow(newY + smartyHeight / 2 - mouseY, 2)
+            );
+
+            const distFromOld = Math.sqrt(
+                Math.pow(newX - smartyPosRef.current.x, 2) +
+                Math.pow(newY - smartyPosRef.current.y, 2)
+            );
+
+            if (distFromMouse > 280 && distFromOld > 150) {
+                valid = true;
+            }
+            attempts++;
+        }
+
+        if (!valid) {
+            newX = mouseX > window.innerWidth / 2 ? padding : maxX;
+            newY = mouseY > window.innerHeight / 2 ? padding : maxY;
+        }
+
+        const deltaX = newX - smartyPosRef.current.x;
+        const tilt = deltaX > 0 ? 20 : -20;
+
+        setSmartyPos({ x: newX, y: newY });
+        setSmartyAngle(tilt);
+
+        if (angleTimeoutRef.current) clearTimeout(angleTimeoutRef.current);
+        angleTimeoutRef.current = setTimeout(() => {
+            setSmartyAngle(0);
+        }, 500);
+    }, []);
+
+    // Detectar la proximidad del mouse de manera global
+    useEffect(() => {
+        const handleGlobalMouseMove = (e: MouseEvent) => {
+            const smartyWidth = 120;
+            const smartyHeight = 120;
+            const smartyCenterX = smartyPosRef.current.x + smartyWidth / 2;
+            const smartyCenterY = smartyPosRef.current.y + smartyHeight / 2;
+
+            const dx = e.clientX - smartyCenterX;
+            const dy = e.clientY - smartyCenterY;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
+            // Si el cursor se acerca a menos de 160px de Smarty, escapa
+            if (distance < 160) {
+                escapeSmarty(e.clientX, e.clientY);
+            }
+        };
+
+        window.addEventListener('mousemove', handleGlobalMouseMove);
+        return () => window.removeEventListener('mousemove', handleGlobalMouseMove);
+    }, [escapeSmarty]);
+    // --- FIN SMARTY INTERACTIVO ---
 
     const handleSubmit = async (e: React.FormEvent, forceAgenciaId?: number) => {
         if (e) e.preventDefault();
@@ -335,6 +462,25 @@ export const LoginPage: React.FC = () => {
                         transform: scale(1.02);
                     }
                 }
+
+                @keyframes smartyFloatIdle {
+                    0%, 100% {
+                        transform: translateY(0);
+                    }
+                    50% {
+                        transform: translateY(-8px);
+                    }
+                }
+                @keyframes smartyShadowIdle {
+                    0%, 100% {
+                        transform: scaleX(1);
+                        opacity: 0.8;
+                    }
+                    50% {
+                        transform: scaleX(0.7);
+                        opacity: 0.4;
+                    }
+                }
             `}</style>
 
             <div
@@ -500,6 +646,89 @@ export const LoginPage: React.FC = () => {
                         </button>
                     </form>
                 )}
+            </div>
+
+            {/* Smarty Asistente Interactivo */}
+            <div
+                style={{
+                    position: 'fixed',
+                    left: `${smartyPos.x}px`,
+                    top: `${smartyPos.y}px`,
+                    width: '120px',
+                    height: '120px',
+                    zIndex: 1000,
+                    transition: 'left 0.5s cubic-bezier(0.19, 1, 0.22, 1), top 0.5s cubic-bezier(0.19, 1, 0.22, 1), transform 0.5s cubic-bezier(0.19, 1, 0.22, 1)',
+                    transform: `translate3d(0, 0, 0) rotate(${smartyAngle}deg)`,
+                    pointerEvents: 'auto',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'grab'
+                }}
+            >
+                {/* Globo de diálogo de Smarty */}
+                <div
+                    style={{
+                        position: 'absolute',
+                        bottom: '120px',
+                        backgroundColor: '#1e293b',
+                        border: '2px solid #38bdf8',
+                        borderRadius: '16px',
+                        padding: '8px 16px',
+                        color: 'white',
+                        fontSize: '13px',
+                        fontWeight: 'bold',
+                        boxShadow: '0 8px 16px rgba(56, 189, 248, 0.25)',
+                        opacity: showBubble ? 1 : 0,
+                        transform: showBubble ? 'scale(1) translateY(0)' : 'scale(0.8) translateY(10px)',
+                        transition: 'all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+                        whiteSpace: 'nowrap',
+                        pointerEvents: 'none',
+                        zIndex: 1001
+                    }}
+                >
+                    {bubbleText}
+                    {/* Flecha del globo */}
+                    <div
+                        style={{
+                            position: 'absolute',
+                            bottom: '-8px',
+                            left: '50%',
+                            transform: 'translateX(-50%) rotate(45deg)',
+                            width: '12px',
+                            height: '12px',
+                            backgroundColor: '#1e293b',
+                            borderRight: '2px solid #38bdf8',
+                            borderBottom: '2px solid #38bdf8'
+                        }}
+                    />
+                </div>
+
+                {/* Smarty imagen con halo y float de inactividad */}
+                <img
+                    src="/robot.png"
+                    alt="Smarty Asistente"
+                    style={{
+                        width: '100%',
+                        height: 'auto',
+                        filter: 'drop-shadow(0 0 15px rgba(56, 189, 248, 0.55))',
+                        animation: 'smartyFloatIdle 3s ease-in-out infinite'
+                    }}
+                />
+
+                {/* Estela/Brillo debajo de Smarty */}
+                <div
+                    style={{
+                        width: '60px',
+                        height: '6px',
+                        background: 'rgba(56, 189, 248, 0.3)',
+                        borderRadius: '50%',
+                        filter: 'blur(3px)',
+                        animation: 'smartyShadowIdle 3s ease-in-out infinite',
+                        marginTop: '5px'
+                    }}
+                />
             </div>
         </div>
     );
