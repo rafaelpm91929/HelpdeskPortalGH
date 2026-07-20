@@ -24,11 +24,8 @@ export const LoginPage: React.FC = () => {
     // --- SMARTY INTERACTIVO ---
     const [smartyPos, setSmartyPos] = useState({ x: 100, y: 150 });
     const [smartyAngle, setSmartyAngle] = useState(0);
-    const [bubbleText, setBubbleText] = useState('🤖 ¡Hola! Soy Smarty');
-    const [showBubble, setShowBubble] = useState(true);
 
     const smartyPosRef = useRef({ x: 100, y: 150 });
-    const bubbleTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const angleTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     // Sincronizar el Ref de posición
@@ -42,13 +39,7 @@ export const LoginPage: React.FC = () => {
         const initialY = 120;
         setSmartyPos({ x: initialX, y: initialY });
 
-        const timer = setTimeout(() => {
-            setShowBubble(false);
-        }, 3500);
-
         return () => {
-            clearTimeout(timer);
-            if (bubbleTimeoutRef.current) clearTimeout(bubbleTimeoutRef.current);
             if (angleTimeoutRef.current) clearTimeout(angleTimeoutRef.current);
         };
     }, []);
@@ -58,27 +49,6 @@ export const LoginPage: React.FC = () => {
         const smartyWidth = 120;
         const smartyHeight = 120;
         const padding = 80;
-
-        const phrases = [
-            '¡Casi! ⚡',
-            '¡Por aquí no! 🤖',
-            '¡Muy lento! 💨',
-            '¡Ups! 🚀',
-            '¡Inténtalo de nuevo! 🎮',
-            '¡Sigue intentando! 🌟',
-            '¡Atrápame si puedes! 🏃\u200d♂️',
-            '¡Esquiva veloz! 👾',
-            '¡Demasiado cerca! 🛑'
-        ];
-
-        const randomPhrase = phrases[Math.floor(Math.random() * phrases.length)];
-        setBubbleText(randomPhrase);
-        setShowBubble(true);
-
-        if (bubbleTimeoutRef.current) clearTimeout(bubbleTimeoutRef.current);
-        bubbleTimeoutRef.current = setTimeout(() => {
-            setShowBubble(false);
-        }, 1500);
 
         const maxX = window.innerWidth - smartyWidth - padding;
         const maxY = window.innerHeight - smartyHeight - padding;
@@ -667,43 +637,6 @@ export const LoginPage: React.FC = () => {
                     cursor: 'grab'
                 }}
             >
-                {/* Globo de diálogo de Smarty */}
-                <div
-                    style={{
-                        position: 'absolute',
-                        bottom: '120px',
-                        backgroundColor: '#1e293b',
-                        border: '2px solid #38bdf8',
-                        borderRadius: '16px',
-                        padding: '8px 16px',
-                        color: 'white',
-                        fontSize: '13px',
-                        fontWeight: 'bold',
-                        boxShadow: '0 8px 16px rgba(56, 189, 248, 0.25)',
-                        opacity: showBubble ? 1 : 0,
-                        transform: showBubble ? 'scale(1) translateY(0)' : 'scale(0.8) translateY(10px)',
-                        transition: 'all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
-                        whiteSpace: 'nowrap',
-                        pointerEvents: 'none',
-                        zIndex: 1001
-                    }}
-                >
-                    {bubbleText}
-                    {/* Flecha del globo */}
-                    <div
-                        style={{
-                            position: 'absolute',
-                            bottom: '-8px',
-                            left: '50%',
-                            transform: 'translateX(-50%) rotate(45deg)',
-                            width: '12px',
-                            height: '12px',
-                            backgroundColor: '#1e293b',
-                            borderRight: '2px solid #38bdf8',
-                            borderBottom: '2px solid #38bdf8'
-                        }}
-                    />
-                </div>
 
                 {/* Smarty imagen con halo y float de inactividad */}
                 <img

@@ -253,23 +253,6 @@ export const LandingPage: React.FC = () => {
                                 transform: 'rotate(25deg)'
                             }}
                         />
-                        <div style={{
-                            marginTop: '15px',
-                            fontSize: '14px',
-                            fontWeight: 'bold',
-                            color: '#38bdf8',
-                            textTransform: 'uppercase',
-                            letterSpacing: '2px',
-                            backgroundColor: 'rgba(56, 189, 248, 0.15)',
-                            padding: '6px 16px',
-                            borderRadius: '20px',
-                            border: '1px solid rgba(56, 189, 248, 0.3)',
-                            boxShadow: '0 0 15px rgba(56, 189, 248, 0.2)',
-                            whiteSpace: 'nowrap',
-                            animation: 'textPulse 0.5s infinite alternate'
-                        }}>
-                            ¡Iniciando Propulsores! 🚀
-                        </div>
                     </div>
                 </div>
             )}
