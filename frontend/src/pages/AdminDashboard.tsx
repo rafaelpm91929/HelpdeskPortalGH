@@ -1587,7 +1587,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                     {(() => {
                                         let titleText = currentNotif.titulo || 'Mensaje para ti';
                                         titleText = titleText.replace(/de SuperAdmin/gi, 'para ti');
-                                        titleText = titleText.replace(/^[?\s✉️📢]+/, '');
+                                        titleText = titleText.replace(/^[\s\?\u0080-\uFFFF]+/g, '').trim();
                                         return titleText;
                                     })()}
                                 </h3>
