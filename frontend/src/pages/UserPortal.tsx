@@ -93,6 +93,15 @@ export const UserPortal: React.FC<UserPortalProps> = ({ agenciaParam }) => {
     // ============================================
     const [loading, setLoading] = useState(false);
     const [initialLoading, setInitialLoading] = useState(true);
+    const [isLoggingOut, setIsLoggingOut] = useState(false);
+    
+    const handleLogout = () => {
+        setIsLoggingOut(true);
+        setTimeout(() => {
+            logout();
+        }, 1800);
+    };
+
     const [tickets, setTickets] = useState<ITicket[]>([]);
     const [areas, setAreas] = useState<IArea[]>([]);
     const [agenciaInfo, setAgenciaInfo] = useState<IAgenciaInfo | null>(null);
@@ -631,7 +640,7 @@ export const UserPortal: React.FC<UserPortalProps> = ({ agenciaParam }) => {
     // ============================================
     // RENDER
     // ============================================
-    if (initialLoading || !user) {
+    if (initialLoading || isLoggingOut || !user) {
         return (
             <div style={{
                 minHeight: '100vh',
@@ -819,7 +828,7 @@ export const UserPortal: React.FC<UserPortalProps> = ({ agenciaParam }) => {
                         Este portal de ayuda se encuentra actualmente en revisión o mantenimiento técnico. Por favor, intenta acceder más tarde.
                     </p>
                     <button
-                        onClick={() => logout()}
+                        onClick={handleLogout}
                         style={{
                             width: '100%',
                             padding: '12px',
@@ -1429,7 +1438,7 @@ export const UserPortal: React.FC<UserPortalProps> = ({ agenciaParam }) => {
                         {user.nombre} {user.apellido}
                     </span>
                     <button
-                        onClick={() => logout()}
+                        onClick={handleLogout}
                         style={{
                             padding: '6px 16px',
                             backgroundColor: 'rgba(255,255,255,0.2)',

@@ -95,6 +95,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     });
     const [loading, setLoading] = useState(true);
     const [initialLoading, setInitialLoading] = useState(true);
+    const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+    const handleLogout = () => {
+        setIsLoggingOut(true);
+        setTimeout(() => {
+            logout();
+        }, 1800);
+    };
+
     const [activeTab, setActiveTab] = useState<'dashboard' | 'tickets' | 'usuarios' | 'estadisticas' | 'configuracion'>(() => {
         return (localStorage.getItem(`active_tab_admin_${user?.id}`) as any) || 'dashboard';
     });
@@ -419,7 +428,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     // ============================================
     // RENDER
     // ============================================
-    if (initialLoading || !user) {
+    if (initialLoading || isLoggingOut || !user) {
         return (
             <div style={{
                 minHeight: '100vh',
@@ -611,7 +620,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         </div>
                     )}
                     <button
-                        onClick={() => logout()}
+                        onClick={handleLogout}
                         style={{
                             width: '100%',
                             padding: '12px',
@@ -846,9 +855,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     marginTop: 'auto'
                 }}>
                     <button
-                        onClick={() => {
-                            logout();
-                        }}
+                        onClick={handleLogout}
                         style={{
                             display: 'flex',
                             alignItems: 'center',

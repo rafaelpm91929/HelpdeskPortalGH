@@ -372,8 +372,17 @@ export const SuperAdminDashboard: React.FC = () => {
     
     // --- EFECTO INICIO MATRIX SUPERADMIN ---
     const [isInitializing, setIsInitializing] = useState(true);
+    const [isLoggingOut, setIsLoggingOut] = useState(false);
     const [logoBinaryMap, setLogoBinaryMap] = useState<boolean[][] | null>(null);
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
+
+    const handleLogout = () => {
+        setIsLoggingOut(true);
+        setIsInitializing(true);
+        setTimeout(() => {
+            authLogout();
+        }, 1800);
+    };
 
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -1040,7 +1049,7 @@ export const SuperAdminDashboard: React.FC = () => {
                             letterSpacing: '2px',
                             marginBottom: '6px'
                         }}>
-                            ENTRANDO EN MODO ADMINISTRADOR
+                            {isLoggingOut ? 'CERRANDO MODO ADMINISTRADOR' : 'ENTRANDO EN MODO ADMINISTRADOR'}
                         </div>
                         <div style={{
                             fontSize: '16px',
@@ -1049,7 +1058,9 @@ export const SuperAdminDashboard: React.FC = () => {
                             letterSpacing: '1px',
                             marginBottom: '20px'
                         }}>
-                            ¡Bienvenido, {user?.nombre || ''} {user?.apellido || ''}!
+                            {isLoggingOut 
+                                ? `¡Hasta luego, ${user?.nombre || ''} ${user?.apellido || ''}!` 
+                                : `¡Bienvenido, ${user?.nombre || ''} ${user?.apellido || ''}!`}
                         </div>
 
                         {/* Indicador de carga binario */}
@@ -1115,10 +1126,7 @@ export const SuperAdminDashboard: React.FC = () => {
                         {user?.nombre} {user?.apellido}
                     </span>
                     <button
-                        onClick={() => {
-                            authLogout();
-                            logout();
-                        }}
+                        onClick={handleLogout}
                         style={{
                             padding: '6px 14px',
                             color: '#ef4444',
