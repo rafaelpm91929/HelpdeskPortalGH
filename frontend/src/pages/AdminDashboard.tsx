@@ -444,6 +444,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         0%, 80%, 100% { transform: scale(0); opacity: 0.3; }
                         40% { transform: scale(1.0); opacity: 1; }
                     }
+                    @keyframes smartyFloatIdle {
+                        0%, 100% { transform: translateY(0); }
+                        50% { transform: translateY(-8px); }
+                    }
                     .dot {
                         width: 12px;
                         height: 12px;
@@ -455,6 +459,27 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     .dot1 { animation-delay: -0.32s; }
                     .dot2 { animation-delay: -0.16s; }
                 `}</style>
+
+                {/* Robot Smarty Flotando con Destello de la Agencia */}
+                <div style={{
+                    marginBottom: '24px',
+                    animation: 'smartyFloatIdle 3s ease-in-out infinite',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    pointerEvents: 'none'
+                }}>
+                    <img 
+                        src="/robot.png" 
+                        alt="Smarty Asistente" 
+                        style={{
+                            width: '100px',
+                            height: 'auto',
+                            filter: `drop-shadow(0 0 15px ${colores.primario})`,
+                        }}
+                    />
+                </div>
 
                 <div style={{
                     backgroundColor: 'rgba(255, 255, 255, 0.1)',
