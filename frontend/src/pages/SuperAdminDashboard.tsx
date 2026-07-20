@@ -412,15 +412,17 @@ export const SuperAdminDashboard: React.FC = () => {
 
             ctx.font = `bold ${fontSize}px monospace`;
 
+            // Crear gradiente lineal vertical de azul oscuro a celeste brillante
+            const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            gradient.addColorStop(0, '#1e3a8a');   // Azul oscuro arriba
+            gradient.addColorStop(0.5, '#0284c7'); // Azul cian intermedio
+            gradient.addColorStop(1, '#38bdf8');   // Celeste brillante abajo
+
             for (let i = 0; i < rainDrops.length; i++) {
                 const text = binaryChars[Math.floor(Math.random() * binaryChars.length)];
                 
-                // Variar el brillo de algunos números en azul cian hacker
-                if (Math.random() > 0.98) {
-                    ctx.fillStyle = '#38bdf8'; // azul brillante
-                } else {
-                    ctx.fillStyle = '#0284c7'; // azul cian más oscuro para profundidad
-                }
+                // Aplicar el gradiente degradado azul
+                ctx.fillStyle = gradient;
 
                 ctx.fillText(text, i * fontSize, rainDrops[i] * fontSize);
 
