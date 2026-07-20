@@ -24,14 +24,26 @@ export const LoginPage: React.FC = () => {
     // --- SMARTY INTERACTIVO ---
     const [smartyPos, setSmartyPos] = useState({ x: 100, y: 150 });
     const [smartyAngle, setSmartyAngle] = useState(0);
+    const [bubbleText, setBubbleText] = useState('');
+    const [showBubble, setShowBubble] = useState(false);
 
     const smartyPosRef = useRef({ x: 100, y: 150 });
     const angleTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const bubbleTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     // Sincronizar el Ref de posición
     useEffect(() => {
         smartyPosRef.current = smartyPos;
     }, [smartyPos]);
+
+    const showSmartyMessage = useCallback((msg: string) => {
+        setBubbleText(msg);
+        setShowBubble(true);
+        if (bubbleTimeoutRef.current) clearTimeout(bubbleTimeoutRef.current);
+        bubbleTimeoutRef.current = setTimeout(() => {
+            setShowBubble(false);
+        }, 5000);
+    }, []);
 
     // Establecer la posición inicial de Smarty
     useEffect(() => {
@@ -39,10 +51,14 @@ export const LoginPage: React.FC = () => {
         const initialY = 120;
         setSmartyPos({ x: initialX, y: initialY });
 
+        // Mensaje de bienvenida inicial de Smarty
+        showSmartyMessage('🤖 ¡Hola! Por favor, inicia sesión para continuar.');
+
         return () => {
             if (angleTimeoutRef.current) clearTimeout(angleTimeoutRef.current);
+            if (bubbleTimeoutRef.current) clearTimeout(bubbleTimeoutRef.current);
         };
-    }, []);
+    }, [showSmartyMessage]);
 
     // Función para hacer que Smarty escape del mouse
     const escapeSmarty = useCallback((mouseX: number, mouseY: number) => {
@@ -120,6 +136,13 @@ export const LoginPage: React.FC = () => {
 
     const handleSubmit = async (e: React.FormEvent, forceAgenciaId?: number) => {
         if (e) e.preventDefault();
+
+        // Validación manual de campos vacíos
+        if (!email.trim() || !password.trim()) {
+            showSmartyMessage('📝 ¡Falta ingresar los datos en los campos!');
+            return;
+        }
+
         setLoading(true);
         try {
             const loginAgenciaId = forceAgenciaId !== undefined ? forceAgenciaId : (selectedAgenciaId || undefined);
@@ -185,7 +208,21 @@ export const LoginPage: React.FC = () => {
             }
         } catch (error: any) {
             console.error('❌ Error en login:', error);
-            toast.error(error.response?.data?.error || error.message || '❌ Error al iniciar sesión');
+            const errorMsg = error.response?.data?.error || error.message || '';
+            
+            // Determinar si es un error de credenciales incorrectas/inválidas
+            if (errorMsg.toLowerCase().includes('credenciales') || 
+                errorMsg.toLowerCase().includes('contraseña') || 
+                errorMsg.toLowerCase().includes('usuario') ||
+                errorMsg.toLowerCase().includes('incorrectas') ||
+                errorMsg.toLowerCase().includes('inválidas') ||
+                errorMsg.toLowerCase().includes('invalid')) {
+                showSmartyMessage('❌ ¡Credenciales incorrectas o inválidas!');
+            } else {
+                showSmartyMessage('❌ ¡Error al iniciar sesión!');
+            }
+
+            toast.error(errorMsg || '❌ Error al iniciar sesión');
         } finally {
             setLoading(false);
         }
@@ -585,7 +622,6 @@ export const LoginPage: React.FC = () => {
                             </label>
                             <input
                                 type="email"
-                                required
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 className="login-input"
@@ -599,7 +635,6 @@ export const LoginPage: React.FC = () => {
                             </label>
                             <input
                                 type="password"
-                                required
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 className="login-input"
@@ -637,6 +672,43 @@ export const LoginPage: React.FC = () => {
                     cursor: 'grab'
                 }}
             >
+                {/* Globo de diálogo de Smarty */}
+                <div
+                    style={{
+                        position: 'absolute',
+                        bottom: '120px',
+                        backgroundColor: '#1e293b',
+                        border: '2px solid #38bdf8',
+                        borderRadius: '16px',
+                        padding: '8px 16px',
+                        color: 'white',
+                        fontSize: '13px',
+                        fontWeight: 'bold',
+                        boxShadow: '0 8px 16px rgba(56, 189, 248, 0.25)',
+                        opacity: showBubble ? 1 : 0,
+                        transform: showBubble ? 'scale(1) translateY(0)' : 'scale(0.8) translateY(10px)',
+                        transition: 'all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+                        whiteSpace: 'nowrap',
+                        pointerEvents: 'none',
+                        zIndex: 1001
+                    }}
+                >
+                    {bubbleText}
+                    {/* Flecha del globo */}
+                    <div
+                        style={{
+                            position: 'absolute',
+                            bottom: '-8px',
+                            left: '50%',
+                            transform: 'translateX(-50%) rotate(45deg)',
+                            width: '12px',
+                            height: '12px',
+                            backgroundColor: '#1e293b',
+                            borderRight: '2px solid #38bdf8',
+                            borderBottom: '2px solid #38bdf8'
+                        }}
+                    />
+                </div>
 
                 {/* Smarty imagen con halo y float de inactividad */}
                 <img
