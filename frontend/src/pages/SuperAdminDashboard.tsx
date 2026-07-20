@@ -1049,7 +1049,7 @@ export const SuperAdminDashboard: React.FC = () => {
                             letterSpacing: '2px',
                             marginBottom: '6px'
                         }}>
-                            {isLoggingOut ? 'CERRANDO MODO ADMINISTRADOR' : 'ENTRANDO EN MODO ADMINISTRADOR'}
+                            {isLoggingOut ? 'CERRANDO MODO SUPERADMINISTRADOR' : 'ENTRANDO EN MODO SUPERADMINISTRADOR'}
                         </div>
                         <div style={{
                             fontSize: '16px',
