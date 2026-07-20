@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../api/axios.config';
 import toast from 'react-hot-toast';
@@ -369,6 +369,77 @@ const AgenciaCard = React.memo<AgenciaCardProps>(({
 // ============================================
 export const SuperAdminDashboard: React.FC = () => {
     const { user, logout: authLogout } = useAuth();
+    
+    // --- EFECTO INICIO MATRIX SUPERADMIN ---
+    const [isInitializing, setIsInitializing] = useState(true);
+    const canvasRef = useRef<HTMLCanvasElement | null>(null);
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setIsInitializing(false);
+        }, 2500); // 2.5 segundos de pantalla de carga
+
+        return () => clearTimeout(timer);
+    }, []);
+
+    // Efecto de lluvia binaria en canvas
+    useEffect(() => {
+        if (!isInitializing) return;
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+
+        // Ajustar canvas al tamaño de pantalla
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const handleResize = () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        };
+        window.addEventListener('resize', handleResize);
+
+        const fontSize = 16;
+        const columns = Math.floor(canvas.width / fontSize);
+        const rainDrops: number[] = Array(columns).fill(1);
+        const binaryChars = ['0', '1'];
+
+        const draw = () => {
+            ctx.fillStyle = 'rgba(2, 6, 23, 0.15)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.font = `bold ${fontSize}px monospace`;
+
+            for (let i = 0; i < rainDrops.length; i++) {
+                const text = binaryChars[Math.floor(Math.random() * binaryChars.length)];
+                
+                // Variar el brillo de algunos números en azul cian hacker
+                if (Math.random() > 0.98) {
+                    ctx.fillStyle = '#38bdf8'; // azul brillante
+                } else {
+                    ctx.fillStyle = '#0284c7'; // azul cian más oscuro para profundidad
+                }
+
+                ctx.fillText(text, i * fontSize, rainDrops[i] * fontSize);
+
+                if (rainDrops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+                    rainDrops[i] = 0;
+                }
+                rainDrops[i]++;
+            }
+        };
+
+        const interval = setInterval(draw, 33); // aprox 30 fps
+
+        return () => {
+            clearInterval(interval);
+            window.removeEventListener('resize', handleResize);
+        };
+    }, [isInitializing]);
+    // --- FIN EFECTO INICIO MATRIX SUPERADMIN ---
+
     const [activeTab, setActiveTab] = useState<'menu' | 'agencias' | 'admins' | 'manuales' | 'licencias' | 'estadisticas'>(() => {
         return (localStorage.getItem(`active_tab_superadmin_${user?.id}`) as any) || 'menu';
     });
@@ -849,6 +920,116 @@ export const SuperAdminDashboard: React.FC = () => {
             background: 'radial-gradient(circle at center, #1e3a8a 0%, #090d16 100%) fixed', 
             fontFamily: 'system-ui, -apple-system, sans-serif' 
         }}>
+            {/* Pantalla de Inicio Hack Matrix Binaria para SuperAdmin */}
+            {isInitializing && (
+                <div style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    width: '100vw',
+                    height: '100vh',
+                    backgroundColor: '#020617',
+                    zIndex: 99999,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    overflow: 'hidden'
+                }}>
+                    <canvas 
+                        ref={canvasRef} 
+                        style={{
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            width: '100%',
+                            height: '100%',
+                            pointerEvents: 'none'
+                        }}
+                    />
+                    
+                    {/* Caja de consola hacker central */}
+                    <div style={{
+                        position: 'relative',
+                        zIndex: 1,
+                        backgroundColor: 'rgba(2, 6, 23, 0.85)',
+                        border: '2px solid #06b6d4',
+                        boxShadow: '0 0 35px rgba(6, 182, 212, 0.4)',
+                        borderRadius: '16px',
+                        padding: '30px 40px',
+                        textAlign: 'center',
+                        maxWidth: '450px',
+                        width: '90%',
+                        backdropFilter: 'blur(10px)',
+                        fontFamily: 'monospace'
+                    }}>
+                        <style dangerouslySetInnerHTML={{__html: `
+                            @keyframes glowPulseSA {
+                                0% { box-shadow: 0 0 20px rgba(6, 182, 212, 0.3); border-color: #0891b2; }
+                                100% { box-shadow: 0 0 40px rgba(6, 182, 212, 0.6); border-color: #22d3ee; }
+                            }
+                            @keyframes dotPulseSA {
+                                0%, 80%, 100% { transform: scale(0.6); opacity: 0.3; }
+                                40% { transform: scale(1.2); opacity: 1; }
+                            }
+                        `}} />
+                        <div style={{
+                            fontSize: '28px',
+                            marginBottom: '15px',
+                            color: '#38bdf8',
+                            textShadow: '0 0 10px rgba(56, 189, 248, 0.7)'
+                        }}>
+                            🤖 SMART SOLUTIONS
+                        </div>
+                        <div style={{
+                            fontSize: '16px',
+                            color: '#06b6d4',
+                            fontWeight: 'bold',
+                            letterSpacing: '1px',
+                            marginBottom: '10px'
+                        }}>
+                            MODO: SUPERADMINISTRADOR
+                        </div>
+                        <div style={{
+                            fontSize: '13px',
+                            color: '#94a3b8',
+                            borderTop: '1px solid rgba(6, 182, 212, 0.3)',
+                            paddingTop: '15px',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '5px',
+                            textAlign: 'left'
+                        }}>
+                            <div>DESENCRIPTANDO NODO CENTRAL...</div>
+                            <div style={{ color: '#22c55e', fontWeight: 'bold' }}>CONEXIÓN SECURE_SSL ESTABLECIDA</div>
+                            <div style={{ fontSize: '11px', color: '#64748b', marginTop: '5px' }}>
+                                ACCESO AUTORIZADO - IP: {PUBLIC_IP}
+                            </div>
+                        </div>
+                        
+                        {/* Indicador de carga binario */}
+                        <div style={{
+                            marginTop: '25px',
+                            display: 'flex',
+                            gap: '8px',
+                            justifyContent: 'center'
+                        }}>
+                            {[...Array(6)].map((_, i) => (
+                                <div 
+                                    key={i} 
+                                    style={{
+                                        width: '8px',
+                                        height: '8px',
+                                        backgroundColor: '#06b6d4',
+                                        borderRadius: '50%',
+                                        animation: `dotPulseSA 1.2s infinite ease-in-out both ${i * 0.15}s`
+                                    }}
+                                />
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            )}
             {/* Navbar */}
             <nav style={{
                 backgroundColor: 'rgba(15, 23, 42, 0.65)',
