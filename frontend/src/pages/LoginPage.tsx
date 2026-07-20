@@ -47,8 +47,10 @@ export const LoginPage: React.FC = () => {
 
     // Establecer la posición inicial de Smarty
     useEffect(() => {
-        const initialX = window.innerWidth - 200;
-        const initialY = 120;
+        // Centrar horizontalmente arriba de la tarjeta de login
+        const initialX = window.innerWidth / 2 - 60;
+        // Posicionar arriba de la tarjeta de login
+        const initialY = Math.max(20, window.innerHeight / 2 - 340);
         setSmartyPos({ x: initialX, y: initialY });
 
         // Mensaje de bienvenida inicial de Smarty
@@ -217,12 +219,14 @@ export const LoginPage: React.FC = () => {
                 errorMsg.toLowerCase().includes('incorrectas') ||
                 errorMsg.toLowerCase().includes('inválidas') ||
                 errorMsg.toLowerCase().includes('invalid')) {
-                showSmartyMessage('❌ ¡Credenciales incorrectas o inválidas!');
+                
+                // Recargar la página directamente
+                window.location.reload();
+                return;
             } else {
                 showSmartyMessage('❌ ¡Error al iniciar sesión!');
+                toast.error(errorMsg || '❌ Error al iniciar sesión');
             }
-
-            toast.error(errorMsg || '❌ Error al iniciar sesión');
         } finally {
             setLoading(false);
         }
