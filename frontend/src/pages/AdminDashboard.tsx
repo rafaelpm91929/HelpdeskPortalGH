@@ -1429,95 +1429,258 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     />
                 )}
             {/* 🔥 Modal de Mensajes Directos del SuperAdmin */}
-            {notificaciones.filter(n => !n.leido && n.ticket_id === null).length > 0 && (
-                <div style={{
-                    position: 'fixed',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    backgroundColor: 'rgba(9, 13, 22, 0.8)',
-                    backdropFilter: 'blur(8px)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    zIndex: 2000
-                }}>
+            {notificaciones.filter(n => !n.leido && n.ticket_id === null).length > 0 && (() => {
+                const currentNotif = notificaciones.find(n => !n.leido && n.ticket_id === null);
+                if (!currentNotif) return null;
+
+                return (
                     <div style={{
-                        backgroundColor: '#1e293b',
-                        color: 'white',
-                        border: '1px solid rgba(255, 255, 255, 0.1)',
-                        boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)',
-                        borderRadius: '16px',
-                        width: '90%',
-                        maxWidth: '500px',
-                        padding: '24px',
-                        textAlign: 'center',
+                        position: 'fixed',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        backgroundColor: 'rgba(9, 13, 22, 0.85)',
+                        backdropFilter: 'blur(10px)',
                         display: 'flex',
-                        flexDirection: 'column',
-                        gap: '16px',
-                        animation: 'fadeInNotif 0.3s ease'
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        zIndex: 2000,
+                        padding: '16px'
                     }}>
-                        <div style={{ fontSize: '40px' }}>✉️</div>
-                        <h3 style={{ fontSize: '20px', fontWeight: 'bold', margin: 0 }}>
-                            Mensaje
-                        </h3>
-                        <p style={{ 
-                            fontSize: '17px', 
-                            color: '#ffffff', 
-                            lineHeight: '1.6', 
-                            backgroundColor: 'rgba(15, 23, 42, 0.3)',
-                            padding: '16px',
-                            borderRadius: '8px',
-                            border: '1px solid rgba(255,255,255,0.05)',
-                            textAlign: 'left',
-                            whiteSpace: 'pre-wrap'
-                        }}>
-                            {notificaciones.find(n => !n.leido && n.ticket_id === null)?.mensaje}
-                        </p>
-                        <div style={{ display: 'flex', justifyContent: 'center', marginTop: '8px' }}>
-                            <button
-                                onClick={async () => {
-                                    const notif = notificaciones.find(n => !n.leido && n.ticket_id === null);
-                                    if (notif) {
-                                        try {
-                                            await api.put(`/notificaciones/${notif.id}/leer`);
-                                            setNotificaciones(prev => 
-                                                prev.map(n => n.id === notif.id ? { ...n, leido: true } : n)
-                                            );
-                                            toast.success('Mensaje marcado como leído');
-                                        } catch (err) {
-                                            console.error('Error al leer notificación:', err);
-                                        }
-                                    }
-                                }}
-                                style={{
-                                    padding: '10px 24px',
-                                    backgroundColor: '#2563eb',
-                                    color: 'white',
-                                    border: 'none',
-                                    borderRadius: '6px',
+                        <div style={{
+                            display: 'flex',
+                            flexDirection: 'row',
+                            alignItems: 'flex-end',
+                            justifyContent: 'center',
+                            gap: '24px',
+                            maxWidth: '700px',
+                            width: '100%',
+                            position: 'relative',
+                            flexWrap: 'wrap-reverse',
+                        }} className="robot-modal-container">
+                            
+                            {/* Contenedor del Robot */}
+                            <div style={{
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                                animation: 'slideInRobot 0.5s cubic-bezier(0.16, 1, 0.3, 1) both',
+                                flexShrink: 0
+                            }}>
+                                <img 
+                                    src="/robot.png" 
+                                    alt="Robot Asistente" 
+                                    style={{
+                                        width: '140px',
+                                        height: 'auto',
+                                        filter: 'drop-shadow(0 0 15px rgba(56, 189, 248, 0.4))',
+                                        animation: 'floatRobot 4s ease-in-out infinite'
+                                    }}
+                                />
+                                <div style={{
+                                    marginTop: '8px',
+                                    fontSize: '11px',
                                     fontWeight: 'bold',
-                                    cursor: 'pointer',
-                                    fontSize: '13px',
-                                    boxShadow: '0 4px 12px rgba(37,99,235,0.25)',
-                                    transition: 'all 0.15s'
-                                }}
-                                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#1d4ed8'}
-                                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#2563eb'}
-                            >
-                                ✓ Mensaje Leído / Cerrar
-                            </button>
+                                    color: '#38bdf8',
+                                    textTransform: 'uppercase',
+                                    letterSpacing: '1px',
+                                    backgroundColor: 'rgba(56, 189, 248, 0.1)',
+                                    padding: '4px 10px',
+                                    borderRadius: '12px',
+                                    border: '1px solid rgba(56, 189, 248, 0.2)'
+                                }}>
+                                    SmartBot
+                                </div>
+                            </div>
+
+                            {/* Puntos de conexión del pensamiento (thought dots) */}
+                            <div className="thought-dots-container" style={{
+                                display: 'flex',
+                                flexDirection: 'row',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '8px',
+                                alignSelf: 'center',
+                                zIndex: 10
+                            }}>
+                                <div style={{
+                                    width: '8px',
+                                    height: '8px',
+                                    borderRadius: '50%',
+                                    backgroundColor: '#38bdf8',
+                                    opacity: 0.5,
+                                    animation: 'popDot 0.4s ease 0.1s both'
+                                }} />
+                                <div style={{
+                                    width: '12px',
+                                    height: '12px',
+                                    borderRadius: '50%',
+                                    backgroundColor: '#38bdf8',
+                                    opacity: 0.75,
+                                    animation: 'popDot 0.4s ease 0.2s both'
+                                }} />
+                                <div style={{
+                                    width: '18px',
+                                    height: '18px',
+                                    borderRadius: '50%',
+                                    backgroundColor: '#38bdf8',
+                                    opacity: 0.9,
+                                    boxShadow: '0 0 10px rgba(56, 189, 248, 0.5)',
+                                    animation: 'popDot 0.4s ease 0.3s both'
+                                }} />
+                            </div>
+
+                            {/* Burbuja principal de pensamiento */}
+                            <div style={{
+                                backgroundColor: '#1e293b',
+                                color: 'white',
+                                border: '2px solid #38bdf8',
+                                boxShadow: '0 20px 40px rgba(0, 0, 0, 0.6), 0 0 20px rgba(56, 189, 248, 0.15)',
+                                borderRadius: '24px',
+                                flex: '1',
+                                minWidth: '280px',
+                                padding: '24px',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '16px',
+                                position: 'relative',
+                                animation: 'popBubble 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 0.3s both',
+                            }}>
+                                <div style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'space-between',
+                                    borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+                                    paddingBottom: '12px'
+                                }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <span style={{ fontSize: '18px' }}>💭</span>
+                                        <span style={{ 
+                                            fontSize: '11px', 
+                                            fontWeight: 'bold', 
+                                            color: '#94a3b8', 
+                                            textTransform: 'uppercase',
+                                            letterSpacing: '0.5px'
+                                        }}>
+                                            Mensaje de SuperAdmin
+                                        </span>
+                                    </div>
+                                    <span style={{ 
+                                        fontSize: '11px', 
+                                        color: '#64748b',
+                                        backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                                        padding: '2px 8px',
+                                        borderRadius: '8px'
+                                    }}>
+                                        {new Date(currentNotif.fecha_creacion).toLocaleDateString()}
+                                    </span>
+                                </div>
+
+                                <h3 style={{ 
+                                    fontSize: '18px', 
+                                    fontWeight: '800', 
+                                    margin: 0,
+                                    color: '#38bdf8',
+                                    textAlign: 'left'
+                                }}>
+                                    {currentNotif.titulo || 'Comunicado Oficial'}
+                                </h3>
+
+                                <div style={{ 
+                                    fontSize: '15px', 
+                                    color: '#e2e8f0', 
+                                    lineHeight: '1.6', 
+                                    backgroundColor: 'rgba(15, 23, 42, 0.4)',
+                                    padding: '16px',
+                                    borderRadius: '16px',
+                                    border: '1px solid rgba(255, 255, 255, 0.05)',
+                                    textAlign: 'left',
+                                    whiteSpace: 'pre-wrap',
+                                    maxHeight: '200px',
+                                    overflowY: 'auto'
+                                }}>
+                                    {currentNotif.mensaje}
+                                </div>
+
+                                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '4px' }}>
+                                    <button
+                                        onClick={async () => {
+                                            try {
+                                                await api.put(`/notificaciones/${currentNotif.id}/leer`);
+                                                setNotificaciones(prev => 
+                                                    prev.map(n => n.id === currentNotif.id ? { ...n, leido: true } : n)
+                                                );
+                                                toast.success('Mensaje marcado como leído');
+                                            } catch (err) {
+                                                console.error('Error al leer notificación:', err);
+                                            }
+                                        }}
+                                        style={{
+                                            padding: '10px 20px',
+                                            backgroundColor: '#38bdf8',
+                                            color: '#0f172a',
+                                            border: 'none',
+                                            borderRadius: '12px',
+                                            fontWeight: 'bold',
+                                            cursor: 'pointer',
+                                            fontSize: '13px',
+                                            boxShadow: '0 4px 14px rgba(56, 189, 248, 0.3)',
+                                            transition: 'all 0.2s',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '6px'
+                                        }}
+                                        onMouseEnter={(e) => {
+                                            e.currentTarget.style.backgroundColor = '#0ea5e9';
+                                            e.currentTarget.style.transform = 'translateY(-1px)';
+                                            e.currentTarget.style.boxShadow = '0 6px 20px rgba(14, 165, 233, 0.4)';
+                                        }}
+                                        onMouseLeave={(e) => {
+                                            e.currentTarget.style.backgroundColor = '#38bdf8';
+                                            e.currentTarget.style.transform = 'translateY(0)';
+                                            e.currentTarget.style.boxShadow = '0 4px 14px rgba(56, 189, 248, 0.3)';
+                                        }}
+                                    >
+                                        <span>Entendido, Cerrar</span>
+                                    </button>
+                                </div>
+                            </div>
                         </div>
+                        
+                        <style>{`
+                            @keyframes slideInRobot {
+                                from { opacity: 0; transform: translateY(40px) scale(0.9); }
+                                to { opacity: 1; transform: translateY(0) scale(1); }
+                            }
+                            @keyframes popBubble {
+                                from { opacity: 0; transform: scale(0.9) translateY(20px); }
+                                to { opacity: 1; transform: scale(1) translateY(0); }
+                            }
+                            @keyframes popDot {
+                                from { opacity: 0; transform: scale(0); }
+                                to { opacity: 1; transform: scale(1); }
+                            }
+                            @keyframes floatRobot {
+                                0% { transform: translateY(0px); }
+                                50% { transform: translateY(-8px); }
+                                100% { transform: translateY(0px); }
+                            }
+                            
+                            @media (max-width: 640px) {
+                                .robot-modal-container {
+                                    flex-direction: column !important;
+                                    align-items: center !important;
+                                    gap: 16px !important;
+                                }
+                                .thought-dots-container {
+                                    display: none !important;
+                                }
+                            }
+                        `}</style>
                     </div>
-                    <style>{`
-                        @keyframes fadeInNotif {
-                            from { opacity: 0; transform: scale(0.95); }
-                            to { opacity: 1; transform: scale(1); }
-                        }
-                    `}</style>
-                </div>
-            )}
+                );
+            })()}
             </div>
         </div>
     );
