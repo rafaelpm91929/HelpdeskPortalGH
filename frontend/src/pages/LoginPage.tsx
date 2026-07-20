@@ -28,8 +28,8 @@ export const LoginPage: React.FC = () => {
     const [showBubble, setShowBubble] = useState(true);
 
     const smartyPosRef = useRef({ x: 100, y: 150 });
-    const bubbleTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-    const angleTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const bubbleTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const angleTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     // Sincronizar el Ref de posición
     useEffect(() => {
