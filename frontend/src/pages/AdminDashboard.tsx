@@ -1472,25 +1472,25 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                     src="/robot.png" 
                                     alt="Robot Asistente" 
                                     style={{
-                                        width: '140px',
+                                        width: '180px',
                                         height: 'auto',
-                                        filter: 'drop-shadow(0 0 15px rgba(56, 189, 248, 0.4))',
+                                        filter: 'drop-shadow(0 0 18px rgba(56, 189, 248, 0.45))',
                                         animation: 'floatRobot 4s ease-in-out infinite'
                                     }}
                                 />
                                 <div style={{
                                     marginTop: '8px',
-                                    fontSize: '11px',
+                                    fontSize: '12px',
                                     fontWeight: 'bold',
                                     color: '#38bdf8',
                                     textTransform: 'uppercase',
-                                    letterSpacing: '1px',
+                                    letterSpacing: '1.2px',
                                     backgroundColor: 'rgba(56, 189, 248, 0.1)',
-                                    padding: '4px 10px',
+                                    padding: '4px 12px',
                                     borderRadius: '12px',
-                                    border: '1px solid rgba(56, 189, 248, 0.2)'
+                                    border: '1px solid rgba(56, 189, 248, 0.25)'
                                 }}>
-                                    SmartBot
+                                    Smarty
                                 </div>
                             </div>
 
@@ -1557,13 +1557,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                         <span style={{ fontSize: '18px' }}>💭</span>
                                         <span style={{ 
-                                            fontSize: '11px', 
+                                            fontSize: '12px', 
                                             fontWeight: 'bold', 
                                             color: '#94a3b8', 
                                             textTransform: 'uppercase',
                                             letterSpacing: '0.5px'
                                         }}>
-                                            Mensaje de SuperAdmin
+                                            Mensaje para ti
                                         </span>
                                     </div>
                                     <span style={{ 
@@ -1578,7 +1578,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                 </div>
 
                                 <h3 style={{ 
-                                    fontSize: '18px', 
+                                    fontSize: '22px', 
                                     fontWeight: '800', 
                                     margin: 0,
                                     color: '#38bdf8',
@@ -1588,7 +1588,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                 </h3>
 
                                 <div style={{ 
-                                    fontSize: '15px', 
+                                    fontSize: '18px', 
                                     color: '#e2e8f0', 
                                     lineHeight: '1.6', 
                                     backgroundColor: 'rgba(15, 23, 42, 0.4)',
@@ -1597,7 +1597,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                     border: '1px solid rgba(255, 255, 255, 0.05)',
                                     textAlign: 'left',
                                     whiteSpace: 'pre-wrap',
-                                    maxHeight: '200px',
+                                    maxHeight: '260px',
                                     overflowY: 'auto'
                                 }}>
                                     {currentNotif.mensaje}
