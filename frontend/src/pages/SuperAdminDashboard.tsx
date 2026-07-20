@@ -372,17 +372,44 @@ export const SuperAdminDashboard: React.FC = () => {
     
     // --- EFECTO INICIO MATRIX SUPERADMIN ---
     const [isInitializing, setIsInitializing] = useState(true);
+    const [smartyBinaryMap, setSmartyBinaryMap] = useState<boolean[][] | null>(null);
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
     useEffect(() => {
         const timer = setTimeout(() => {
             setIsInitializing(false);
-        }, 2500); // 2.5 segundos de pantalla de carga
+        }, 2800); // 2.8 segundos de pantalla de carga
 
         return () => clearTimeout(timer);
     }, []);
 
-    // Efecto de lluvia binaria en canvas
+    // Cargar y mapear la silueta de Smarty en binario (35x35 de resolución)
+    useEffect(() => {
+        const img = new Image();
+        img.src = '/robot.png';
+        img.onload = () => {
+            const size = 35; // 35x35 caracteres
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = size;
+            tempCanvas.height = size;
+            const tempCtx = tempCanvas.getContext('2d');
+            if (tempCtx) {
+                tempCtx.drawImage(img, 0, 0, size, size);
+                const imgData = tempCtx.getImageData(0, 0, size, size).data;
+                const opacityMap: boolean[][] = [];
+                for (let y = 0; y < size; y++) {
+                    opacityMap[y] = [];
+                    for (let x = 0; x < size; x++) {
+                        const alpha = imgData[(y * size + x) * 4 + 3];
+                        opacityMap[y][x] = alpha > 40; // pixel opaco
+                    }
+                }
+                setSmartyBinaryMap(opacityMap);
+            }
+        };
+    }, []);
+
+    // Efecto de lluvia binaria y renderizado de Smarty
     useEffect(() => {
         if (!isInitializing) return;
         const canvas = canvasRef.current;
@@ -407,12 +434,12 @@ export const SuperAdminDashboard: React.FC = () => {
         const binaryChars = ['0', '1'];
 
         const draw = () => {
+            // Fondo semitransparente oscuro
             ctx.fillStyle = 'rgba(2, 6, 23, 0.15)';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+            // 1. Dibujar Lluvia Binaria del Fondo
             ctx.font = `bold ${fontSize}px monospace`;
-
-            // Crear gradiente lineal vertical de azul oscuro a celeste brillante
             const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
             gradient.addColorStop(0, '#1e3a8a');   // Azul oscuro arriba
             gradient.addColorStop(0.5, '#0284c7'); // Azul cian intermedio
@@ -420,16 +447,49 @@ export const SuperAdminDashboard: React.FC = () => {
 
             for (let i = 0; i < rainDrops.length; i++) {
                 const text = binaryChars[Math.floor(Math.random() * binaryChars.length)];
-                
-                // Aplicar el gradiente degradado azul
                 ctx.fillStyle = gradient;
-
                 ctx.fillText(text, i * fontSize, rainDrops[i] * fontSize);
 
                 if (rainDrops[i] * fontSize > canvas.height && Math.random() > 0.975) {
                     rainDrops[i] = 0;
                 }
                 rainDrops[i]++;
+            }
+
+            // 2. Dibujar Silueta Holográfica de Smarty en Binario
+            if (smartyBinaryMap) {
+                const mapSize = smartyBinaryMap.length;
+                const charSize = 9; // resolución fina
+                const startX = Math.floor((canvas.width - mapSize * charSize) / 2);
+                const startY = Math.floor((canvas.height - mapSize * charSize) / 2) - 40; // centrado vertical ligeramente elevado
+
+                ctx.font = `bold ${charSize}px monospace`;
+                
+                for (let y = 0; y < mapSize; y++) {
+                    for (let x = 0; x < mapSize; x++) {
+                        if (smartyBinaryMap[y][x]) {
+                            // Caracteres binarios parpadeantes
+                            const text = Math.random() > 0.5 ? '1' : '0';
+                            
+                            // Gradiente vertical para Smarty
+                            const gradientY = startY + y * charSize;
+                            const charGradient = ctx.createLinearGradient(0, startY, 0, startY + mapSize * charSize);
+                            charGradient.addColorStop(0, '#38bdf8'); // Celeste brillante arriba
+                            charGradient.addColorStop(1, '#0284c7'); // Azul cian medio abajo
+                            
+                            ctx.fillStyle = charGradient;
+                            
+                            // Añadir efecto de resplandor holográfico
+                            ctx.shadowColor = '#06b6d4';
+                            ctx.shadowBlur = 8;
+                            
+                            ctx.fillText(text, startX + x * charSize, gradientY);
+                            
+                            // Limpiar sombra para no arruinar la performance
+                            ctx.shadowBlur = 0;
+                        }
+                    }
+                }
             }
         };
 
@@ -439,7 +499,7 @@ export const SuperAdminDashboard: React.FC = () => {
             clearInterval(interval);
             window.removeEventListener('resize', handleResize);
         };
-    }, [isInitializing]);
+    }, [isInitializing, smartyBinaryMap]);
     // --- FIN EFECTO INICIO MATRIX SUPERADMIN ---
 
     const [activeTab, setActiveTab] = useState<'menu' | 'agencias' | 'admins' | 'manuales' | 'licencias' | 'estadisticas'>(() => {
@@ -950,68 +1010,44 @@ export const SuperAdminDashboard: React.FC = () => {
                         }}
                     />
                     
-                    {/* Caja de consola hacker central */}
+                    {/* Estilos CSS para animaciones básicas */}
+                    <style dangerouslySetInnerHTML={{__html: `
+                        @keyframes dotPulseSA {
+                            0%, 80%, 100% { transform: scale(0.6); opacity: 0.3; }
+                            40% { transform: scale(1.2); opacity: 1; }
+                        }
+                    `}} />
+
+                    {/* Texto de Acceso SuperAdmin Flotante */}
                     <div style={{
                         position: 'relative',
                         zIndex: 1,
-                        backgroundColor: 'rgba(2, 6, 23, 0.85)',
-                        border: '2px solid #06b6d4',
-                        boxShadow: '0 0 35px rgba(6, 182, 212, 0.4)',
-                        borderRadius: '16px',
-                        padding: '30px 40px',
+                        marginTop: '380px', // Colocado debajo de Smarty
                         textAlign: 'center',
-                        maxWidth: '450px',
-                        width: '90%',
-                        backdropFilter: 'blur(10px)',
-                        fontFamily: 'monospace'
+                        fontFamily: 'monospace',
                     }}>
-                        <style dangerouslySetInnerHTML={{__html: `
-                            @keyframes glowPulseSA {
-                                0% { box-shadow: 0 0 20px rgba(6, 182, 212, 0.3); border-color: #0891b2; }
-                                100% { box-shadow: 0 0 40px rgba(6, 182, 212, 0.6); border-color: #22d3ee; }
-                            }
-                            @keyframes dotPulseSA {
-                                0%, 80%, 100% { transform: scale(0.6); opacity: 0.3; }
-                                40% { transform: scale(1.2); opacity: 1; }
-                            }
-                        `}} />
                         <div style={{
-                            fontSize: '28px',
-                            marginBottom: '15px',
+                            fontSize: '24px',
+                            fontWeight: 'bold',
                             color: '#38bdf8',
-                            textShadow: '0 0 10px rgba(56, 189, 248, 0.7)'
+                            textShadow: '0 0 12px rgba(56, 189, 248, 0.8)',
+                            letterSpacing: '2px',
+                            marginBottom: '6px'
                         }}>
-                            🤖 SMART SOLUTIONS
+                            SMARTY.SYS -- INITIALIZED
                         </div>
                         <div style={{
-                            fontSize: '16px',
+                            fontSize: '14px',
                             color: '#06b6d4',
                             fontWeight: 'bold',
                             letterSpacing: '1px',
-                            marginBottom: '10px'
+                            marginBottom: '20px'
                         }}>
                             MODO: SUPERADMINISTRADOR
                         </div>
-                        <div style={{
-                            fontSize: '13px',
-                            color: '#94a3b8',
-                            borderTop: '1px solid rgba(6, 182, 212, 0.3)',
-                            paddingTop: '15px',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            gap: '5px',
-                            textAlign: 'left'
-                        }}>
-                            <div>DESENCRIPTANDO NODO CENTRAL...</div>
-                            <div style={{ color: '#22c55e', fontWeight: 'bold' }}>CONEXIÓN SECURE_SSL ESTABLECIDA</div>
-                            <div style={{ fontSize: '11px', color: '#64748b', marginTop: '5px' }}>
-                                ACCESO AUTORIZADO - IP: {PUBLIC_IP}
-                            </div>
-                        </div>
-                        
+
                         {/* Indicador de carga binario */}
                         <div style={{
-                            marginTop: '25px',
                             display: 'flex',
                             gap: '8px',
                             justifyContent: 'center'
