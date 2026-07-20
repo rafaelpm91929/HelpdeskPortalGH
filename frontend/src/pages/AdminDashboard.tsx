@@ -1585,10 +1585,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                     textAlign: 'left'
                                 }}>
                                     {(() => {
-                                        let titleText = currentNotif.titulo || 'Mensaje para ti';
-                                        titleText = titleText.replace(/de SuperAdmin/gi, 'para ti');
-                                        titleText = titleText.replace(/^[\s\?\u0080-\uFFFF]+/g, '').trim();
-                                        return titleText;
+                                        const title = currentNotif.titulo || '';
+                                        if (title.toLowerCase().includes('global')) {
+                                            return 'Mensaje Global para ti';
+                                        }
+                                        return 'Mensaje para ti';
                                     })()}
                                 </h3>
 
