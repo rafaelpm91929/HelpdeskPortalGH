@@ -1584,9 +1584,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                     color: '#38bdf8',
                                     textAlign: 'left'
                                 }}>
-                                    {currentNotif.titulo 
-                                        ? currentNotif.titulo.replace(/de SuperAdmin/gi, 'para ti') 
-                                        : 'Mensaje para ti'}
+                                    {(() => {
+                                        let titleText = currentNotif.titulo || 'Mensaje para ti';
+                                        titleText = titleText.replace(/de SuperAdmin/gi, 'para ti');
+                                        titleText = titleText.replace(/^[?\s✉️📢]+/, '');
+                                        return titleText;
+                                    })()}
                                 </h3>
 
                                 <div style={{ 
