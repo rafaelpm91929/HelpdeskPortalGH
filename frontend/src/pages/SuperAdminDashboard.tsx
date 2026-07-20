@@ -791,7 +791,7 @@ export const SuperAdminDashboard: React.FC = () => {
         try {
             await api.post('/notificaciones/enviar', {
                 usuario_id: messagingUser.id,
-                titulo: '✉️ Mensaje de SuperAdmin',
+                titulo: '✉️ Mensaje para ti',
                 mensaje: directMessageText
             });
             toast.success(`✅ Mensaje enviado a ${messagingUser.nombre}`);
@@ -806,7 +806,7 @@ export const SuperAdminDashboard: React.FC = () => {
         if (!broadcastMessageText.trim()) return;
         try {
             await api.post('/notificaciones/enviar-todos', {
-                titulo: '📢 Mensaje Global de SuperAdmin',
+                titulo: '📢 Mensaje Global para ti',
                 mensaje: broadcastMessageText
             });
             toast.success('✅ Mensaje enviado a todos los administradores');
