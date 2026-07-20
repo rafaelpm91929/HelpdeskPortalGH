@@ -372,7 +372,7 @@ export const SuperAdminDashboard: React.FC = () => {
     
     // --- EFECTO INICIO MATRIX SUPERADMIN ---
     const [isInitializing, setIsInitializing] = useState(true);
-    const [smartyBinaryMap, setSmartyBinaryMap] = useState<boolean[][] | null>(null);
+    const [logoBinaryMap, setLogoBinaryMap] = useState<boolean[][] | null>(null);
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
     useEffect(() => {
@@ -383,33 +383,39 @@ export const SuperAdminDashboard: React.FC = () => {
         return () => clearTimeout(timer);
     }, []);
 
-    // Cargar y mapear la silueta de Smarty en binario (35x35 de resolución)
+    // Crear y mapear la silueta de las letras "SS" en binario (35x35 de resolución)
     useEffect(() => {
-        const img = new Image();
-        img.src = '/robot.png';
-        img.onload = () => {
-            const size = 35; // 35x35 caracteres
-            const tempCanvas = document.createElement('canvas');
-            tempCanvas.width = size;
-            tempCanvas.height = size;
-            const tempCtx = tempCanvas.getContext('2d');
-            if (tempCtx) {
-                tempCtx.drawImage(img, 0, 0, size, size);
-                const imgData = tempCtx.getImageData(0, 0, size, size).data;
-                const opacityMap: boolean[][] = [];
-                for (let y = 0; y < size; y++) {
-                    opacityMap[y] = [];
-                    for (let x = 0; x < size; x++) {
-                        const alpha = imgData[(y * size + x) * 4 + 3];
-                        opacityMap[y][x] = alpha > 40; // pixel opaco
-                    }
+        const size = 35; // 35x35 caracteres
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = size;
+        tempCanvas.height = size;
+        const tempCtx = tempCanvas.getContext('2d');
+        if (tempCtx) {
+            // Rellenar fondo transparente
+            tempCtx.fillStyle = 'rgba(0,0,0,0)';
+            tempCtx.fillRect(0, 0, size, size);
+            
+            // Dibujar las letras "SS" gruesas y centradas
+            tempCtx.fillStyle = 'black';
+            tempCtx.font = '900 24px system-ui, -apple-system, sans-serif';
+            tempCtx.textAlign = 'center';
+            tempCtx.textBaseline = 'middle';
+            tempCtx.fillText('SS', size / 2, size / 2);
+
+            const imgData = tempCtx.getImageData(0, 0, size, size).data;
+            const opacityMap: boolean[][] = [];
+            for (let y = 0; y < size; y++) {
+                opacityMap[y] = [];
+                for (let x = 0; x < size; x++) {
+                    const alpha = imgData[(y * size + x) * 4 + 3];
+                    opacityMap[y][x] = alpha > 40; // pixel opaco
                 }
-                setSmartyBinaryMap(opacityMap);
             }
-        };
+            setLogoBinaryMap(opacityMap);
+        }
     }, []);
 
-    // Efecto de lluvia binaria y renderizado de Smarty
+    // Efecto de lluvia binaria y renderizado del logo SS
     useEffect(() => {
         if (!isInitializing) return;
         const canvas = canvasRef.current;
@@ -456,9 +462,9 @@ export const SuperAdminDashboard: React.FC = () => {
                 rainDrops[i]++;
             }
 
-            // 2. Dibujar Silueta Holográfica de Smarty en Binario
-            if (smartyBinaryMap) {
-                const mapSize = smartyBinaryMap.length;
+            // 2. Dibujar Silueta Holográfica de "SS" en Binario
+            if (logoBinaryMap) {
+                const mapSize = logoBinaryMap.length;
                 const charSize = 9; // resolución fina
                 const startX = Math.floor((canvas.width - mapSize * charSize) / 2);
                 const startY = Math.floor((canvas.height - mapSize * charSize) / 2) - 40; // centrado vertical ligeramente elevado
@@ -467,11 +473,11 @@ export const SuperAdminDashboard: React.FC = () => {
                 
                 for (let y = 0; y < mapSize; y++) {
                     for (let x = 0; x < mapSize; x++) {
-                        if (smartyBinaryMap[y][x]) {
+                        if (logoBinaryMap[y][x]) {
                             // Caracteres binarios parpadeantes
                             const text = Math.random() > 0.5 ? '1' : '0';
                             
-                            // Gradiente vertical para Smarty
+                            // Gradiente vertical para "SS"
                             const gradientY = startY + y * charSize;
                             const charGradient = ctx.createLinearGradient(0, startY, 0, startY + mapSize * charSize);
                             charGradient.addColorStop(0, '#38bdf8'); // Celeste brillante arriba
@@ -499,7 +505,7 @@ export const SuperAdminDashboard: React.FC = () => {
             clearInterval(interval);
             window.removeEventListener('resize', handleResize);
         };
-    }, [isInitializing, smartyBinaryMap]);
+    }, [isInitializing, logoBinaryMap]);
     // --- FIN EFECTO INICIO MATRIX SUPERADMIN ---
 
     const [activeTab, setActiveTab] = useState<'menu' | 'agencias' | 'admins' | 'manuales' | 'licencias' | 'estadisticas'>(() => {
