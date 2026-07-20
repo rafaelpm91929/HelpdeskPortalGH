@@ -160,9 +160,16 @@ export const LoginPage: React.FC = () => {
                 return;
             }
 
+            // Verificar si el login fue realmente exitoso (evitar redirección fantasma)
+            const storedUser = sessionStorage.getItem('user');
+            if (!storedUser) {
+                const errMsg = result?.error || 'Contraseña incorrecta o credenciales incorrectas';
+                throw new Error(errMsg);
+            }
+
             toast.success('✅ Inicio de sesión exitoso');
 
-            const user = JSON.parse(sessionStorage.getItem('user') || '{}');
+            const user = JSON.parse(storedUser);
             console.log('👤 Usuario logueado:', user);
 
             if (user.rol === 'superadmin') {
@@ -219,14 +226,12 @@ export const LoginPage: React.FC = () => {
                 errorMsg.toLowerCase().includes('incorrectas') ||
                 errorMsg.toLowerCase().includes('inválidas') ||
                 errorMsg.toLowerCase().includes('invalid')) {
-                
-                // Recargar la página directamente
-                window.location.reload();
-                return;
+                showSmartyMessage('❌ ¡Contraseña o credenciales incorrectas!');
             } else {
                 showSmartyMessage('❌ ¡Error al iniciar sesión!');
-                toast.error(errorMsg || '❌ Error al iniciar sesión');
             }
+
+            toast.error(errorMsg || '❌ Error al iniciar sesión');
         } finally {
             setLoading(false);
         }
