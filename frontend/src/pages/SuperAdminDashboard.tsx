@@ -1040,16 +1040,16 @@ export const SuperAdminDashboard: React.FC = () => {
                             letterSpacing: '2px',
                             marginBottom: '6px'
                         }}>
-                            SMARTY.SYS -- INITIALIZED
+                            ENTRANDO EN MODO ADMINISTRADOR
                         </div>
                         <div style={{
-                            fontSize: '14px',
+                            fontSize: '16px',
                             color: '#06b6d4',
                             fontWeight: 'bold',
                             letterSpacing: '1px',
                             marginBottom: '20px'
                         }}>
-                            MODO: SUPERADMINISTRADOR
+                            ¡Bienvenido, {user?.nombre || ''} {user?.apellido || ''}!
                         </div>
 
                         {/* Indicador de carga binario */}
