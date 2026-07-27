@@ -82,10 +82,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             if (user?.rol === 'superadmin') {
                 return;
             }
+
+            // Configurar tiempo de expiración según el rol del usuario
+            let timeoutMs = 10 * 60 * 1000; // 10 minutos por defecto
+            if (user?.rol === 'admin' || user?.rol === 'agente') {
+                timeoutMs = 120 * 60 * 1000; // 2 horas
+            } else if (user?.rol === 'usuario') {
+                timeoutMs = 30 * 60 * 1000; // 30 minutos
+            }
+
             timeoutRef.current = setTimeout(() => {
                 console.log('⏰ Sesión expirada por inactividad');
                 logout();
-            }, 10 * 60 * 1000); // 10 minutos
+            }, timeoutMs);
         }
     };
 

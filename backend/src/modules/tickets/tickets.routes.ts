@@ -1008,6 +1008,20 @@ router.put('/:id/estado', authMiddleware, async (req: any, res: any) => {
         const currentAgenteId = ticketInfo.recordset[0]?.agente_id;
         const creatorId = ticketInfo.recordset[0]?.usuario_id;
 
+        // Restricción para admins/agentes: deben estar asignados al ticket para cambiar su estado/cerrarlo.
+        if (currentUser.rol === 'admin' || currentUser.rol === 'agente') {
+            if (currentAgenteId !== currentUser.id) {
+                // Si el ticket no está asignado a él, solo se permite cambiar la asignación (agente_id).
+                // Si el estado está cambiando, bloqueamos la acción.
+                if (prevEstado !== estado) {
+                    return res.status(403).json({
+                        success: false,
+                        error: 'No puedes actualizar ni cerrar este ticket porque no está asignado a ti. Primero debes asignarlo a ti o a un agente.'
+                    });
+                }
+            }
+        }
+
         // Actualizar estado
         await pool.request()
             .input('id', parseInt(id))
@@ -1197,7 +1211,7 @@ router.post('/:id/responder', authMiddleware, async (req: any, res: any) => {
 
         const ticketCheck = await pool.request()
             .input('id', parseInt(id))
-            .query('SELECT agencia_id FROM tbl_tickets WHERE id = @id');
+            .query('SELECT agencia_id, agente_id FROM tbl_tickets WHERE id = @id');
 
         if (ticketCheck.recordset.length === 0) {
             return res.status(404).json({
@@ -1213,6 +1227,16 @@ router.post('/:id/responder', authMiddleware, async (req: any, res: any) => {
                 success: false,
                 error: 'No tienes permiso para responder este ticket'
             });
+        }
+
+        // Restricción para admins/agentes: deben estar asignados al ticket para poder responder.
+        if (currentUser.rol === 'admin' || currentUser.rol === 'agente') {
+            if (ticket.agente_id !== currentUser.id) {
+                return res.status(403).json({
+                    success: false,
+                    error: 'No puedes responder a este ticket porque no está asignado a ti.'
+                });
+            }
         }
 
         await pool.request()

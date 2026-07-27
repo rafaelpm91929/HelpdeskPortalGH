@@ -114,6 +114,7 @@ export const AdminTickets: React.FC<AdminTicketsProps> = ({
     const [enviandoRespuesta, setEnviandoRespuesta] = useState(false);
     const [archivoSeleccionado, setArchivoSeleccionado] = useState<IArchivo | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
+    const isBlocked = !!selectedTicket && (user?.rol === 'admin' || user?.rol === 'agente') && selectedTicket.agente_id !== user?.id;
 
     // ============================================
     // FUNCIÓN PARA PARSEAR ARCHIVOS ADJUNTOS
@@ -297,7 +298,7 @@ export const AdminTickets: React.FC<AdminTicketsProps> = ({
             
             await api.put(`/tickets/${selectedTicket.id}/estado`, {
                 estado: selectedTicket.estado,
-                agente_id: user?.id
+                agente_id: selectedTicket.agente_id
             });
 
             toast.success('✅ Ticket actualizado correctamente');
@@ -778,41 +779,60 @@ export const AdminTickets: React.FC<AdminTicketsProps> = ({
                                     <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', marginBottom: '8px' }}>
                                         💬 Responder
                                     </label>
-                                    <textarea
-                                        value={replyMessage}
-                                        onChange={(e) => setReplyMessage(e.target.value)}
-                                        style={{
-                                            width: '100%',
-                                            padding: '10px 12px',
-                                            border: '1px solid ' + c.borde,
+                                    {isBlocked ? (
+                                        <div style={{
+                                            padding: '12px',
+                                            backgroundColor: isDarkMode ? '#2d1e1e' : '#fef2f2',
+                                            color: '#ef4444',
                                             borderRadius: '6px',
-                                            outline: 'none',
-                                            minHeight: '80px',
-                                            resize: 'vertical',
-                                            fontSize: '14px',
-                                            marginBottom: '10px',
-                                            backgroundColor: c.inputBg,
-                                            color: c.inputText
-                                        }}
-                                        placeholder="Escribe tu respuesta aquí..."
-                                    />
-                                    <button
-                                        onClick={enviarRespuesta}
-                                        disabled={enviandoRespuesta}
-                                        style={{
-                                            padding: '8px 24px',
-                                            backgroundColor: '#10b981',
-                                            color: 'white',
-                                            border: 'none',
-                                            borderRadius: '6px',
-                                            cursor: 'pointer',
-                                            fontSize: '14px',
+                                            border: '1px solid ' + (isDarkMode ? '#7f1d1d' : '#fee2e2'),
+                                            fontSize: '13px',
                                             fontWeight: '500',
-                                            opacity: enviandoRespuesta ? 0.5 : 1
-                                        }}
-                                    >
-                                        {enviandoRespuesta ? 'Enviando...' : '📤 Enviar'}
-                                    </button>
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '8px'
+                                        }}>
+                                            <span>⚠️ Debes asignarte este ticket para poder responder.</span>
+                                        </div>
+                                    ) : (
+                                        <>
+                                            <textarea
+                                                value={replyMessage}
+                                                onChange={(e) => setReplyMessage(e.target.value)}
+                                                style={{
+                                                    width: '100%',
+                                                    padding: '10px 12px',
+                                                    border: '1px solid ' + c.borde,
+                                                    borderRadius: '6px',
+                                                    outline: 'none',
+                                                    minHeight: '80px',
+                                                    resize: 'vertical',
+                                                    fontSize: '14px',
+                                                    marginBottom: '10px',
+                                                    backgroundColor: c.inputBg,
+                                                    color: c.inputText
+                                                }}
+                                                placeholder="Escribe tu respuesta aquí..."
+                                            />
+                                            <button
+                                                onClick={enviarRespuesta}
+                                                disabled={enviandoRespuesta}
+                                                style={{
+                                                    padding: '8px 24px',
+                                                    backgroundColor: '#10b981',
+                                                    color: 'white',
+                                                    border: 'none',
+                                                    borderRadius: '6px',
+                                                    cursor: 'pointer',
+                                                    fontSize: '14px',
+                                                    fontWeight: '500',
+                                                    opacity: enviandoRespuesta ? 0.5 : 1
+                                                }}
+                                            >
+                                                {enviandoRespuesta ? 'Enviando...' : '📤 Enviar'}
+                                            </button>
+                                        </>
+                                    )}
                                 </div>
                             </div>
 
@@ -900,10 +920,21 @@ export const AdminTickets: React.FC<AdminTicketsProps> = ({
                                     }}>
                                         🔧 Gestión
                                     </h4>
+                                    {isBlocked && (
+                                        <p style={{
+                                            fontSize: '12px',
+                                            color: '#ef4444',
+                                            margin: '0 0 10px 0',
+                                            fontWeight: '500'
+                                        }}>
+                                            ⚠️ Debes asignarte este ticket para cambiar el estado o prioridad.
+                                        </p>
+                                    )}
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                                         <select
                                             value={selectedTicket.estado}
                                             onChange={(e) => cambiarEstado(e.target.value)}
+                                            disabled={isBlocked}
                                             style={{
                                                 padding: '6px 12px',
                                                 border: '1px solid ' + c.borde,
@@ -926,6 +957,7 @@ export const AdminTickets: React.FC<AdminTicketsProps> = ({
                                         <select
                                             value={selectedTicket.prioridad}
                                             onChange={(e) => cambiarPrioridad(e.target.value)}
+                                            disabled={isBlocked}
                                             style={{
                                                 padding: '6px 12px',
                                                 border: '1px solid ' + c.borde,
