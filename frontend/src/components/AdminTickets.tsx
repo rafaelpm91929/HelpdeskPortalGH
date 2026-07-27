@@ -990,8 +990,8 @@ export const AdminTickets: React.FC<AdminTicketsProps> = ({
                                                         setSelectedTicket({
                                                             ...selectedTicket,
                                                             agente_id: agenteId,
-                                                            agente_nombre: agente?.nombre || null,
-                                                            agente_apellido: agente?.apellido || null
+                                                            agente_nombre: agente?.nombre || undefined,
+                                                            agente_apellido: agente?.apellido || undefined
                                                         });
                                                         loadTickets();
                                                     } catch (error: any) {
