@@ -977,16 +977,26 @@ export const AdminTickets: React.FC<AdminTicketsProps> = ({
 
                                         <select
                                             value={selectedTicket.agente_id || ''}
-                                            onChange={(e) => {
-                                                const agenteId = parseInt(e.target.value);
+                                            onChange={async (e) => {
+                                                const val = e.target.value;
+                                                const agenteId = val === '' ? null : parseInt(val);
                                                 if (selectedTicket) {
-                                                    const agente = agentes.find(a => a.id === agenteId);
-                                                    setSelectedTicket({
-                                                        ...selectedTicket,
-                                                        agente_id: agenteId,
-                                                        agente_nombre: agente?.nombre,
-                                                        agente_apellido: agente?.apellido
-                                                    });
+                                                    try {
+                                                        await api.put(`/tickets/${selectedTicket.id}/asignar`, {
+                                                            agente_id: agenteId
+                                                        });
+                                                        toast.success('✅ Agente asignado correctamente');
+                                                        const agente = agentes.find(a => a.id === (agenteId || 0));
+                                                        setSelectedTicket({
+                                                            ...selectedTicket,
+                                                            agente_id: agenteId,
+                                                            agente_nombre: agente?.nombre || null,
+                                                            agente_apellido: agente?.apellido || null
+                                                        });
+                                                        loadTickets();
+                                                    } catch (error: any) {
+                                                        toast.error(error.response?.data?.error || '❌ Error al asignar agente');
+                                                    }
                                                 }
                                             }}
                                             style={{
