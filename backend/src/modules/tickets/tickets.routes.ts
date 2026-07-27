@@ -488,6 +488,7 @@ router.get('/agencia/:agencia_id', authMiddleware, async (req: any, res: any) =>
             .query(`
                 SELECT 
                     t.id,
+                    t.agente_id,
                     t.asunto,
                     t.tipo,
                     t.estado,
@@ -570,6 +571,7 @@ router.get('/usuario/:usuario_id', authMiddleware, async (req: any, res: any) =>
             .query(`
                 SELECT 
                     t.id,
+                    t.agente_id,
                     t.asunto,
                     t.tipo,
                     t.estado,
@@ -644,6 +646,7 @@ router.get('/:id/detalle', authMiddleware, async (req: any, res: any) => {
                     t.id,
                     t.agencia_id,
                     t.usuario_id,
+                    t.agente_id,
                     t.asunto,
                     t.tipo,
                     t.estado,
