@@ -25,6 +25,8 @@ interface IMensaje {
     usuario_nombre: string;
     usuario_apellido: string;
     usuario_rol: string;
+    archivos?: IArchivo[];
+    archivos_adjuntos?: any;
 }
 
 interface ITicket {
@@ -1092,7 +1094,7 @@ export const UserPortal: React.FC<UserPortalProps> = ({ agenciaParam }) => {
                                     {mensaje.contenido}
                                 </p>
                                 {(() => {
-                                    const msgArchivos = parseArchivos(mensaje.archivos || (mensaje as any).archivos_adjuntos);
+                                    const msgArchivos = parseArchivos((mensaje as any).archivos || (mensaje as any).archivos_adjuntos);
                                     return msgArchivos.length > 0 ? (
                                         <div style={{ marginTop: '8px', display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
                                             {msgArchivos.map((archivo, idx) => {
