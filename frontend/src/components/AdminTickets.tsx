@@ -17,6 +17,7 @@ interface IMensaje {
     usuario_nombre: string;
     usuario_apellido: string;
     usuario_rol: string;
+    archivos?: IArchivo[];
 }
 
 interface IArchivo {
@@ -106,6 +107,8 @@ export const AdminTickets: React.FC<AdminTicketsProps> = ({
     }, [selectedTicket]);
     const [showDetailModal, setShowDetailModal] = useState(false);
     const [replyMessage, setReplyMessage] = useState('');
+    const [replyFiles, setReplyFiles] = useState<File[]>([]);
+    const replyFileInputRef = useRef<HTMLInputElement>(null);
     const [filtros, setFiltros] = useState({
         estado: 'todos',
         prioridad: 'todas'
@@ -259,25 +262,62 @@ export const AdminTickets: React.FC<AdminTicketsProps> = ({
     }, [initialStatusFilter]);
 
     // ============================================
+    // MANEJO DE ARCHIVOS EN RESPUESTAS
+    // ============================================
+    const handleReplyFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (!e.target.files) return;
+        const selectedFiles = Array.from(e.target.files);
+        const maxSizeBytes = 20 * 1024 * 1024; // 20 MB
+
+        const invalidFiles = selectedFiles.filter(f => f.size > maxSizeBytes);
+        if (invalidFiles.length > 0) {
+            toast.error(`❌ ${invalidFiles.length} archivo(s) superan el límite de 20 MB.`);
+            return;
+        }
+
+        if (replyFiles.length + selectedFiles.length > 5) {
+            toast.error('❌ Solo puedes adjuntar hasta 5 archivos.');
+            return;
+        }
+
+        setReplyFiles(prev => [...prev, ...selectedFiles]);
+        if (replyFileInputRef.current) replyFileInputRef.current.value = '';
+    };
+
+    const removeReplyFile = (index: number) => {
+        setReplyFiles(prev => prev.filter((_, i) => i !== index));
+    };
+
+    // ============================================
     // ENVIAR RESPUESTA
     // ============================================
     const enviarRespuesta = async () => {
         if (!selectedTicket) return;
-        if (!replyMessage.trim()) {
-            toast.error('Escribe un mensaje antes de enviar');
+        if (!replyMessage.trim() && replyFiles.length === 0) {
+            toast.error('Escribe un mensaje o adjunta un archivo antes de enviar');
             return;
         }
 
         try {
             setEnviandoRespuesta(true);
-            await api.post(`/tickets/${selectedTicket.id}/responder`, {
-                mensaje: replyMessage,
-                usuario_id: user?.id,
-                es_interno: false
+            const formData = new FormData();
+            formData.append('mensaje', replyMessage);
+            if (user?.id) formData.append('usuario_id', String(user.id));
+            formData.append('es_interno', '0');
+
+            replyFiles.forEach(file => {
+                formData.append('archivos', file);
+            });
+
+            await api.post(`/tickets/${selectedTicket.id}/responder`, formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                }
             });
 
             toast.success('✅ Respuesta enviada correctamente');
             setReplyMessage('');
+            setReplyFiles([]);
             await loadTicketDetail(selectedTicket.id);
             loadTickets();
         } catch (error: any) {
@@ -764,6 +804,53 @@ export const AdminTickets: React.FC<AdminTicketsProps> = ({
                                                 <p style={{ fontSize: '14px', whiteSpace: 'pre-wrap', margin: 0 }}>
                                                     {mensaje.contenido}
                                                 </p>
+                                                {(() => {
+                                                    const msgArchivos = parseArchivos(mensaje.archivos || (mensaje as any).archivos_adjuntos);
+                                                    return msgArchivos.length > 0 ? (
+                                                        <div style={{ marginTop: '8px', display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                                                            {msgArchivos.map((archivo, idx) => {
+                                                                const esImg = esImagen(archivo.tipo);
+                                                                const rutaFull = archivo.ruta.startsWith('http') ? archivo.ruta : `${IMAGE_BASE_URL.replace('/uploads', '')}${archivo.ruta}`;
+                                                                return (
+                                                                    <a
+                                                                        key={idx}
+                                                                        href={rutaFull}
+                                                                        target="_blank"
+                                                                        rel="noopener noreferrer"
+                                                                        onClick={(e) => {
+                                                                            if (esImg) {
+                                                                                e.preventDefault();
+                                                                                setArchivoSeleccionado(archivo);
+                                                                            }
+                                                                        }}
+                                                                        style={{
+                                                                            display: 'inline-flex',
+                                                                            alignItems: 'center',
+                                                                            gap: '6px',
+                                                                            backgroundColor: isDarkMode ? '#1e293b' : '#ffffff',
+                                                                            color: c.texto,
+                                                                            padding: '4px 10px',
+                                                                            borderRadius: '6px',
+                                                                            border: '1px solid ' + c.borde,
+                                                                            fontSize: '12px',
+                                                                            textDecoration: 'none'
+                                                                        }}
+                                                                    >
+                                                                        {esImg ? '🖼️' : (archivo.tipo?.includes('pdf') || archivo.nombre?.endsWith('.pdf')) ? '📄' : '📊'}
+                                                                        <span style={{ maxWidth: '160px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                                                            {archivo.nombre}
+                                                                        </span>
+                                                                        {archivo.tamano && (
+                                                                            <span style={{ color: c.textoMuted, fontSize: '10px' }}>
+                                                                                ({(archivo.tamano / 1024).toFixed(0)} KB)
+                                                                            </span>
+                                                                        )}
+                                                                    </a>
+                                                                );
+                                                            })}
+                                                        </div>
+                                                    ) : null;
+                                                })()}
                                             </div>
                                         ))}
                                     </div>
@@ -814,6 +901,77 @@ export const AdminTickets: React.FC<AdminTicketsProps> = ({
                                                 }}
                                                 placeholder="Escribe tu respuesta aquí..."
                                             />
+
+                                            {/* Adjuntar Archivos */}
+                                            <div style={{ marginBottom: '10px' }}>
+                                                <input
+                                                    type="file"
+                                                    ref={replyFileInputRef}
+                                                    onChange={handleReplyFileChange}
+                                                    multiple
+                                                    accept=".pdf,.xls,.xlsx,image/*"
+                                                    style={{ display: 'none' }}
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => replyFileInputRef.current?.click()}
+                                                    style={{
+                                                        padding: '6px 14px',
+                                                        backgroundColor: isDarkMode ? '#334155' : '#e5e7eb',
+                                                        color: c.texto,
+                                                        border: 'none',
+                                                        borderRadius: '6px',
+                                                        cursor: 'pointer',
+                                                        fontSize: '13px',
+                                                        fontWeight: '500',
+                                                        display: 'inline-flex',
+                                                        alignItems: 'center',
+                                                        gap: '6px'
+                                                    }}
+                                                >
+                                                    📎 Adjuntar Archivos (PDF, Excel, Imagen &lt; 20MB)
+                                                </button>
+                                            </div>
+
+                                            {replyFiles.length > 0 && (
+                                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '10px' }}>
+                                                    {replyFiles.map((file, idx) => (
+                                                        <div
+                                                            key={idx}
+                                                            style={{
+                                                                display: 'inline-flex',
+                                                                alignItems: 'center',
+                                                                gap: '6px',
+                                                                backgroundColor: isDarkMode ? '#0f172a' : '#ffffff',
+                                                                padding: '4px 10px',
+                                                                borderRadius: '6px',
+                                                                fontSize: '12px',
+                                                                border: '1px solid ' + c.borde
+                                                            }}
+                                                        >
+                                                            <span>📎 {file.name}</span>
+                                                            <span style={{ color: c.textoMuted, fontSize: '10px' }}>
+                                                                ({(file.size / 1024).toFixed(0)} KB)
+                                                            </span>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => removeReplyFile(idx)}
+                                                                style={{
+                                                                    background: 'none',
+                                                                    border: 'none',
+                                                                    color: '#ef4444',
+                                                                    cursor: 'pointer',
+                                                                    fontWeight: 'bold',
+                                                                    padding: '0 2px'
+                                                                }}
+                                                            >
+                                                                ✕
+                                                            </button>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+
                                             <button
                                                 onClick={enviarRespuesta}
                                                 disabled={enviandoRespuesta}

@@ -228,6 +228,66 @@ const upload = multer({
 });
 
 // ============================================
+// CONFIGURACIÓN DE ARCHIVOS PARA RESPUESTAS ADMIN
+// ============================================
+const storageAdmin = multer.diskStorage({
+    destination: (req, file, cb) => {
+        const uploadDir = path.join(__dirname, '../../../uploads/tickets_admin');
+        if (!fs.existsSync(uploadDir)) {
+            fs.mkdirSync(uploadDir, { recursive: true });
+        }
+        cb(null, uploadDir);
+    },
+    filename: (req, file, cb) => {
+        const ext = path.extname(file.originalname);
+        const filename = `${uuidv4()}${ext}`;
+        cb(null, filename);
+    }
+});
+
+const fileFilterAdmin = (req: any, file: any, cb: any) => {
+    const allowedMimes = [
+        'image/jpeg', 'image/png', 'image/gif', 'image/webp',
+        'application/pdf',
+        'application/vnd.ms-excel',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'application/octet-stream'
+    ];
+    const allowedExts = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.pdf', '.xls', '.xlsx'];
+    const ext = path.extname(file.originalname).toLowerCase();
+
+    if (allowedMimes.includes(file.mimetype) || allowedExts.includes(ext)) {
+        cb(null, true);
+    } else {
+        cb(new Error('Formato no permitido. Solo PDF, Excel (.xls, .xlsx) e imágenes'));
+    }
+};
+
+const uploadAdmin = multer({
+    storage: storageAdmin,
+    fileFilter: fileFilterAdmin,
+    limits: {
+        fileSize: 20 * 1024 * 1024 // 20MB
+    }
+});
+
+const ensureMensajesArchivosColumn = async (pool: any) => {
+    try {
+        await pool.request().query(`
+            IF NOT EXISTS (
+                SELECT * FROM INFORMATION_SCHEMA.COLUMNS 
+                WHERE TABLE_NAME = 'tbl_mensajes' AND COLUMN_NAME = 'archivos_adjuntos'
+            )
+            BEGIN
+                ALTER TABLE tbl_mensajes ADD archivos_adjuntos NVARCHAR(MAX) NULL;
+            END
+        `);
+    } catch (err) {
+        console.error('⚠️ Error al verificar/crear columna archivos_adjuntos en tbl_mensajes:', err);
+    }
+};
+
+// ============================================
 // GET /api/tickets/stats
 // ============================================
 router.get('/stats', authMiddleware, async (req: any, res: any) => {
@@ -750,6 +810,7 @@ router.get('/:id/detalle', authMiddleware, async (req: any, res: any) => {
                 m.usuario_id,
                 m.contenido,
                 m.es_interno,
+                m.archivos_adjuntos,
                 m.fecha_creacion,
                 u.nombre as usuario_nombre,
                 u.apellido as usuario_apellido,
@@ -770,11 +831,16 @@ router.get('/:id/detalle', authMiddleware, async (req: any, res: any) => {
             .input('ticket_id', ticketIdNum)
             .query(mensajesQuery);
 
+        const mensajes = mensajesResult.recordset.map((m: any) => ({
+            ...m,
+            archivos: m.archivos_adjuntos ? JSON.parse(m.archivos_adjuntos) : []
+        }));
+
         // Parsear archivos
         const ticketData = {
             ...ticket,
             archivos: ticket.archivos_adjuntos ? JSON.parse(ticket.archivos_adjuntos) : [],
-            mensajes: mensajesResult.recordset
+            mensajes
         };
 
         console.log('📊 Mensajes encontrados:', mensajesResult.recordset.length);
@@ -1193,7 +1259,7 @@ router.put('/:id/asignar', authMiddleware, async (req: any, res: any) => {
 // ============================================
 // POST /api/tickets/:id/responder - Responder ticket
 // ============================================
-router.post('/:id/responder', authMiddleware, async (req: any, res: any) => {
+router.post('/:id/responder', authMiddleware, uploadAdmin.array('archivos', 5), async (req: any, res: any) => {
     try {
         const { id } = req.params;
         const { mensaje, usuario_id, es_interno } = req.body;
@@ -1203,14 +1269,15 @@ router.post('/:id/responder', authMiddleware, async (req: any, res: any) => {
         console.log('📍 Ticket ID:', id);
         console.log('📝 Mensaje:', mensaje);
 
-        if (!mensaje) {
+        if (!mensaje && (!req.files || req.files.length === 0)) {
             return res.status(400).json({
                 success: false,
-                error: 'El mensaje es requerido'
+                error: 'El mensaje o al menos un archivo es requerido'
             });
         }
 
         const pool = await getConnection();
+        await ensureMensajesArchivosColumn(pool);
 
         const ticketCheck = await pool.request()
             .input('id', parseInt(id))
@@ -1242,14 +1309,23 @@ router.post('/:id/responder', authMiddleware, async (req: any, res: any) => {
             }
         }
 
+        const files = req.files || [];
+        const fileData = files.map((file: any) => ({
+            nombre: file.originalname,
+            ruta: `/uploads/tickets_admin/${file.filename}`,
+            tamano: file.size,
+            tipo: file.mimetype
+        }));
+
         await pool.request()
             .input('ticket_id', parseInt(id))
             .input('usuario_id', parseInt(usuario_id) || currentUser.userId)
-            .input('contenido', mensaje)
-            .input('es_interno', es_interno || 0)
+            .input('contenido', mensaje || '')
+            .input('es_interno', parseInt(es_interno) || 0)
+            .input('archivos', fileData.length > 0 ? JSON.stringify(fileData) : null)
             .query(`
-                INSERT INTO tbl_mensajes (ticket_id, usuario_id, contenido, es_interno)
-                VALUES (@ticket_id, @usuario_id, @contenido, @es_interno)
+                INSERT INTO tbl_mensajes (ticket_id, usuario_id, contenido, es_interno, archivos_adjuntos)
+                VALUES (@ticket_id, @usuario_id, @contenido, @es_interno, @archivos)
             `);
 
         // Actualizar fecha de actualización del ticket

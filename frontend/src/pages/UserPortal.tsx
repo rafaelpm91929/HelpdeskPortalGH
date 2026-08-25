@@ -1091,6 +1091,53 @@ export const UserPortal: React.FC<UserPortalProps> = ({ agenciaParam }) => {
                                 <p style={{ fontSize: '14px', whiteSpace: 'pre-wrap', margin: 0 }}>
                                     {mensaje.contenido}
                                 </p>
+                                {(() => {
+                                    const msgArchivos = parseArchivos(mensaje.archivos || (mensaje as any).archivos_adjuntos);
+                                    return msgArchivos.length > 0 ? (
+                                        <div style={{ marginTop: '8px', display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                                            {msgArchivos.map((archivo, idx) => {
+                                                const esImg = esImagen(archivo.tipo);
+                                                const rutaFull = archivo.ruta.startsWith('http') ? archivo.ruta : `${IMAGE_BASE_URL.replace('/uploads', '')}${archivo.ruta}`;
+                                                return (
+                                                    <a
+                                                        key={idx}
+                                                        href={rutaFull}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        onClick={(e) => {
+                                                            if (esImg) {
+                                                                e.preventDefault();
+                                                                setArchivoSeleccionado(archivo);
+                                                            }
+                                                        }}
+                                                        style={{
+                                                            display: 'inline-flex',
+                                                            alignItems: 'center',
+                                                            gap: '6px',
+                                                            backgroundColor: isDarkMode ? '#1e293b' : '#ffffff',
+                                                            color: colores.texto,
+                                                            padding: '4px 10px',
+                                                            borderRadius: '6px',
+                                                            border: '1px solid ' + colores.borde,
+                                                            fontSize: '12px',
+                                                            textDecoration: 'none'
+                                                        }}
+                                                    >
+                                                        {esImg ? '🖼️' : (archivo.tipo?.includes('pdf') || archivo.nombre?.endsWith('.pdf')) ? '📄' : '📊'}
+                                                        <span style={{ maxWidth: '160px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                                            {archivo.nombre}
+                                                        </span>
+                                                        {archivo.tamano && (
+                                                            <span style={{ color: '#6b7280', fontSize: '10px' }}>
+                                                                ({(archivo.tamano / 1024).toFixed(0)} KB)
+                                                            </span>
+                                                        )}
+                                                    </a>
+                                                );
+                                            })}
+                                        </div>
+                                    ) : null;
+                                })()}
                             </div>
                         ))}
                     </div>
