@@ -83,6 +83,15 @@ app.use('/uploads', (req, res, next) => {
     next();
 }, express.static('uploads'));
 
+// Servir vista en línea del PORTAL JURÍDICO
+const juridicoDistPath = path.join(__dirname, '../../juridico/front/dist');
+if (fs.existsSync(juridicoDistPath)) {
+    app.use('/juridico', express.static(juridicoDistPath));
+    app.get(['/juridico', '/juridico/*'], (req, res) => {
+        res.sendFile(path.join(juridicoDistPath, 'index.html'));
+    });
+}
+
 // ============================================
 // RUTAS DE API
 // ============================================

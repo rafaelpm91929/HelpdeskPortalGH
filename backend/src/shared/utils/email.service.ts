@@ -1,4 +1,3 @@
-import { Resend } from 'resend';
 import nodemailer from 'nodemailer';
 import fs from 'fs';
 import path from 'path';
@@ -15,13 +14,14 @@ function writeEmailLog(message: string) {
 }
 
 // Clientes perezosos para evitar condiciones de carrera de inicialización
-let resendInstance: Resend | null = null;
+let resendInstance: any = null;
 let smtpTransporter: any = null;
 
 const getResendClient = () => {
     if (!resendInstance) {
         const apiKey = process.env.RESEND_API_KEY;
         if (!apiKey) throw new Error('Missing RESEND_API_KEY in environment variables');
+        const { Resend } = require('resend');
         resendInstance = new Resend(apiKey);
     }
     return resendInstance;
