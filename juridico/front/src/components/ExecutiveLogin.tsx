@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import logoGrupoHuerta from '../assets/logo_grupo_huerta.jpg';
 
 export const ExecutiveLogin: React.FC<{ onLoginSuccess: () => void }> = ({ onLoginSuccess }) => {
   const [email, setEmail] = useState('');
@@ -25,14 +26,32 @@ export const ExecutiveLogin: React.FC<{ onLoginSuccess: () => void }> = ({ onLog
           <span>Acceso Restringido • Alta Dirección</span>
         </div>
 
-        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.25rem', color: '#c29b47' }}>
-          <svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-            <path d="M12 3v18M3 7h18M6 12l-3 5h6l-3-5zm12 0l-3 5h6l-3-5z"/>
-          </svg>
+        {/* LOGO OFICIAL DE GRUPO HUERTA */}
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.5rem' }}>
+          <div style={{
+            background: '#ffffff',
+            padding: '12px 20px',
+            borderRadius: '10px',
+            boxShadow: '0 8px 25px rgba(0, 0, 0, 0.4)',
+            border: '1px solid #c29b47',
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}>
+            <img 
+              src={logoGrupoHuerta} 
+              alt="Grupo Huerta" 
+              style={{ height: '56px', width: 'auto', objectFit: 'contain' }} 
+            />
+          </div>
         </div>
 
-        <h1 className="brand-title formal-header-font">PORTAL JURÍDICO</h1>
-        <p className="brand-subtitle">Grupo Huerta — Asuntos Corporativos & Legales</p>
+        <h1 className="brand-title formal-header-font" style={{ fontSize: '1.75rem', marginTop: '0.5rem' }}>
+          PORTAL JURÍDICO
+        </h1>
+        <p className="brand-subtitle" style={{ marginBottom: '1.75rem' }}>
+          Dirección de Asuntos Corporativos & Legales
+        </p>
       </div>
 
       <form onSubmit={handleSubmit}>

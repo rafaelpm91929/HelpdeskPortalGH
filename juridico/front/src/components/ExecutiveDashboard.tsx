@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import logoGrupoHuerta from '../assets/logo_grupo_huerta.jpg';
 
 export interface TicketItem {
   id: string;
@@ -195,14 +196,12 @@ export const ExecutiveDashboard: React.FC<{ onLogout: () => void }> = ({ onLogou
         <div>
           {/* HEADER SIDEBAR */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '0 0.5rem 1.5rem 0.5rem', borderBottom: '1px solid #263347', marginBottom: '1.5rem' }}>
-            <div style={{ background: 'rgba(194, 155, 71, 0.1)', border: '1px solid rgba(194, 155, 71, 0.3)', padding: '6px', borderRadius: '6px', color: '#c29b47' }}>
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                <path d="M12 3v18M3 7h18M6 12l-3 5h6l-3-5zm12 0l-3 5h6l-3-5z"/>
-              </svg>
+            <div style={{ background: '#ffffff', padding: '4px 8px', borderRadius: '6px', border: '1px solid #c29b47', display: 'flex', alignItems: 'center' }}>
+              <img src={logoGrupoHuerta} alt="Grupo Huerta" style={{ height: '26px', width: 'auto' }} />
             </div>
             <div>
-              <div className="formal-header-font" style={{ fontSize: '1.1rem', color: '#ffffff' }}>PORTAL JURÍDICO</div>
-              <div style={{ fontSize: '0.675rem', color: '#94a3b8', textTransform: 'uppercase', fontFamily: 'Montserrat, sans-serif' }}>Grupo Huerta</div>
+              <div className="formal-header-font" style={{ fontSize: '1.05rem', color: '#ffffff' }}>PORTAL JURÍDICO</div>
+              <div style={{ fontSize: '0.65rem', color: '#94a3b8', textTransform: 'uppercase', fontFamily: 'Montserrat, sans-serif' }}>Grupo Huerta</div>
             </div>
           </div>
 

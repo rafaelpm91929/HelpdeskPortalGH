@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { AGENCIAS_OFICIALES } from './ExecutiveDashboard';
+import logoGrupoHuerta from '../assets/logo_grupo_huerta.jpg';
 
 interface UserTicket {
   id: string;
@@ -124,19 +126,14 @@ export const UserPortal: React.FC<{ onLogout: () => void; onSwitchRole?: () => v
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
           <div style={{
-            background: 'rgba(194, 155, 71, 0.08)',
-            border: '1px solid rgba(194, 155, 71, 0.25)',
-            padding: '10px',
+            background: '#ffffff',
+            padding: '5px 10px',
             borderRadius: '6px',
-            color: '#c29b47',
-            display: 'flex'
+            border: '1px solid #c29b47',
+            display: 'flex',
+            alignItems: 'center'
           }}>
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-              <polyline points="14 2 14 8 20 8"/>
-              <line x1="16" y1="13" x2="8" y2="13"/>
-              <line x1="16" y1="17" x2="8" y2="17"/>
-            </svg>
+            <img src={logoGrupoHuerta} alt="Grupo Huerta" style={{ height: '30px', width: 'auto' }} />
           </div>
           <div>
             <h2 className="formal-header-font" style={{ fontSize: '1.35rem', color: '#ffffff', letterSpacing: '0.03em' }}>
