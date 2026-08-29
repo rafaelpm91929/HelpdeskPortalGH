@@ -1,104 +1,103 @@
 import React, { useState } from 'react';
+import { AGENCIAS_OFICIALES } from './ExecutiveDashboard';
 
-interface LegalRequest {
+interface UserTicket {
   id: string;
   folio: string;
   agencia: string;
-  tipo: string;
+  tipo: 'RH' | 'DEMANDA' | 'SOLICITUD' | 'CONTRATO';
   titulo: string;
-  fecha: string;
+  correosCopia: string;
+  descripcion: string;
+  fechaCreacion: string;
+  diasAbierto: number;
   estado: 'En Revisión' | 'En Dictamen' | 'Requiere Información' | 'Concluido';
   prioridad: 'Normal' | 'Urgente';
-  respuestaJuridico?: string;
+  documentos: string[];
+  respuestaJuridico: string;
 }
 
 export const UserPortal: React.FC<{ onLogout: () => void; onSwitchRole?: () => void }> = ({ onLogout, onSwitchRole }) => {
-  const [showNewModal, setShowNewModal] = useState(false);
-  const [selectedRequest, setSelectedRequest] = useState<LegalRequest | null>(null);
+  const [activeView, setActiveView] = useState<'lista' | 'nuevo' | 'detalle'>('lista');
+  const [selectedTicket, setSelectedTicket] = useState<UserTicket | null>(null);
 
   // Form State
-  const [agencia, setAgencia] = useState('Suzuki Montevideo');
-  const [tipo, setTipo] = useState('Revisión de Contrato');
-  const [titulo, setTitulo] = useState('');
+  const [empresaUsuario] = useState('Divol Norte');
+  const [usuarioNombre] = useState('Ing. Carlos Mendoza');
+  const [usuarioCargo] = useState<'Gerente General' | 'Gerente Administrativo' | 'Recursos Humanos'>('Gerente Administrativo');
+  
+  const [tipo, setTipo] = useState<UserTicket['tipo']>('REVISIÓN DE CONTRATO' as any);
+  const [correosCopia, setCorreosCopia] = useState('direccion@divol.com');
+  const [asunto, setAsunto] = useState('');
   const [descripcion, setDescripcion] = useState('');
   const [prioridad, setPrioridad] = useState<'Normal' | 'Urgente'>('Normal');
+  const [archivosSimulados, setArchivosSimulados] = useState<string[]>([]);
 
-  // Mock list of user requests
-  const [requests, setRequests] = useState<LegalRequest[]>([
+  // List of user's tickets
+  const [myTickets, setMyTickets] = useState<UserTicket[]>([
     {
       id: '1',
       folio: 'SOL-JUR-089',
-      agencia: 'Suzuki Montevideo',
-      tipo: 'Revisión de Contrato',
-      titulo: 'Contrato de Adhesión Proveedor de Limpieza',
-      fecha: '29/08/2026',
-      estado: 'En Revisión',
-      prioridad: 'Normal',
-      respuestaJuridico: 'El Departamento Jurídico está revisando las cláusulas de responsabilidad y penalizaciones.'
+      agencia: 'Divol Norte',
+      tipo: 'DEMANDA',
+      titulo: 'Notificación Mercantil de Juicio Ejecutivo',
+      correosCopia: 'direccion@divol.com',
+      descripcion: 'Se recibió emplazamiento respecto al expediente mercantil 402/2026. Se requiere contestación de demanda antes del 02/09/2026.',
+      fechaCreacion: '20/08/2026',
+      diasAbierto: 9,
+      estado: 'En Dictamen',
+      prioridad: 'Urgente',
+      documentos: ['Emplazamiento_Notificacion.pdf', 'Anexo_Documental.pdf'],
+      respuestaJuridico: 'El Departamento Jurídico ha tomado el caso. La contestación de la demanda se encuentra en elaboración por la Lic. Mariana Fernández.'
     },
     {
       id: '2',
       folio: 'SOL-JUR-076',
-      agencia: 'Suzuki Montevideo',
-      tipo: 'Poder Notarial',
-      titulo: 'Solicitud de Poder para Trámites Vehiculares',
-      fecha: '20/08/2026',
-      estado: 'Concluido',
-      prioridad: 'Urgente',
-      respuestaJuridico: 'Poder notarial emitido y enviado a la sucursal el 22/08/2026. Documento original archivado.'
-    },
-    {
-      id: '3',
-      folio: 'SOL-JUR-062',
-      agencia: 'Suzuki Montevideo',
-      tipo: 'Asesoría Legal',
-      titulo: 'Dictamen de Garantía de Refacciones',
-      fecha: '15/08/2026',
-      estado: 'En Dictamen',
+      agencia: 'Divol Norte',
+      tipo: 'RH',
+      titulo: 'Rescisión y Finiquito por Abandono de Empleo',
+      correosCopia: 'rh@divol.com',
+      descripcion: 'Solicitud de convenio de rescisión laboral sin responsabilidad patronal por inasistencias consecutivas.',
+      fechaCreacion: '25/08/2026',
+      diasAbierto: 4,
+      estado: 'En Revisión',
       prioridad: 'Normal',
-      respuestaJuridico: 'Dictamen preliminar elaborado. En espera de visto bueno del abogado sénior.'
+      documentos: ['Acta_Administrativa.pdf'],
+      respuestaJuridico: 'Se envió la propuesta de finiquito y acta administrativa para la firma del colaborador.'
     }
   ]);
 
-  const handleCreateRequest = (e: React.FormEvent) => {
+  const handleCreateTicket = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!titulo.trim()) return;
+    if (!asunto.trim() || !descripcion.trim()) return;
 
-    const newReq: LegalRequest = {
+    const newT: UserTicket = {
       id: Date.now().toString(),
       folio: `SOL-JUR-${Math.floor(100 + Math.random() * 900)}`,
-      agencia,
-      tipo,
-      titulo,
-      fecha: new Date().toLocaleDateString('es-MX'),
+      agencia: empresaUsuario,
+      tipo: tipo as any,
+      titulo: asunto,
+      correosCopia,
+      descripcion,
+      fechaCreacion: new Date().toLocaleDateString('es-MX'),
+      diasAbierto: 0,
       estado: 'En Revisión',
       prioridad,
-      respuestaJuridico: 'Solicitud registrada exitosamente. Un abogado revisará tu caso en breve.'
+      documentos: archivosSimulados.length > 0 ? archivosSimulados : ['Borrador_Documento_Legal.pdf'],
+      respuestaJuridico: 'Solicitud registrada institucionalmente. Un abogado asignado iniciará la revisión formal.'
     };
 
-    setRequests([newReq, ...requests]);
-    setShowNewModal(false);
-    setTitulo('');
+    setMyTickets([newT, ...myTickets]);
+    setActiveView('lista');
+    setAsunto('');
     setDescripcion('');
-  };
-
-  const getStatusBadge = (status: LegalRequest['estado']) => {
-    switch (status) {
-      case 'En Revisión':
-        return { bg: 'rgba(59, 130, 246, 0.12)', color: '#60a5fa', border: 'rgba(59, 130, 246, 0.35)' };
-      case 'En Dictamen':
-        return { bg: 'rgba(245, 158, 11, 0.12)', color: '#fbbf24', border: 'rgba(245, 158, 11, 0.35)' };
-      case 'Requiere Información':
-        return { bg: 'rgba(239, 68, 68, 0.12)', color: '#f87171', border: 'rgba(239, 68, 68, 0.35)' };
-      case 'Concluido':
-        return { bg: 'rgba(34, 197, 94, 0.12)', color: '#4ade80', border: 'rgba(34, 197, 94, 0.35)' };
-    }
+    setArchivosSimulados([]);
   };
 
   return (
-    <div style={{ width: '100%', maxWidth: '1100px', margin: '0 auto', padding: '2rem 1.5rem' }}>
+    <div style={{ width: '100%', maxWidth: '1150px', margin: '0 auto', padding: '2rem 1.5rem' }}>
       
-      {/* NAVBAR FORMAL USUARIO */}
+      {/* NAVBAR USUARIO */}
       <header style={{
         display: 'flex',
         alignItems: 'center',
@@ -131,7 +130,7 @@ export const UserPortal: React.FC<{ onLogout: () => void; onSwitchRole?: () => v
               PORTAL JURÍDICO
             </h2>
             <span style={{ fontSize: '0.75rem', color: '#94a3b8', letterSpacing: '0.05em', textTransform: 'uppercase', fontFamily: 'Montserrat, sans-serif' }}>
-              Atención a Solicitudes Legales — Grupo Huerta
+              Recepción de Trámites Legales — Grupo Huerta
             </span>
           </div>
         </div>
@@ -149,22 +148,16 @@ export const UserPortal: React.FC<{ onLogout: () => void; onSwitchRole?: () => v
                 fontSize: '0.775rem',
                 fontFamily: 'Montserrat, sans-serif',
                 cursor: 'pointer',
-                fontWeight: 600,
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px'
+                fontWeight: 600
               }}
             >
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M12 3v18M3 7h18M6 12l-3 5h6l-3-5zm12 0l-3 5h6l-3-5z"/>
-              </svg>
-              <span>Ver Alta Dirección</span>
+              Ver Alta Dirección
             </button>
           )}
 
           <div style={{ textAlign: 'right', borderLeft: '1px solid #263347', paddingLeft: '1.25rem' }}>
-            <div style={{ fontSize: '0.85rem', fontWeight: 600, color: '#ffffff', fontFamily: 'Montserrat, sans-serif' }}>Carlos Ramírez</div>
-            <div style={{ fontSize: '0.725rem', color: '#94a3b8', textTransform: 'uppercase' }}>Gerencia • Suzuki Montevideo</div>
+            <div style={{ fontSize: '0.85rem', fontWeight: 600, color: '#ffffff', fontFamily: 'Montserrat, sans-serif' }}>{usuarioNombre}</div>
+            <div style={{ fontSize: '0.725rem', color: '#c29b47', textTransform: 'uppercase' }}>{usuarioCargo} • {empresaUsuario}</div>
           </div>
 
           <button 
@@ -189,229 +182,182 @@ export const UserPortal: React.FC<{ onLogout: () => void; onSwitchRole?: () => v
         </div>
       </header>
 
-      {/* BANNER FORMAL */}
-      <div style={{
-        background: '#141a24',
-        border: '1px solid #263347',
-        borderRadius: '8px',
-        padding: '1.75rem 2rem',
-        marginBottom: '2rem',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        flexWrap: 'wrap',
-        gap: '1rem'
-      }}>
+      {/* PESTAÑA DE DETALLE (NO MODAL FLOTANTE) */}
+      {activeView === 'detalle' && selectedTicket ? (
         <div>
-          <h3 className="formal-header-font" style={{ fontSize: '1.3rem', color: '#ffffff', marginBottom: '0.3rem' }}>
-            Solicitudes de Dictamen y Asesoría Legal
-          </h3>
-          <p style={{ fontSize: '0.825rem', color: '#94a3b8', maxWidth: '640px' }}>
-            Ingrese una nueva solicitud corporativa para el análisis y dictamen de la Dirección Jurídica.
-          </p>
-        </div>
+          <button
+            onClick={() => setActiveView('lista')}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              background: '#19212d',
+              border: '1px solid #334155',
+              color: '#cbd5e1',
+              padding: '8px 16px',
+              borderRadius: '6px',
+              fontSize: '0.8rem',
+              cursor: 'pointer',
+              marginBottom: '1.5rem',
+              fontFamily: 'Montserrat, sans-serif'
+            }}
+          >
+            ← Volver a Mis Solicitudes
+          </button>
 
-        <button
-          onClick={() => setShowNewModal(true)}
-          style={{
-            background: 'linear-gradient(135deg, #c29b47, #9e7b30)',
-            border: 'none',
-            color: '#0b0e14',
-            padding: '11px 20px',
-            borderRadius: '6px',
-            fontSize: '0.825rem',
-            fontWeight: 700,
-            fontFamily: 'Montserrat, sans-serif',
-            textTransform: 'uppercase',
-            letterSpacing: '0.04em',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            boxShadow: '0 4px 15px rgba(194, 155, 71, 0.2)'
-          }}
-        >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-            <line x1="12" y1="5" x2="12" y2="19"/>
-            <line x1="5" y1="12" x2="19" y2="12"/>
-          </svg>
-          <span>Nueva Solicitud Legal</span>
-        </button>
-      </div>
-
-      {/* LISTADO FORMAL */}
-      <div style={{
-        background: '#141a24',
-        border: '1px solid #263347',
-        borderRadius: '8px',
-        padding: '1.75rem'
-      }}>
-        <h4 className="formal-header-font" style={{ fontSize: '1.2rem', color: '#ffffff', marginBottom: '1.25rem' }}>
-          Registro de Solicitudes Emitidas
-        </h4>
-
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          {requests.map(item => {
-            const badge = getStatusBadge(item.estado);
-            return (
-              <div
-                key={item.id}
-                style={{
-                  background: '#0b0e14',
-                  border: '1px solid #263347',
-                  borderRadius: '6px',
-                  padding: '1.25rem',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  flexWrap: 'wrap',
-                  gap: '1rem'
-                }}
-              >
-                <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '0.4rem' }}>
-                    <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#c29b47', fontFamily: 'Montserrat, sans-serif' }}>{item.folio}</span>
-                    <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>• {item.tipo}</span>
-                    <span style={{ fontSize: '0.725rem', color: '#64748b' }}>• {item.fecha}</span>
-                  </div>
-
-                  <h5 style={{ fontSize: '0.975rem', color: '#ffffff', fontWeight: 600, marginBottom: '0.3rem' }}>
-                    {item.titulo}
-                  </h5>
-
-                  <p style={{ fontSize: '0.8rem', color: '#94a3b8' }}>
-                    Sucursal: <span style={{ color: '#cbd5e1' }}>{item.agencia}</span>
-                  </p>
-                </div>
-
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                  <span style={{
-                    padding: '4px 10px',
-                    borderRadius: '4px',
-                    fontSize: '0.7rem',
-                    fontWeight: 600,
-                    fontFamily: 'Montserrat, sans-serif',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.03em',
-                    background: badge.bg,
-                    color: badge.color,
-                    border: `1px solid ${badge.border}`
-                  }}>
-                    {item.estado}
-                  </span>
-
-                  <button
-                    onClick={() => setSelectedRequest(item)}
-                    style={{
-                      background: 'rgba(255, 255, 255, 0.04)',
-                      border: '1px solid #334155',
-                      color: '#cbd5e1',
-                      padding: '7px 14px',
-                      borderRadius: '4px',
-                      fontSize: '0.775rem',
-                      fontFamily: 'Montserrat, sans-serif',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    Ver Seguimiento
-                  </button>
-                </div>
+          <div style={{ background: '#141a24', border: '1px solid #263347', borderRadius: '8px', padding: '2rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid #263347', paddingBottom: '1.25rem', marginBottom: '1.5rem' }}>
+              <div>
+                <span style={{ fontSize: '0.75rem', color: '#c29b47', fontWeight: 600, fontFamily: 'Montserrat, sans-serif' }}>{selectedTicket.folio}</span>
+                <h3 className="formal-header-font" style={{ fontSize: '1.5rem', color: '#ffffff', marginTop: '2px' }}>{selectedTicket.titulo}</h3>
               </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* MODAL NUEVA SOLICITUD */}
-      {showNewModal && (
-        <div style={{
-          position: 'fixed',
-          top: 0, left: 0, right: 0, bottom: 0,
-          background: 'rgba(0, 0, 0, 0.82)',
-          backdropFilter: 'blur(4px)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 999,
-          padding: '1rem'
-        }}>
-          <div style={{
-            background: '#141a24',
-            border: '1px solid #263347',
-            borderRadius: '8px',
-            width: '100%',
-            maxWidth: '600px',
-            padding: '2rem',
-            boxShadow: '0 25px 50px rgba(0, 0, 0, 0.9)'
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', borderBottom: '1px solid #263347', paddingBottom: '0.75rem' }}>
-              <h3 className="formal-header-font" style={{ fontSize: '1.3rem', color: '#ffffff' }}>Nueva Solicitud Legal</h3>
-              <button onClick={() => setShowNewModal(false)} style={{ background: 'transparent', border: 'none', color: '#94a3b8', fontSize: '1.2rem', cursor: 'pointer' }}>✕</button>
+              <span style={{ padding: '6px 12px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 600, background: 'rgba(59, 130, 246, 0.12)', color: '#60a5fa', border: '1px solid rgba(59, 130, 246, 0.35)', fontFamily: 'Montserrat, sans-serif' }}>
+                {selectedTicket.estado}
+              </span>
             </div>
 
-            <form onSubmit={handleCreateRequest}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', background: '#0b0e14', padding: '1.25rem', borderRadius: '6px', border: '1px solid #263347', marginBottom: '1.5rem' }}>
+              <div>
+                <span style={{ fontSize: '0.7rem', color: '#94a3b8', textTransform: 'uppercase', fontFamily: 'Montserrat, sans-serif' }}>Empresa</span>
+                <div style={{ color: '#ffffff', fontWeight: 600 }}>{selectedTicket.agencia}</div>
+              </div>
+              <div>
+                <span style={{ fontSize: '0.7rem', color: '#94a3b8', textTransform: 'uppercase', fontFamily: 'Montserrat, sans-serif' }}>Tipo de Trámite</span>
+                <div style={{ color: '#c29b47', fontWeight: 600 }}>{selectedTicket.tipo}</div>
+              </div>
+              <div>
+                <span style={{ fontSize: '0.7rem', color: '#94a3b8', textTransform: 'uppercase', fontFamily: 'Montserrat, sans-serif' }}>Correos en Copia (CC)</span>
+                <div style={{ color: '#cbd5e1' }}>{selectedTicket.correosCopia || 'Sin copia'}</div>
+              </div>
+              <div>
+                <span style={{ fontSize: '0.7rem', color: '#94a3b8', textTransform: 'uppercase', fontFamily: 'Montserrat, sans-serif' }}>Fecha de Envío</span>
+                <div style={{ color: '#cbd5e1' }}>{selectedTicket.fechaCreacion}</div>
+              </div>
+            </div>
+
+            <div style={{ marginBottom: '1.5rem' }}>
+              <h4 style={{ fontSize: '0.8rem', color: '#94a3b8', textTransform: 'uppercase', fontFamily: 'Montserrat, sans-serif', marginBottom: '0.5rem' }}>Descripción del Trámite</h4>
+              <div style={{ background: '#19212d', padding: '1.25rem', borderRadius: '6px', border: '1px solid #263347', color: '#f1f5f9', lineHeight: 1.6 }}>
+                {selectedTicket.descripcion}
+              </div>
+            </div>
+
+            <div style={{ background: '#0b0e14', padding: '1.25rem', borderRadius: '6px', border: '1px solid #263347' }}>
+              <span style={{ color: '#c29b47', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', fontFamily: 'Montserrat, sans-serif', display: 'block', marginBottom: '0.4rem' }}>
+                Respuesta del Departamento Jurídico:
+              </span>
+              <p style={{ fontSize: '0.875rem', color: '#cbd5e1', lineHeight: 1.6 }}>
+                {selectedTicket.respuestaJuridico}
+              </p>
+            </div>
+          </div>
+        </div>
+      ) : activeView === 'nuevo' ? (
+
+        /* PESTAÑA DEDICADA DE FORMULARIO (NO MODAL FLOTANTE) */
+        <div>
+          <button
+            onClick={() => setActiveView('lista')}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              background: '#19212d',
+              border: '1px solid #334155',
+              color: '#cbd5e1',
+              padding: '8px 16px',
+              borderRadius: '6px',
+              fontSize: '0.8rem',
+              cursor: 'pointer',
+              marginBottom: '1.5rem',
+              fontFamily: 'Montserrat, sans-serif'
+            }}
+          >
+            ← Volver a Mis Solicitudes
+          </button>
+
+          <div style={{ background: '#141a24', border: '1px solid #263347', borderRadius: '8px', padding: '2.25rem' }}>
+            <div style={{ borderBottom: '1px solid #263347', paddingBottom: '1rem', marginBottom: '1.75rem' }}>
+              <h3 className="formal-header-font" style={{ fontSize: '1.45rem', color: '#ffffff' }}>
+                Registro Formal de Solicitud Legal
+              </h3>
+              <p style={{ fontSize: '0.8rem', color: '#94a3b8' }}>
+                Formulario de envío de trámites corporativos al Departamento Jurídico de Grupo Huerta
+              </p>
+            </div>
+
+            <form onSubmit={handleCreateTicket}>
+              {/* DATOS DE LA EMPRESA Y USUARIO */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.25rem', marginBottom: '1.5rem', background: '#0b0e14', padding: '1.25rem', borderRadius: '6px', border: '1px solid #263347' }}>
                 <div>
-                  <label className="input-label">Sucursal / Empresa</label>
-                  <select 
-                    className="custom-input" 
-                    value={agencia} 
-                    onChange={e => setAgencia(e.target.value)}
-                    style={{ paddingLeft: '12px' }}
-                  >
-                    <option value="Suzuki Montevideo">Suzuki Montevideo</option>
-                    <option value="Ford Huerta Vallarta">Ford Huerta Vallarta</option>
-                    <option value="Mazda Guadalajara">Mazda Guadalajara</option>
-                    <option value="Corporativo Grupo Huerta">Corporativo Grupo Huerta</option>
-                  </select>
+                  <label className="input-label">Empresa / Sucursal Solicitante</label>
+                  <input type="text" readOnly className="custom-input" style={{ background: '#19212d', color: '#c29b47', fontWeight: 600, paddingLeft: '12px' }} value={empresaUsuario} />
                 </div>
 
                 <div>
-                  <label className="input-label">Tipo de Trámite</label>
+                  <label className="input-label">Solicitante Autorizado</label>
+                  <input type="text" readOnly className="custom-input" style={{ background: '#19212d', color: '#ffffff', paddingLeft: '12px' }} value={`${usuarioNombre} (${usuarioCargo})`} />
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem', marginBottom: '1.25rem' }}>
+                <div>
+                  <label className="input-label">Tipo de Trámite Legal</label>
                   <select 
                     className="custom-input" 
                     value={tipo} 
-                    onChange={e => setTipo(e.target.value)}
+                    onChange={e => setTipo(e.target.value as any)}
                     style={{ paddingLeft: '12px' }}
                   >
-                    <option value="Revisión de Contrato">Revisión de Contrato</option>
-                    <option value="Poder Notarial">Poder Notarial</option>
-                    <option value="Asesoría Legal">Asesoría Legal</option>
-                    <option value="Convenio Mercantil">Convenio Mercantil</option>
-                    <option value="Asunto Laboral">Asunto Laboral</option>
+                    <option value="RH">Recursos Humanos (RH / Finiquitos / Rescisiones)</option>
+                    <option value="DEMANDA">Demandas & Litigios (Notificaciones Mercantiles)</option>
+                    <option value="SOLICITUD">Solicitud Notarial / Poderes / Asesoría</option>
+                    <option value="CONTRATO">Revisión de Contratos / Convenios</option>
                   </select>
+                </div>
+
+                <div>
+                  <label className="input-label">Copiar a Correos (CC)</label>
+                  <input 
+                    type="text" 
+                    className="custom-input" 
+                    style={{ paddingLeft: '12px' }}
+                    placeholder="ejemplo: gerencia@divol.com, rh@divol.com"
+                    value={correosCopia}
+                    onChange={e => setCorreosCopia(e.target.value)}
+                  />
                 </div>
               </div>
 
               <div className="input-group">
-                <label className="input-label">Título / Asunto Breve</label>
+                <label className="input-label">Asunto / Título del Trámite</label>
                 <input 
                   type="text" 
                   required 
                   className="custom-input" 
                   style={{ paddingLeft: '12px' }}
-                  placeholder="Ej: Contrato de Prestación de Servicios"
-                  value={titulo}
-                  onChange={e => setTitulo(e.target.value)}
+                  placeholder="Ej: Revisión de Contrato de Arrendamiento Comercial Sucursal Norte"
+                  value={asunto}
+                  onChange={e => setAsunto(e.target.value)}
                 />
               </div>
 
               <div className="input-group">
-                <label className="input-label">Descripción y Antecedentes del Caso</label>
+                <label className="input-label">Descripción Detallada y Antecedentes del Caso</label>
                 <textarea 
                   required
-                  rows={4}
+                  rows={5}
                   className="custom-input" 
-                  style={{ paddingLeft: '12px', resize: 'vertical' }}
-                  placeholder="Desglose los detalles jurídicos relevantes..."
+                  style={{ paddingLeft: '12px', resize: 'vertical', lineHeight: 1.5 }}
+                  placeholder="Desglose los antecedentes jurídicos, fechas relevantes y requerimientos específicos para el abogado asignado..."
                   value={descripcion}
                   onChange={e => setDescripcion(e.target.value)}
                 />
               </div>
 
               <div className="input-group">
-                <label className="input-label">Prioridad del Trámite</label>
-                <div style={{ display: 'flex', gap: '1.5rem' }}>
+                <label className="input-label">Prioridad de Atención</label>
+                <div style={{ display: 'flex', gap: '2rem' }}>
                   <label style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#cbd5e1', cursor: 'pointer', fontSize: '0.825rem' }}>
                     <input 
                       type="radio" 
@@ -419,7 +365,7 @@ export const UserPortal: React.FC<{ onLogout: () => void; onSwitchRole?: () => v
                       checked={prioridad === 'Normal'} 
                       onChange={() => setPrioridad('Normal')} 
                     />
-                    <span>Normal (3 a 5 días hábiles)</span>
+                    <span>Normal (SLA de atención: 3 a 5 días hábiles)</span>
                   </label>
                   <label style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#f87171', cursor: 'pointer', fontSize: '0.825rem' }}>
                     <input 
@@ -428,96 +374,185 @@ export const UserPortal: React.FC<{ onLogout: () => void; onSwitchRole?: () => v
                       checked={prioridad === 'Urgente'} 
                       onChange={() => setPrioridad('Urgente')} 
                     />
-                    <span>Urgente (Prioridad Operativa)</span>
+                    <span>Urgente (Notificaciones judiciales / Plazo legal venciendo)</span>
                   </label>
                 </div>
               </div>
 
-              {/* UPLOAD ARCHIVOS */}
+              {/* UPLOAD DE DOCUMENTOS */}
               <div style={{
                 border: '1px dashed #334155',
                 borderRadius: '6px',
-                padding: '1.25rem',
+                padding: '1.5rem',
                 textAlign: 'center',
                 background: '#0b0e14',
-                marginBottom: '1.5rem',
+                marginBottom: '1.75rem',
                 cursor: 'pointer'
-              }}>
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2" style={{ margin: '0 auto 6px auto', display: 'block' }}>
+              }}
+              onClick={() => setArchivosSimulados(['Expediente_Documental_Respaldado.pdf'])}
+              >
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2" style={{ margin: '0 auto 8px auto', display: 'block' }}>
                   <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
                   <polyline points="17 8 12 3 7 8"/>
                   <line x1="12" y1="3" x2="12" y2="15"/>
                 </svg>
-                <span style={{ fontSize: '0.775rem', color: '#94a3b8', display: 'block' }}>
-                  Adjuntar borrador de contrato o expediente de respaldo (PDF, Word)
+                <span style={{ fontSize: '0.8rem', color: '#cbd5e1', display: 'block', fontWeight: 600 }}>
+                  Adjuntar Expedientes y Borradores (PDF, Word, ZIP)
                 </span>
+                <span style={{ fontSize: '0.725rem', color: '#64748b', display: 'block', marginTop: '4px' }}>
+                  Haz clic para simular la carga de un archivo adjunto
+                </span>
+                {archivosSimulados.length > 0 && (
+                  <div style={{ marginTop: '8px', color: '#4ade80', fontSize: '0.75rem', fontWeight: 600 }}>
+                    ✓ Archivo adjunto: {archivosSimulados[0]}
+                  </div>
+                )}
               </div>
 
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
                 <button 
                   type="button" 
-                  onClick={() => setShowNewModal(false)}
-                  style={{ background: 'transparent', border: '1px solid #334155', color: '#cbd5e1', padding: '8px 16px', borderRadius: '4px', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', fontSize: '0.775rem' }}
+                  onClick={() => setActiveView('lista')}
+                  style={{ background: 'transparent', border: '1px solid #334155', color: '#cbd5e1', padding: '10px 18px', borderRadius: '4px', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', fontSize: '0.775rem' }}
                 >
                   Cancelar
                 </button>
                 <button 
                   type="submit"
-                  style={{ background: '#c29b47', border: 'none', color: '#0b0e14', padding: '8px 20px', borderRadius: '4px', fontWeight: 700, fontFamily: 'Montserrat, sans-serif', fontSize: '0.775rem', textTransform: 'uppercase', cursor: 'pointer' }}
+                  style={{ background: '#c29b47', border: 'none', color: '#0b0e14', padding: '10px 24px', borderRadius: '4px', fontWeight: 700, fontFamily: 'Montserrat, sans-serif', fontSize: '0.775rem', textTransform: 'uppercase', cursor: 'pointer' }}
                 >
-                  Enviar a Jurídico
+                  Enviar Trámite a Jurídico
                 </button>
               </div>
             </form>
           </div>
         </div>
-      )}
+      ) : (
 
-      {/* MODAL DETALLE SEGUIMIENTO */}
-      {selectedRequest && (
-        <div style={{
-          position: 'fixed',
-          top: 0, left: 0, right: 0, bottom: 0,
-          background: 'rgba(0, 0, 0, 0.82)',
-          backdropFilter: 'blur(4px)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 999,
-          padding: '1rem'
-        }}>
+        /* VISTA PRINCIPAL: LISTADO DE MIS TRÁMITES */
+        <div>
+          {/* BANNER DE ACCIÓN */}
           <div style={{
             background: '#141a24',
             border: '1px solid #263347',
             borderRadius: '8px',
-            width: '100%',
-            maxWidth: '540px',
-            padding: '2rem'
+            padding: '1.75rem 2rem',
+            marginBottom: '2rem',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '1rem'
           }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', borderBottom: '1px solid #263347', paddingBottom: '0.75rem' }}>
-              <div>
-                <span style={{ fontSize: '0.75rem', color: '#c29b47', fontWeight: 600, fontFamily: 'Montserrat, sans-serif' }}>{selectedRequest.folio}</span>
-                <h4 className="formal-header-font" style={{ fontSize: '1.25rem', color: '#ffffff' }}>{selectedRequest.titulo}</h4>
-              </div>
-              <button onClick={() => setSelectedRequest(null)} style={{ background: 'transparent', border: 'none', color: '#94a3b8', fontSize: '1.2rem', cursor: 'pointer' }}>✕</button>
-            </div>
-
-            <div style={{ background: '#0b0e14', padding: '1.25rem', borderRadius: '6px', border: '1px solid #263347', marginBottom: '1.5rem' }}>
-              <span style={{ color: '#c29b47', fontSize: '0.725rem', fontWeight: 600, textTransform: 'uppercase', fontFamily: 'Montserrat, sans-serif', display: 'block', marginBottom: '0.5rem' }}>
-                Dictamen y Observaciones de la Dirección Jurídica
-              </span>
-              <p style={{ fontSize: '0.85rem', color: '#cbd5e1', lineHeight: 1.6 }}>
-                {selectedRequest.respuestaJuridico}
+            <div>
+              <h3 className="formal-header-font" style={{ fontSize: '1.35rem', color: '#ffffff', marginBottom: '0.3rem' }}>
+                Atención a Solicitudes Legales
+              </h3>
+              <p style={{ fontSize: '0.825rem', color: '#94a3b8', maxWidth: '640px' }}>
+                Registra un nuevo trámite o consulta el dictamen emitido por la Dirección Jurídica
               </p>
             </div>
 
-            <div style={{ textAlign: 'right' }}>
-              <button 
-                onClick={() => setSelectedRequest(null)}
-                style={{ background: '#c29b47', border: 'none', color: '#0b0e14', padding: '8px 18px', borderRadius: '4px', fontWeight: 700, fontFamily: 'Montserrat, sans-serif', fontSize: '0.775rem', textTransform: 'uppercase', cursor: 'pointer' }}
-              >
-                Cerrar
-              </button>
+            <button
+              onClick={() => setActiveView('nuevo')}
+              style={{
+                background: 'linear-gradient(135deg, #c29b47, #9e7b30)',
+                border: 'none',
+                color: '#0b0e14',
+                padding: '11px 22px',
+                borderRadius: '6px',
+                fontSize: '0.825rem',
+                fontWeight: 700,
+                fontFamily: 'Montserrat, sans-serif',
+                textTransform: 'uppercase',
+                letterSpacing: '0.04em',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                boxShadow: '0 4px 15px rgba(194, 155, 71, 0.2)'
+              }}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <line x1="12" y1="5" x2="12" y2="19"/>
+                <line x1="5" y1="12" x2="19" y2="12"/>
+              </svg>
+              <span>Nueva Solicitud Legal</span>
+            </button>
+          </div>
+
+          {/* REGISTRO DE TRÁMITES */}
+          <div style={{ background: '#141a24', border: '1px solid #263347', borderRadius: '8px', padding: '1.75rem' }}>
+            <h4 className="formal-header-font" style={{ fontSize: '1.25rem', color: '#ffffff', marginBottom: '1.25rem' }}>
+              Mis Trámites Legales Registrados
+            </h4>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              {myTickets.map(item => (
+                <div
+                  key={item.id}
+                  style={{
+                    background: '#0b0e14',
+                    border: '1px solid #263347',
+                    borderRadius: '6px',
+                    padding: '1.25rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    flexWrap: 'wrap',
+                    gap: '1rem'
+                  }}
+                >
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '0.4rem' }}>
+                      <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#c29b47', fontFamily: 'Montserrat, sans-serif' }}>{item.folio}</span>
+                      <span style={{ fontSize: '0.725rem', padding: '2px 6px', background: '#19212d', border: '1px solid #334155', borderRadius: '4px', color: '#ffffff' }}>{item.tipo}</span>
+                      <span style={{ fontSize: '0.725rem', color: '#64748b' }}>• Registrado el {item.fechaCreacion}</span>
+                    </div>
+
+                    <h5 style={{ fontSize: '0.975rem', color: '#ffffff', fontWeight: 600, marginBottom: '0.3rem' }}>
+                      {item.titulo}
+                    </h5>
+
+                    <p style={{ fontSize: '0.8rem', color: '#94a3b8' }}>
+                      Sucursal: <span style={{ color: '#cbd5e1' }}>{item.agencia}</span>
+                    </p>
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    <span style={{
+                      padding: '4px 10px',
+                      borderRadius: '4px',
+                      fontSize: '0.7rem',
+                      fontWeight: 600,
+                      fontFamily: 'Montserrat, sans-serif',
+                      textTransform: 'uppercase',
+                      background: 'rgba(59, 130, 246, 0.12)',
+                      color: '#60a5fa',
+                      border: '1px solid rgba(59, 130, 246, 0.35)'
+                    }}>
+                      {item.estado}
+                    </span>
+
+                    <button
+                      onClick={() => { setSelectedTicket(item); setActiveView('detalle'); }}
+                      style={{
+                        background: 'rgba(194, 155, 71, 0.08)',
+                        border: '1px solid rgba(194, 155, 71, 0.25)',
+                        color: '#c29b47',
+                        padding: '7px 14px',
+                        borderRadius: '4px',
+                        fontSize: '0.775rem',
+                        fontFamily: 'Montserrat, sans-serif',
+                        cursor: 'pointer',
+                        fontWeight: 600
+                      }}
+                    >
+                      Abrir Expediente
+                    </button>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>
