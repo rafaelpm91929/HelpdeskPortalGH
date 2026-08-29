@@ -11,7 +11,7 @@ export const ExecutiveLogin: React.FC<{ onLoginSuccess: () => void }> = ({ onLog
     setTimeout(() => {
       setLoading(false);
       onLoginSuccess();
-    }, 800);
+    }, 600);
   };
 
   return (
@@ -22,16 +22,16 @@ export const ExecutiveLogin: React.FC<{ onLoginSuccess: () => void }> = ({ onLog
             <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
             <path d="m9 12 2 2 4-4"/>
           </svg>
-          <span>Acceso Reservado • Alta Dirección</span>
+          <span>Acceso Restringido • Alta Dirección</span>
         </div>
 
-        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1rem', color: '#c5a059' }}>
-          <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.25rem', color: '#c29b47' }}>
+          <svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
             <path d="M12 3v18M3 7h18M6 12l-3 5h6l-3-5zm12 0l-3 5h6l-3-5z"/>
           </svg>
         </div>
 
-        <h1 className="brand-title executive-font">PORTAL JURÍDICO</h1>
+        <h1 className="brand-title formal-header-font">PORTAL JURÍDICO</h1>
         <p className="brand-subtitle">Grupo Huerta — Asuntos Corporativos & Legales</p>
       </div>
 
@@ -82,17 +82,17 @@ export const ExecutiveLogin: React.FC<{ onLoginSuccess: () => void }> = ({ onLog
             <span>Recordar mi sesión</span>
           </label>
           <a href="#forgot" className="forgot-link" onClick={(e) => e.preventDefault()}>
-            ¿Olvidó su acceso?
+            ¿Restablecer credenciales?
           </a>
         </div>
 
         <button type="submit" className="btn-executive" disabled={loading}>
           {loading ? (
-            <span>Accediendo al entorno seguro...</span>
+            <span>Verificando Autenticación...</span>
           ) : (
             <>
               <span>Ingresar al Portal Jurídico</span>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                 <path d="M5 12h14M12 5l7 7-7 7"/>
               </svg>
             </>

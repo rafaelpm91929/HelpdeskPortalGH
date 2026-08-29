@@ -22,7 +22,6 @@ export const UserPortal: React.FC<{ onLogout: () => void; onSwitchRole?: () => v
   const [titulo, setTitulo] = useState('');
   const [descripcion, setDescripcion] = useState('');
   const [prioridad, setPrioridad] = useState<'Normal' | 'Urgente'>('Normal');
-  const [archivos, setArchivos] = useState<string[]>([]);
 
   // Mock list of user requests
   const [requests, setRequests] = useState<LegalRequest[]>([
@@ -81,47 +80,46 @@ export const UserPortal: React.FC<{ onLogout: () => void; onSwitchRole?: () => v
     setShowNewModal(false);
     setTitulo('');
     setDescripcion('');
-    setArchivos([]);
   };
 
   const getStatusBadge = (status: LegalRequest['estado']) => {
     switch (status) {
       case 'En Revisión':
-        return { bg: 'rgba(59, 130, 246, 0.15)', color: '#60a5fa', border: 'rgba(59, 130, 246, 0.4)' };
+        return { bg: 'rgba(59, 130, 246, 0.12)', color: '#60a5fa', border: 'rgba(59, 130, 246, 0.35)' };
       case 'En Dictamen':
-        return { bg: 'rgba(245, 158, 11, 0.15)', color: '#fbbf24', border: 'rgba(245, 158, 11, 0.4)' };
+        return { bg: 'rgba(245, 158, 11, 0.12)', color: '#fbbf24', border: 'rgba(245, 158, 11, 0.35)' };
       case 'Requiere Información':
-        return { bg: 'rgba(239, 68, 68, 0.15)', color: '#f87171', border: 'rgba(239, 68, 68, 0.4)' };
+        return { bg: 'rgba(239, 68, 68, 0.12)', color: '#f87171', border: 'rgba(239, 68, 68, 0.35)' };
       case 'Concluido':
-        return { bg: 'rgba(34, 197, 94, 0.15)', color: '#4ade80', border: 'rgba(34, 197, 94, 0.4)' };
+        return { bg: 'rgba(34, 197, 94, 0.12)', color: '#4ade80', border: 'rgba(34, 197, 94, 0.35)' };
     }
   };
 
   return (
-    <div style={{ width: '100%', maxWidth: '1100px', margin: '0 auto', padding: '1.5rem' }}>
+    <div style={{ width: '100%', maxWidth: '1100px', margin: '0 auto', padding: '2rem 1.5rem' }}>
       
-      {/* NAVBAR USUARIO */}
+      {/* NAVBAR FORMAL USUARIO */}
       <header style={{
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        background: '#151c28',
-        padding: '1rem 1.75rem',
-        borderRadius: '12px',
-        border: '1px solid #2a364f',
+        background: '#141a24',
+        padding: '1.25rem 2rem',
+        borderRadius: '8px',
+        border: '1px solid #263347',
         marginBottom: '2rem',
-        boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.5)'
+        boxShadow: '0 10px 30px -5px rgba(0, 0, 0, 0.6)'
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
           <div style={{
-            background: 'rgba(197, 160, 89, 0.12)',
-            border: '1px solid rgba(197, 160, 89, 0.3)',
-            padding: '8px',
-            borderRadius: '8px',
-            color: '#c5a059',
+            background: 'rgba(194, 155, 71, 0.08)',
+            border: '1px solid rgba(194, 155, 71, 0.25)',
+            padding: '10px',
+            borderRadius: '6px',
+            color: '#c29b47',
             display: 'flex'
           }}>
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
               <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
               <polyline points="14 2 14 8 20 8"/>
               <line x1="16" y1="13" x2="8" y2="13"/>
@@ -129,54 +127,55 @@ export const UserPortal: React.FC<{ onLogout: () => void; onSwitchRole?: () => v
             </svg>
           </div>
           <div>
-            <h2 className="executive-font" style={{ fontSize: '1.2rem', color: '#ffffff' }}>
+            <h2 className="formal-header-font" style={{ fontSize: '1.35rem', color: '#ffffff', letterSpacing: '0.03em' }}>
               PORTAL JURÍDICO
             </h2>
-            <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
-              Atención a Solicitudes Legales • Grupo Huerta
+            <span style={{ fontSize: '0.75rem', color: '#94a3b8', letterSpacing: '0.05em', textTransform: 'uppercase', fontFamily: 'Montserrat, sans-serif' }}>
+              Atención a Solicitudes Legales — Grupo Huerta
             </span>
           </div>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
           {onSwitchRole && (
             <button
               onClick={onSwitchRole}
               style={{
-                background: 'rgba(197, 160, 89, 0.12)',
-                border: '1px solid rgba(197, 160, 89, 0.3)',
-                color: '#c5a059',
-                padding: '7px 12px',
-                borderRadius: '8px',
-                fontSize: '0.8rem',
+                background: 'rgba(194, 155, 71, 0.08)',
+                border: '1px solid rgba(194, 155, 71, 0.25)',
+                color: '#c29b47',
+                padding: '8px 14px',
+                borderRadius: '6px',
+                fontSize: '0.775rem',
+                fontFamily: 'Montserrat, sans-serif',
                 cursor: 'pointer',
                 fontWeight: 600,
                 display: 'flex',
                 alignItems: 'center',
-                gap: '6px'
+                gap: '8px'
               }}
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M12 3v18M3 7h18M6 12l-3 5h6l-3-5zm12 0l-3 5h6l-3-5z"/>
               </svg>
-              <span>Ver Modo Alta Dirección</span>
+              <span>Ver Alta Dirección</span>
             </button>
           )}
 
-          <div style={{ textAlign: 'right', borderLeft: '1px solid #2a364f', paddingLeft: '1rem' }}>
-            <div style={{ fontSize: '0.85rem', fontWeight: 600, color: '#ffffff' }}>Carlos Ramírez</div>
-            <div style={{ fontSize: '0.725rem', color: '#94a3b8' }}>Gerencia • Suzuki Montevideo</div>
+          <div style={{ textAlign: 'right', borderLeft: '1px solid #263347', paddingLeft: '1.25rem' }}>
+            <div style={{ fontSize: '0.85rem', fontWeight: 600, color: '#ffffff', fontFamily: 'Montserrat, sans-serif' }}>Carlos Ramírez</div>
+            <div style={{ fontSize: '0.725rem', color: '#94a3b8', textTransform: 'uppercase' }}>Gerencia • Suzuki Montevideo</div>
           </div>
 
           <button 
             onClick={onLogout}
             title="Cerrar Sesión"
             style={{
-              background: 'rgba(239, 68, 68, 0.1)',
-              border: '1px solid rgba(239, 68, 68, 0.3)',
+              background: 'rgba(239, 68, 68, 0.08)',
+              border: '1px solid rgba(239, 68, 68, 0.25)',
               color: '#f87171',
-              padding: '8px',
-              borderRadius: '8px',
+              padding: '9px',
+              borderRadius: '6px',
               cursor: 'pointer',
               display: 'flex'
             }}
@@ -190,12 +189,12 @@ export const UserPortal: React.FC<{ onLogout: () => void; onSwitchRole?: () => v
         </div>
       </header>
 
-      {/* BANNER ACCIÓN PRINCIPAL */}
+      {/* BANNER FORMAL */}
       <div style={{
-        background: 'linear-gradient(135deg, #151c28 0%, #1a2332 100%)',
-        border: '1px solid #2a364f',
-        borderRadius: '12px',
-        padding: '1.75rem',
+        background: '#141a24',
+        border: '1px solid #263347',
+        borderRadius: '8px',
+        padding: '1.75rem 2rem',
         marginBottom: '2rem',
         display: 'flex',
         alignItems: 'center',
@@ -204,32 +203,35 @@ export const UserPortal: React.FC<{ onLogout: () => void; onSwitchRole?: () => v
         gap: '1rem'
       }}>
         <div>
-          <h3 style={{ fontSize: '1.25rem', color: '#ffffff', marginBottom: '0.3rem' }}>
-            ¿Necesitas asesoría legal o revisión de un contrato?
+          <h3 className="formal-header-font" style={{ fontSize: '1.3rem', color: '#ffffff', marginBottom: '0.3rem' }}>
+            Solicitudes de Dictamen y Asesoría Legal
           </h3>
-          <p style={{ fontSize: '0.85rem', color: '#94a3b8', maxWidth: '600px' }}>
-            Registra tu solicitud para que el Departamento Jurídico analice y emita el dictamen correspondiente.
+          <p style={{ fontSize: '0.825rem', color: '#94a3b8', maxWidth: '640px' }}>
+            Ingrese una nueva solicitud corporativa para el análisis y dictamen de la Dirección Jurídica.
           </p>
         </div>
 
         <button
           onClick={() => setShowNewModal(true)}
           style={{
-            background: 'linear-gradient(135deg, #c5a059, #9b7b38)',
+            background: 'linear-gradient(135deg, #c29b47, #9e7b30)',
             border: 'none',
-            color: '#0b0f17',
-            padding: '12px 20px',
-            borderRadius: '8px',
-            fontSize: '0.9rem',
+            color: '#0b0e14',
+            padding: '11px 20px',
+            borderRadius: '6px',
+            fontSize: '0.825rem',
             fontWeight: 700,
+            fontFamily: 'Montserrat, sans-serif',
+            textTransform: 'uppercase',
+            letterSpacing: '0.04em',
             cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
             gap: '8px',
-            boxShadow: '0 4px 15px rgba(197, 160, 89, 0.25)'
+            boxShadow: '0 4px 15px rgba(194, 155, 71, 0.2)'
           }}
         >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
             <line x1="12" y1="5" x2="12" y2="19"/>
             <line x1="5" y1="12" x2="19" y2="12"/>
           </svg>
@@ -237,15 +239,15 @@ export const UserPortal: React.FC<{ onLogout: () => void; onSwitchRole?: () => v
         </button>
       </div>
 
-      {/* LISTADO DE SOLICITUDES DEL USUARIO */}
+      {/* LISTADO FORMAL */}
       <div style={{
-        background: '#151c28',
-        border: '1px solid #2a364f',
-        borderRadius: '12px',
-        padding: '1.5rem'
+        background: '#141a24',
+        border: '1px solid #263347',
+        borderRadius: '8px',
+        padding: '1.75rem'
       }}>
-        <h4 style={{ fontSize: '1.05rem', color: '#ffffff', marginBottom: '1.25rem' }}>
-          Mis Solicitudes y Trámites Legales
+        <h4 className="formal-header-font" style={{ fontSize: '1.2rem', color: '#ffffff', marginBottom: '1.25rem' }}>
+          Registro de Solicitudes Emitidas
         </h4>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -255,9 +257,9 @@ export const UserPortal: React.FC<{ onLogout: () => void; onSwitchRole?: () => v
               <div
                 key={item.id}
                 style={{
-                  background: '#0b0f17',
-                  border: '1px solid #2a364f',
-                  borderRadius: '10px',
+                  background: '#0b0e14',
+                  border: '1px solid #263347',
+                  borderRadius: '6px',
                   padding: '1.25rem',
                   display: 'flex',
                   alignItems: 'center',
@@ -268,12 +270,12 @@ export const UserPortal: React.FC<{ onLogout: () => void; onSwitchRole?: () => v
               >
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '0.4rem' }}>
-                    <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#c5a059' }}>{item.folio}</span>
+                    <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#c29b47', fontFamily: 'Montserrat, sans-serif' }}>{item.folio}</span>
                     <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>• {item.tipo}</span>
                     <span style={{ fontSize: '0.725rem', color: '#64748b' }}>• {item.fecha}</span>
                   </div>
 
-                  <h5 style={{ fontSize: '1rem', color: '#ffffff', fontWeight: 600, marginBottom: '0.3rem' }}>
+                  <h5 style={{ fontSize: '0.975rem', color: '#ffffff', fontWeight: 600, marginBottom: '0.3rem' }}>
                     {item.titulo}
                   </h5>
 
@@ -284,10 +286,13 @@ export const UserPortal: React.FC<{ onLogout: () => void; onSwitchRole?: () => v
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                   <span style={{
-                    padding: '4px 12px',
-                    borderRadius: '20px',
-                    fontSize: '0.75rem',
+                    padding: '4px 10px',
+                    borderRadius: '4px',
+                    fontSize: '0.7rem',
                     fontWeight: 600,
+                    fontFamily: 'Montserrat, sans-serif',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.03em',
                     background: badge.bg,
                     color: badge.color,
                     border: `1px solid ${badge.border}`
@@ -298,12 +303,13 @@ export const UserPortal: React.FC<{ onLogout: () => void; onSwitchRole?: () => v
                   <button
                     onClick={() => setSelectedRequest(item)}
                     style={{
-                      background: 'rgba(255, 255, 255, 0.05)',
+                      background: 'rgba(255, 255, 255, 0.04)',
                       border: '1px solid #334155',
                       color: '#cbd5e1',
                       padding: '7px 14px',
-                      borderRadius: '6px',
-                      fontSize: '0.8rem',
+                      borderRadius: '4px',
+                      fontSize: '0.775rem',
+                      fontFamily: 'Montserrat, sans-serif',
                       cursor: 'pointer'
                     }}
                   >
@@ -321,8 +327,8 @@ export const UserPortal: React.FC<{ onLogout: () => void; onSwitchRole?: () => v
         <div style={{
           position: 'fixed',
           top: 0, left: 0, right: 0, bottom: 0,
-          background: 'rgba(0, 0, 0, 0.8)',
-          backdropFilter: 'blur(5px)',
+          background: 'rgba(0, 0, 0, 0.82)',
+          backdropFilter: 'blur(4px)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -330,16 +336,16 @@ export const UserPortal: React.FC<{ onLogout: () => void; onSwitchRole?: () => v
           padding: '1rem'
         }}>
           <div style={{
-            background: '#151c28',
-            border: '1px solid #2a364f',
-            borderRadius: '14px',
+            background: '#141a24',
+            border: '1px solid #263347',
+            borderRadius: '8px',
             width: '100%',
             maxWidth: '600px',
-            padding: '1.75rem',
-            boxShadow: '0 20px 40px rgba(0, 0, 0, 0.8)'
+            padding: '2rem',
+            boxShadow: '0 25px 50px rgba(0, 0, 0, 0.9)'
           }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', borderBottom: '1px solid #2a364f', paddingBottom: '0.75rem' }}>
-              <h3 style={{ fontSize: '1.15rem', color: '#ffffff' }}>Nueva Solicitud Legal</h3>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', borderBottom: '1px solid #263347', paddingBottom: '0.75rem' }}>
+              <h3 className="formal-header-font" style={{ fontSize: '1.3rem', color: '#ffffff' }}>Nueva Solicitud Legal</h3>
               <button onClick={() => setShowNewModal(false)} style={{ background: 'transparent', border: 'none', color: '#94a3b8', fontSize: '1.2rem', cursor: 'pointer' }}>✕</button>
             </div>
 
@@ -384,7 +390,7 @@ export const UserPortal: React.FC<{ onLogout: () => void; onSwitchRole?: () => v
                   required 
                   className="custom-input" 
                   style={{ paddingLeft: '12px' }}
-                  placeholder="Ej: Contrato de Prestación de Servicios de Limpieza"
+                  placeholder="Ej: Contrato de Prestación de Servicios"
                   value={titulo}
                   onChange={e => setTitulo(e.target.value)}
                 />
@@ -397,7 +403,7 @@ export const UserPortal: React.FC<{ onLogout: () => void; onSwitchRole?: () => v
                   rows={4}
                   className="custom-input" 
                   style={{ paddingLeft: '12px', resize: 'vertical' }}
-                  placeholder="Escriba los detalles relevantes para el abogado..."
+                  placeholder="Desglose los detalles jurídicos relevantes..."
                   value={descripcion}
                   onChange={e => setDescripcion(e.target.value)}
                 />
@@ -405,8 +411,8 @@ export const UserPortal: React.FC<{ onLogout: () => void; onSwitchRole?: () => v
 
               <div className="input-group">
                 <label className="input-label">Prioridad del Trámite</label>
-                <div style={{ display: 'flex', gap: '1rem' }}>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#cbd5e1', cursor: 'pointer', fontSize: '0.85rem' }}>
+                <div style={{ display: 'flex', gap: '1.5rem' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#cbd5e1', cursor: 'pointer', fontSize: '0.825rem' }}>
                     <input 
                       type="radio" 
                       name="prioridad" 
@@ -415,35 +421,35 @@ export const UserPortal: React.FC<{ onLogout: () => void; onSwitchRole?: () => v
                     />
                     <span>Normal (3 a 5 días hábiles)</span>
                   </label>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#f87171', cursor: 'pointer', fontSize: '0.85rem' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#f87171', cursor: 'pointer', fontSize: '0.825rem' }}>
                     <input 
                       type="radio" 
                       name="prioridad" 
                       checked={prioridad === 'Urgente'} 
                       onChange={() => setPrioridad('Urgente')} 
                     />
-                    <span>Urgente (Urgencia Operativa)</span>
+                    <span>Urgente (Prioridad Operativa)</span>
                   </label>
                 </div>
               </div>
 
-              {/* UPLOAD DE ARCHIVOS */}
+              {/* UPLOAD ARCHIVOS */}
               <div style={{
-                border: '2px dashed #2a364f',
-                borderRadius: '8px',
+                border: '1px dashed #334155',
+                borderRadius: '6px',
                 padding: '1.25rem',
                 textAlign: 'center',
-                background: '#0b0f17',
+                background: '#0b0e14',
                 marginBottom: '1.5rem',
                 cursor: 'pointer'
               }}>
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2" style={{ margin: '0 auto 6px auto', display: 'block' }}>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2" style={{ margin: '0 auto 6px auto', display: 'block' }}>
                   <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
                   <polyline points="17 8 12 3 7 8"/>
                   <line x1="12" y1="3" x2="12" y2="15"/>
                 </svg>
-                <span style={{ fontSize: '0.8rem', color: '#94a3b8', display: 'block' }}>
-                  Adjuntar borrador de contrato o documentos de respaldo (PDF, Word)
+                <span style={{ fontSize: '0.775rem', color: '#94a3b8', display: 'block' }}>
+                  Adjuntar borrador de contrato o expediente de respaldo (PDF, Word)
                 </span>
               </div>
 
@@ -451,13 +457,13 @@ export const UserPortal: React.FC<{ onLogout: () => void; onSwitchRole?: () => v
                 <button 
                   type="button" 
                   onClick={() => setShowNewModal(false)}
-                  style={{ background: 'transparent', border: '1px solid #475569', color: '#cbd5e1', padding: '8px 16px', borderRadius: '6px', cursor: 'pointer' }}
+                  style={{ background: 'transparent', border: '1px solid #334155', color: '#cbd5e1', padding: '8px 16px', borderRadius: '4px', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', fontSize: '0.775rem' }}
                 >
                   Cancelar
                 </button>
                 <button 
                   type="submit"
-                  style={{ background: '#c5a059', border: 'none', color: '#0b0f17', padding: '8px 20px', borderRadius: '6px', fontWeight: 700, cursor: 'pointer' }}
+                  style={{ background: '#c29b47', border: 'none', color: '#0b0e14', padding: '8px 20px', borderRadius: '4px', fontWeight: 700, fontFamily: 'Montserrat, sans-serif', fontSize: '0.775rem', textTransform: 'uppercase', cursor: 'pointer' }}
                 >
                   Enviar a Jurídico
                 </button>
@@ -467,13 +473,13 @@ export const UserPortal: React.FC<{ onLogout: () => void; onSwitchRole?: () => v
         </div>
       )}
 
-      {/* MODAL DETALLE DE SEGUIMIENTO */}
+      {/* MODAL DETALLE SEGUIMIENTO */}
       {selectedRequest && (
         <div style={{
           position: 'fixed',
           top: 0, left: 0, right: 0, bottom: 0,
-          background: 'rgba(0, 0, 0, 0.8)',
-          backdropFilter: 'blur(5px)',
+          background: 'rgba(0, 0, 0, 0.82)',
+          backdropFilter: 'blur(4px)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -481,26 +487,26 @@ export const UserPortal: React.FC<{ onLogout: () => void; onSwitchRole?: () => v
           padding: '1rem'
         }}>
           <div style={{
-            background: '#151c28',
-            border: '1px solid #2a364f',
-            borderRadius: '14px',
+            background: '#141a24',
+            border: '1px solid #263347',
+            borderRadius: '8px',
             width: '100%',
             maxWidth: '540px',
-            padding: '1.75rem'
+            padding: '2rem'
           }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', borderBottom: '1px solid #2a364f', paddingBottom: '0.75rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', borderBottom: '1px solid #263347', paddingBottom: '0.75rem' }}>
               <div>
-                <span style={{ fontSize: '0.75rem', color: '#c5a059', fontWeight: 600 }}>{selectedRequest.folio}</span>
-                <h4 style={{ fontSize: '1.1rem', color: '#ffffff' }}>{selectedRequest.titulo}</h4>
+                <span style={{ fontSize: '0.75rem', color: '#c29b47', fontWeight: 600, fontFamily: 'Montserrat, sans-serif' }}>{selectedRequest.folio}</span>
+                <h4 className="formal-header-font" style={{ fontSize: '1.25rem', color: '#ffffff' }}>{selectedRequest.titulo}</h4>
               </div>
               <button onClick={() => setSelectedRequest(null)} style={{ background: 'transparent', border: 'none', color: '#94a3b8', fontSize: '1.2rem', cursor: 'pointer' }}>✕</button>
             </div>
 
-            <div style={{ background: '#0b0f17', padding: '1.25rem', borderRadius: '10px', border: '1px solid #2a364f', marginBottom: '1.5rem' }}>
-              <span style={{ color: '#c5a059', fontSize: '0.75rem', fontWeight: 600, display: 'block', marginBottom: '0.4rem' }}>
-                RESPUESTA Y ESTATUS DEL ABOGADO:
+            <div style={{ background: '#0b0e14', padding: '1.25rem', borderRadius: '6px', border: '1px solid #263347', marginBottom: '1.5rem' }}>
+              <span style={{ color: '#c29b47', fontSize: '0.725rem', fontWeight: 600, textTransform: 'uppercase', fontFamily: 'Montserrat, sans-serif', display: 'block', marginBottom: '0.5rem' }}>
+                Dictamen y Observaciones de la Dirección Jurídica
               </span>
-              <p style={{ fontSize: '0.85rem', color: '#cbd5e1', lineHeight: 1.5 }}>
+              <p style={{ fontSize: '0.85rem', color: '#cbd5e1', lineHeight: 1.6 }}>
                 {selectedRequest.respuestaJuridico}
               </p>
             </div>
@@ -508,7 +514,7 @@ export const UserPortal: React.FC<{ onLogout: () => void; onSwitchRole?: () => v
             <div style={{ textAlign: 'right' }}>
               <button 
                 onClick={() => setSelectedRequest(null)}
-                style={{ background: '#c5a059', border: 'none', color: '#0b0f17', padding: '8px 18px', borderRadius: '6px', fontWeight: 700, cursor: 'pointer' }}
+                style={{ background: '#c29b47', border: 'none', color: '#0b0e14', padding: '8px 18px', borderRadius: '4px', fontWeight: 700, fontFamily: 'Montserrat, sans-serif', fontSize: '0.775rem', textTransform: 'uppercase', cursor: 'pointer' }}
               >
                 Cerrar
               </button>

@@ -13,44 +13,52 @@ export const App: React.FC = () => {
         <ExecutiveLogin onLoginSuccess={() => setIsLoggedIn(true)} />
       ) : userRole === 'executive' ? (
         <div>
-          {/* BARRA FLOTANTE DE SELECCIÓN DE VISTA DE PRUEBA */}
+          {/* BARRA FLOTANTE INSTITUCIONAL DE SELECCIÓN DE VISTA */}
           <div style={{
-            background: 'rgba(30, 41, 59, 0.95)',
-            borderBottom: '1px solid #334155',
-            padding: '8px 16px',
+            background: '#141a24',
+            borderBottom: '1px solid #263347',
+            padding: '8px 20px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            gap: '12px',
-            fontSize: '0.8rem',
-            color: '#cbd5e1'
+            gap: '16px',
+            fontSize: '0.775rem',
+            color: '#94a3b8',
+            fontFamily: 'Montserrat, sans-serif',
+            letterSpacing: '0.02em'
           }}>
-            <span>👁️ Modo de Demostración Visual:</span>
+            <span style={{ textTransform: 'uppercase', fontWeight: 600, color: '#64748b' }}>
+              Entorno de Pruebas:
+            </span>
             <button
               style={{
-                background: '#c5a059',
-                color: '#0b0f17',
+                background: '#c29b47',
+                color: '#0b0e14',
                 border: 'none',
-                padding: '4px 10px',
+                padding: '4px 12px',
                 borderRadius: '4px',
                 fontWeight: 700,
-                cursor: 'pointer'
+                fontSize: '0.75rem',
+                cursor: 'default',
+                letterSpacing: '0.02em'
               }}
             >
-              👑 Vista Alta Dirección / Abogados
+              Alta Dirección y Dirección Jurídica
             </button>
             <button
               onClick={() => setUserRole('user')}
               style={{
                 background: 'transparent',
-                color: '#94a3b8',
-                border: '1px solid #475569',
-                padding: '4px 10px',
+                color: '#cbd5e1',
+                border: '1px solid #334155',
+                padding: '4px 12px',
                 borderRadius: '4px',
-                cursor: 'pointer'
+                fontSize: '0.75rem',
+                cursor: 'pointer',
+                transition: 'all 0.2s'
               }}
             >
-              👤 Cambiar a Vista Usuario / Solicitante
+              Cambiar a Vista Colaborador / Solicitante
             </button>
           </div>
 
@@ -58,44 +66,52 @@ export const App: React.FC = () => {
         </div>
       ) : (
         <div>
-          {/* BARRA FLOTANTE DE SELECCIÓN DE VISTA DE PRUEBA */}
+          {/* BARRA FLOTANTE INSTITUCIONAL DE SELECCIÓN DE VISTA */}
           <div style={{
-            background: 'rgba(30, 41, 59, 0.95)',
-            borderBottom: '1px solid #334155',
-            padding: '8px 16px',
+            background: '#141a24',
+            borderBottom: '1px solid #263347',
+            padding: '8px 20px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            gap: '12px',
-            fontSize: '0.8rem',
-            color: '#cbd5e1'
+            gap: '16px',
+            fontSize: '0.775rem',
+            color: '#94a3b8',
+            fontFamily: 'Montserrat, sans-serif',
+            letterSpacing: '0.02em'
           }}>
-            <span>👁️ Modo de Demostración Visual:</span>
+            <span style={{ textTransform: 'uppercase', fontWeight: 600, color: '#64748b' }}>
+              Entorno de Pruebas:
+            </span>
             <button
               onClick={() => setUserRole('executive')}
               style={{
                 background: 'transparent',
-                color: '#94a3b8',
-                border: '1px solid #475569',
-                padding: '4px 10px',
+                color: '#cbd5e1',
+                border: '1px solid #334155',
+                padding: '4px 12px',
                 borderRadius: '4px',
-                cursor: 'pointer'
+                fontSize: '0.75rem',
+                cursor: 'pointer',
+                transition: 'all 0.2s'
               }}
             >
-              👑 Cambiar a Vista Alta Dirección / Abogados
+              Cambiar a Alta Dirección y Dirección Jurídica
             </button>
             <button
               style={{
-                background: '#c5a059',
-                color: '#0b0f17',
+                background: '#c29b47',
+                color: '#0b0e14',
                 border: 'none',
-                padding: '4px 10px',
+                padding: '4px 12px',
                 borderRadius: '4px',
                 fontWeight: 700,
-                cursor: 'pointer'
+                fontSize: '0.75rem',
+                cursor: 'default',
+                letterSpacing: '0.02em'
               }}
             >
-              👤 Vista Usuario / Solicitante
+              Vista Colaborador / Solicitante
             </button>
           </div>
 
