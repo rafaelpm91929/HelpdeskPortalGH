@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { AGENCIAS_OFICIALES } from './ExecutiveDashboard';
 
 interface UserTicket {
   id: string;
@@ -14,26 +13,27 @@ interface UserTicket {
   estado: 'En Revisión' | 'En Dictamen' | 'Requiere Información' | 'Concluido';
   prioridad: 'Normal' | 'Urgente';
   documentos: string[];
-  respuestaJuridico: string;
+  historial: { fecha: string; autor: string; mensaje: string }[];
 }
 
 export const UserPortal: React.FC<{ onLogout: () => void; onSwitchRole?: () => void }> = ({ onLogout, onSwitchRole }) => {
-  const [activeView, setActiveView] = useState<'lista' | 'nuevo' | 'detalle'>('lista');
+  const [activeView, setActiveView] = useState<'lista' | 'nuevo' | 'detalle' | 'perfil'>('lista');
   const [selectedTicket, setSelectedTicket] = useState<UserTicket | null>(null);
 
   // Form State
   const [empresaUsuario] = useState('Divol Norte');
   const [usuarioNombre] = useState('Ing. Carlos Mendoza');
+  const [usuarioCorreo] = useState('cmendoza@divol.com');
   const [usuarioCargo] = useState<'Gerente General' | 'Gerente Administrativo' | 'Recursos Humanos'>('Gerente Administrativo');
   
-  const [tipo, setTipo] = useState<UserTicket['tipo']>('REVISIÓN DE CONTRATO' as any);
-  const [correosCopia, setCorreosCopia] = useState('direccion@divol.com');
+  const [tipo, setTipo] = useState<UserTicket['tipo']>('CONTRATO');
+  const [correosCopia, setCorreosCopia] = useState('gerencia@divol.com, contabilidad@divol.com');
   const [asunto, setAsunto] = useState('');
   const [descripcion, setDescripcion] = useState('');
   const [prioridad, setPrioridad] = useState<'Normal' | 'Urgente'>('Normal');
   const [archivosSimulados, setArchivosSimulados] = useState<string[]>([]);
 
-  // List of user's tickets
+  // List of user's tickets with full cronological history
   const [myTickets, setMyTickets] = useState<UserTicket[]>([
     {
       id: '1',
@@ -41,14 +41,18 @@ export const UserPortal: React.FC<{ onLogout: () => void; onSwitchRole?: () => v
       agencia: 'Divol Norte',
       tipo: 'DEMANDA',
       titulo: 'Notificación Mercantil de Juicio Ejecutivo',
-      correosCopia: 'direccion@divol.com',
+      correosCopia: 'gerencia@divol.com, contabilidad@divol.com',
       descripcion: 'Se recibió emplazamiento respecto al expediente mercantil 402/2026. Se requiere contestación de demanda antes del 02/09/2026.',
       fechaCreacion: '20/08/2026',
       diasAbierto: 9,
       estado: 'En Dictamen',
       prioridad: 'Urgente',
       documentos: ['Emplazamiento_Notificacion.pdf', 'Anexo_Documental.pdf'],
-      respuestaJuridico: 'El Departamento Jurídico ha tomado el caso. La contestación de la demanda se encuentra en elaboración por la Lic. Mariana Fernández.'
+      historial: [
+        { fecha: '20/08/2026 09:30', autor: 'Carlos Mendoza (Gerente Admin)', mensaje: 'Se registró la solicitud inicial adjuntando la cédula de notificación judicial.' },
+        { fecha: '20/08/2026 14:15', autor: 'Lic. Mariana Fernández (Dirección Jurídica)', mensaje: 'Solicitud recibida. Asunto clasificado como Prioridad Alta y asignado a expediente JUR-2026-089.' },
+        { fecha: '21/08/2026 11:00', autor: 'Lic. Mariana Fernández (Dirección Jurídica)', mensaje: 'Se formuló la contestación de la demanda. En proceso de certificación notarial de poderes.' }
+      ]
     },
     {
       id: '2',
@@ -56,14 +60,17 @@ export const UserPortal: React.FC<{ onLogout: () => void; onSwitchRole?: () => v
       agencia: 'Divol Norte',
       tipo: 'RH',
       titulo: 'Rescisión y Finiquito por Abandono de Empleo',
-      correosCopia: 'rh@divol.com',
+      correosCopia: 'rh@divol.com, gerencia@divol.com',
       descripcion: 'Solicitud de convenio de rescisión laboral sin responsabilidad patronal por inasistencias consecutivas.',
       fechaCreacion: '25/08/2026',
       diasAbierto: 4,
       estado: 'En Revisión',
       prioridad: 'Normal',
       documentos: ['Acta_Administrativa.pdf'],
-      respuestaJuridico: 'Se envió la propuesta de finiquito y acta administrativa para la firma del colaborador.'
+      historial: [
+        { fecha: '25/08/2026 10:00', autor: 'Carlos Mendoza (Gerente Admin)', mensaje: 'Ingreso de acta administrativa para cálculo de liquidación.' },
+        { fecha: '26/08/2026 16:45', autor: 'Lic. Roberto Garza (Dirección Jurídica)', mensaje: 'Convenio de finiquito elaborado y disponible para su firma.' }
+      ]
     }
   ]);
 
@@ -75,7 +82,7 @@ export const UserPortal: React.FC<{ onLogout: () => void; onSwitchRole?: () => v
       id: Date.now().toString(),
       folio: `SOL-JUR-${Math.floor(100 + Math.random() * 900)}`,
       agencia: empresaUsuario,
-      tipo: tipo as any,
+      tipo,
       titulo: asunto,
       correosCopia,
       descripcion,
@@ -83,8 +90,14 @@ export const UserPortal: React.FC<{ onLogout: () => void; onSwitchRole?: () => v
       diasAbierto: 0,
       estado: 'En Revisión',
       prioridad,
-      documentos: archivosSimulados.length > 0 ? archivosSimulados : ['Borrador_Documento_Legal.pdf'],
-      respuestaJuridico: 'Solicitud registrada institucionalmente. Un abogado asignado iniciará la revisión formal.'
+      documentos: archivosSimulados.length > 0 ? archivosSimulados : ['Expediente_Borrador_Legal.pdf'],
+      historial: [
+        { 
+          fecha: `${new Date().toLocaleDateString('es-MX')} ${new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })}`,
+          autor: `${usuarioNombre} (${usuarioCargo})`,
+          mensaje: 'Registro de solicitud enviado con copias a las direcciones especificadas.'
+        }
+      ]
     };
 
     setMyTickets([newT, ...myTickets]);
@@ -155,8 +168,18 @@ export const UserPortal: React.FC<{ onLogout: () => void; onSwitchRole?: () => v
             </button>
           )}
 
-          <div style={{ textAlign: 'right', borderLeft: '1px solid #263347', paddingLeft: '1.25rem' }}>
-            <div style={{ fontSize: '0.85rem', fontWeight: 600, color: '#ffffff', fontFamily: 'Montserrat, sans-serif' }}>{usuarioNombre}</div>
+          {/* PERFIL / INFORMACION DEL USUARIO */}
+          <div 
+            onClick={() => setActiveView('perfil')}
+            style={{ 
+              textAlign: 'right', 
+              borderLeft: '1px solid #263347', 
+              paddingLeft: '1.25rem',
+              cursor: 'pointer' 
+            }}
+            title="Ver Mi Perfil e Información de Usuario"
+          >
+            <div style={{ fontSize: '0.85rem', fontWeight: 600, color: '#ffffff', fontFamily: 'Montserrat, sans-serif', textDecoration: 'underline' }}>{usuarioNombre}</div>
             <div style={{ fontSize: '0.725rem', color: '#c29b47', textTransform: 'uppercase' }}>{usuarioCargo} • {empresaUsuario}</div>
           </div>
 
@@ -182,8 +205,65 @@ export const UserPortal: React.FC<{ onLogout: () => void; onSwitchRole?: () => v
         </div>
       </header>
 
-      {/* PESTAÑA DE DETALLE (NO MODAL FLOTANTE) */}
-      {activeView === 'detalle' && selectedTicket ? (
+      {/* VISTA 1: MI PERFIL / INFORMACION DE USUARIO */}
+      {activeView === 'perfil' ? (
+        <div>
+          <button
+            onClick={() => setActiveView('lista')}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              background: '#19212d',
+              border: '1px solid #334155',
+              color: '#cbd5e1',
+              padding: '8px 16px',
+              borderRadius: '6px',
+              fontSize: '0.8rem',
+              cursor: 'pointer',
+              marginBottom: '1.5rem',
+              fontFamily: 'Montserrat, sans-serif'
+            }}
+          >
+            ← Volver a Mis Solicitudes
+          </button>
+
+          <div style={{ background: '#141a24', border: '1px solid #263347', borderRadius: '8px', padding: '2.25rem' }}>
+            <div style={{ borderBottom: '1px solid #263347', paddingBottom: '1rem', marginBottom: '1.5rem' }}>
+              <h3 className="formal-header-font" style={{ fontSize: '1.4rem', color: '#ffffff' }}>
+                Información y Perfil de Usuario Autorizado
+              </h3>
+              <p style={{ fontSize: '0.8rem', color: '#94a3b8' }}>
+                Datos institucionales registrados para el envío y recepción de trámites legales
+              </p>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.5rem', background: '#0b0e14', padding: '1.5rem', borderRadius: '6px', border: '1px solid #263347' }}>
+              <div>
+                <span style={{ fontSize: '0.725rem', color: '#94a3b8', textTransform: 'uppercase', fontFamily: 'Montserrat, sans-serif' }}>Nombre Completo</span>
+                <div style={{ fontSize: '1rem', color: '#ffffff', fontWeight: 600, marginTop: '4px' }}>{usuarioNombre}</div>
+              </div>
+
+              <div>
+                <span style={{ fontSize: '0.725rem', color: '#94a3b8', textTransform: 'uppercase', fontFamily: 'Montserrat, sans-serif' }}>Correo Institucional</span>
+                <div style={{ fontSize: '0.95rem', color: '#c29b47', fontWeight: 600, marginTop: '4px' }}>{usuarioCorreo}</div>
+              </div>
+
+              <div>
+                <span style={{ fontSize: '0.725rem', color: '#94a3b8', textTransform: 'uppercase', fontFamily: 'Montserrat, sans-serif' }}>Empresa / Sucursal</span>
+                <div style={{ fontSize: '0.95rem', color: '#ffffff', fontWeight: 500, marginTop: '4px' }}>{empresaUsuario}</div>
+              </div>
+
+              <div>
+                <span style={{ fontSize: '0.725rem', color: '#94a3b8', textTransform: 'uppercase', fontFamily: 'Montserrat, sans-serif' }}>Cargo Autorizado</span>
+                <div style={{ fontSize: '0.95rem', color: '#ffffff', fontWeight: 600, marginTop: '4px' }}>{usuarioCargo}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : activeView === 'detalle' && selectedTicket ? (
+
+        /* VISTA 2: HISTORIAL CRONOLOGICO COMPLETO DE LA SOLICITUD */
         <div>
           <button
             onClick={() => setActiveView('lista')}
@@ -227,7 +307,7 @@ export const UserPortal: React.FC<{ onLogout: () => void; onSwitchRole?: () => v
               </div>
               <div>
                 <span style={{ fontSize: '0.7rem', color: '#94a3b8', textTransform: 'uppercase', fontFamily: 'Montserrat, sans-serif' }}>Correos en Copia (CC)</span>
-                <div style={{ color: '#cbd5e1' }}>{selectedTicket.correosCopia || 'Sin copia'}</div>
+                <div style={{ color: '#cbd5e1', fontSize: '0.8rem' }}>{selectedTicket.correosCopia || 'Sin copias en correo'}</div>
               </div>
               <div>
                 <span style={{ fontSize: '0.7rem', color: '#94a3b8', textTransform: 'uppercase', fontFamily: 'Montserrat, sans-serif' }}>Fecha de Envío</span>
@@ -242,19 +322,40 @@ export const UserPortal: React.FC<{ onLogout: () => void; onSwitchRole?: () => v
               </div>
             </div>
 
-            <div style={{ background: '#0b0e14', padding: '1.25rem', borderRadius: '6px', border: '1px solid #263347' }}>
-              <span style={{ color: '#c29b47', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', fontFamily: 'Montserrat, sans-serif', display: 'block', marginBottom: '0.4rem' }}>
-                Respuesta del Departamento Jurídico:
-              </span>
-              <p style={{ fontSize: '0.875rem', color: '#cbd5e1', lineHeight: 1.6 }}>
-                {selectedTicket.respuestaJuridico}
-              </p>
+            {/* EXPEDIENTES Y ADJUNTOS */}
+            <div style={{ marginBottom: '1.5rem' }}>
+              <h4 style={{ fontSize: '0.8rem', color: '#94a3b8', textTransform: 'uppercase', fontFamily: 'Montserrat, sans-serif', marginBottom: '0.5rem' }}>Archivos y Expedientes Adjuntos</h4>
+              <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+                {selectedTicket.documentos.map((doc, idx) => (
+                  <div key={idx} style={{ background: '#0b0e14', border: '1px solid #263347', padding: '10px 14px', borderRadius: '6px', color: '#c29b47', fontSize: '0.8rem' }}>
+                    📎 {doc}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* HISTORIAL CRONOLOGICO COMPLETO */}
+            <div>
+              <h4 style={{ fontSize: '0.8rem', color: '#94a3b8', textTransform: 'uppercase', fontFamily: 'Montserrat, sans-serif', marginBottom: '0.75rem' }}>
+                Historial Cronológico de Dictámenes y Actuaciones
+              </h4>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                {selectedTicket.historial.map((h, i) => (
+                  <div key={i} style={{ background: '#0b0e14', border: '1px solid #263347', padding: '1rem', borderRadius: '6px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px', fontSize: '0.75rem' }}>
+                      <strong style={{ color: '#c29b47' }}>{h.autor}</strong>
+                      <span style={{ color: '#64748b' }}>{h.fecha}</span>
+                    </div>
+                    <p style={{ fontSize: '0.85rem', color: '#cbd5e1', margin: 0 }}>{h.mensaje}</p>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
       ) : activeView === 'nuevo' ? (
 
-        /* PESTAÑA DEDICADA DE FORMULARIO (NO MODAL FLOTANTE) */
+        /* VISTA 3: FORMULARIO COMPLETO PARA NUEVA SOLICITUD CON COPIA A CORREOS */
         <div>
           <button
             onClick={() => setActiveView('lista')}
@@ -309,23 +410,26 @@ export const UserPortal: React.FC<{ onLogout: () => void; onSwitchRole?: () => v
                     onChange={e => setTipo(e.target.value as any)}
                     style={{ paddingLeft: '12px' }}
                   >
-                    <option value="RH">Recursos Humanos (RH / Finiquitos / Rescisiones)</option>
-                    <option value="DEMANDA">Demandas & Litigios (Notificaciones Mercantiles)</option>
+                    <option value="RH">Recursos Humanos (RH / Rescisiones / Finiquitos)</option>
+                    <option value="DEMANDA">Demandas & Litigios (Notificaciones Judiciales)</option>
                     <option value="SOLICITUD">Solicitud Notarial / Poderes / Asesoría</option>
                     <option value="CONTRATO">Revisión de Contratos / Convenios</option>
                   </select>
                 </div>
 
                 <div>
-                  <label className="input-label">Copiar a Correos (CC)</label>
+                  <label className="input-label">Copiar a Correos Adicionales (CC)</label>
                   <input 
                     type="text" 
                     className="custom-input" 
                     style={{ paddingLeft: '12px' }}
-                    placeholder="ejemplo: gerencia@divol.com, rh@divol.com"
+                    placeholder="ejemplo: gerencia@divol.com, rh@divol.com, contabilidad@divol.com"
                     value={correosCopia}
                     onChange={e => setCorreosCopia(e.target.value)}
                   />
+                  <span style={{ fontSize: '0.7rem', color: '#64748b', marginTop: '4px', display: 'block' }}>
+                    Separa múltiples direcciones de correo con coma (,)
+                  </span>
                 </div>
               </div>
 

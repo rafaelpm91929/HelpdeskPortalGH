@@ -4,7 +4,7 @@ export interface TicketItem {
   id: string;
   folio: string;
   agencia: string;
-  tipo: 'RH' | 'DEMANDA' | 'SOLICITUD' | 'CONTRATO' | 'ASENSORIA';
+  tipo: 'RH' | 'DEMANDA' | 'SOLICITUD' | 'CONTRATO';
   titulo: string;
   solicitante: string;
   cargoSolicitante: string;
@@ -46,6 +46,9 @@ export const ExecutiveDashboard: React.FC<{ onLogout: () => void }> = ({ onLogou
   const [filtroTipo, setFiltroTipo] = useState<string>('TODOS');
   const [filtroAgencia, setFiltroAgencia] = useState<string>('TODOS');
 
+  // Filtros de Gráficas
+  const [rangoGraficas, setRangoGraficas] = useState<'mes' | 'trimestre' | 'anio'>('mes');
+
   // Form para dar de alta usuario
   const [showAddUserModal, setShowAddUserModal] = useState(false);
   const [nuevoNombre, setNuevoNombre] = useState('');
@@ -53,9 +56,9 @@ export const ExecutiveDashboard: React.FC<{ onLogout: () => void }> = ({ onLogou
   const [nuevaAgencia, setNuevaAgencia] = useState(AGENCIAS_OFICIALES[0]);
   const [nuevoCargo, setNuevoCargo] = useState<UsuarioItem['cargo']>('Gerente Administrativo');
 
-  // Datos de prueba: Usuarios
+  // Datos de prueba: Usuarios sin el apellido Huerta
   const [usuarios, setUsuarios] = useState<UsuarioItem[]>([
-    { id: '1', nombre: 'Lic. Ricardo Huerta', correo: 'rhuerta@grupohuerta.com', agencia: 'Corporativo Grupo Huerta', cargo: 'Gerente General', estatus: 'Activo' },
+    { id: '1', nombre: 'Lic. Ricardo Morales', correo: 'rmorales@grupohuerta.com', agencia: 'Corporativo Grupo Huerta', cargo: 'Gerente General', estatus: 'Activo' },
     { id: '2', nombre: 'Ing. Carlos Mendoza', correo: 'cmendoza@divol.com', agencia: 'Divol Norte', cargo: 'Gerente Administrativo', estatus: 'Activo' },
     { id: '3', nombre: 'Lic. Sofía Ramírez', correo: 'sramirez@grupohuerta.com', agencia: 'Divol Lindavista', cargo: 'Recursos Humanos', estatus: 'Activo' },
     { id: '4', nombre: 'Lic. Mariana Fernández', correo: 'mfernandez@juridico-gh.com', agencia: 'Corporativo Grupo Huerta', cargo: 'Abogado', estatus: 'Activo' },
@@ -63,7 +66,7 @@ export const ExecutiveDashboard: React.FC<{ onLogout: () => void }> = ({ onLogou
   ]);
 
   // Datos de prueba: Tickets/Expedientes
-  const [tickets, setTickets] = useState<TicketItem[]>([
+  const [tickets] = useState<TicketItem[]>([
     {
       id: '1',
       folio: 'JUR-2026-089',
@@ -73,7 +76,7 @@ export const ExecutiveDashboard: React.FC<{ onLogout: () => void }> = ({ onLogou
       solicitante: 'Carlos Mendoza',
       cargoSolicitante: 'Gerente Administrativo',
       correoSolicitante: 'cmendoza@divol.com',
-      correosCopia: 'direccion@divol.com',
+      correosCopia: 'direccion@divol.com, contabilidad@divol.com',
       descripcion: 'Se recibió emplazamiento respecto al expediente mercantil 402/2026. Se requiere contestación de demanda antes del 02/09/2026.',
       fechaCreacion: '20/08/2026',
       diasAbierto: 9,
@@ -82,8 +85,9 @@ export const ExecutiveDashboard: React.FC<{ onLogout: () => void }> = ({ onLogou
       prioridad: 'Urgente',
       documentos: ['Emplazamiento_Notificacion.pdf', 'Anexo_Documental.pdf'],
       historial: [
-        { fecha: '20/08/2026', autor: 'Carlos Mendoza (Gerente Admin)', mensaje: 'Se ingresa demanda urgente con emplazamiento.' },
-        { fecha: '21/08/2026', autor: 'Lic. Mariana Fernández (Abogado)', mensaje: 'Se inició la redacción de la contestación e incidente de falta de personalidad.' }
+        { fecha: '20/08/2026 09:30', autor: 'Carlos Mendoza (Gerente Admin)', mensaje: 'Se ingresa demanda urgente con emplazamiento y notificación judicial.' },
+        { fecha: '20/08/2026 14:15', autor: 'Lic. Mariana Fernández (Abogado)', mensaje: 'Expediente asignado. Se inicia revisión del documento emplazatorio.' },
+        { fecha: '21/08/2026 11:00', autor: 'Lic. Mariana Fernández (Abogado)', mensaje: 'Se redactó la contestación de demanda e incidente de falta de personalidad.' }
       ]
     },
     {
@@ -104,7 +108,7 @@ export const ExecutiveDashboard: React.FC<{ onLogout: () => void }> = ({ onLogou
       prioridad: 'Normal',
       documentos: ['Acta_Administrativa_Faltas.pdf', 'Kardex_Asistencia.pdf'],
       historial: [
-        { fecha: '24/08/2026', autor: 'Sofía Ramírez (RH)', mensaje: 'Envío de expediente laboral para cálculo de finiquito.' }
+        { fecha: '24/08/2026 10:00', autor: 'Sofía Ramírez (RH)', mensaje: 'Envío de expediente laboral para cálculo de finiquito y finiquito legal.' }
       ]
     },
     {
@@ -124,7 +128,7 @@ export const ExecutiveDashboard: React.FC<{ onLogout: () => void }> = ({ onLogou
       prioridad: 'Normal',
       documentos: ['Borrador_Convenio_Arrendamiento.docx'],
       historial: [
-        { fecha: '27/08/2026', autor: 'Roberto Garza (Gerente General)', mensaje: 'Envío de contrato para revisión legal.' }
+        { fecha: '27/08/2026 16:20', autor: 'Roberto Garza (Gerente General)', mensaje: 'Envío de borrador de contrato para análisis de cláusulas.' }
       ]
     },
     {
@@ -144,8 +148,8 @@ export const ExecutiveDashboard: React.FC<{ onLogout: () => void }> = ({ onLogou
       prioridad: 'Normal',
       documentos: ['Escritura_Poder_Notarial_584.pdf'],
       historial: [
-        { fecha: '22/08/2026', autor: 'Fernando Alonso (Gerente Admin)', mensaje: 'Registro de solicitud de validación.' },
-        { fecha: '25/08/2026', autor: 'Lic. Carlos Mendoza (Abogado)', mensaje: 'Poder emitido y certificado. Dictamen concluido.' }
+        { fecha: '22/08/2026 11:00', autor: 'Fernando Alonso (Gerente Admin)', mensaje: 'Registro de solicitud de validación de testimonio notarial.' },
+        { fecha: '25/08/2026 17:00', autor: 'Lic. Carlos Mendoza (Abogado)', mensaje: 'Poder emitido y certificado. Dictamen concluido con éxito.' }
       ]
     }
   ]);
@@ -300,7 +304,7 @@ export const ExecutiveDashboard: React.FC<{ onLogout: () => void }> = ({ onLogou
 
         {/* PIE DE SIDEBAR */}
         <div style={{ borderTop: '1px solid #263347', paddingTop: '1rem' }}>
-          <div style={{ fontSize: '0.75rem', color: '#ffffff', fontWeight: 600, fontFamily: 'Montserrat, sans-serif' }}>Lic. Ricardo Huerta</div>
+          <div style={{ fontSize: '0.75rem', color: '#ffffff', fontWeight: 600, fontFamily: 'Montserrat, sans-serif' }}>Lic. Ricardo Morales</div>
           <div style={{ fontSize: '0.7rem', color: '#c29b47' }}>Gerente General / Alta Dirección</div>
           <button 
             onClick={onLogout}
@@ -314,7 +318,7 @@ export const ExecutiveDashboard: React.FC<{ onLogout: () => void }> = ({ onLogou
       {/* CONTENIDO PRINCIPAL */}
       <main style={{ flex: 1, padding: '2rem 2.5rem', overflowY: 'auto' }}>
         
-        {/* VISTA 1: DETALLE DE EXPEDIENTE (PESTAÑA DEDICADA EN LUGAR DE MODAL FLOTANTE) */}
+        {/* VISTA 1: DETALLE DE EXPEDIENTE (PESTAÑA DEDICADA) */}
         {selectedTicket ? (
           <div>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
@@ -413,7 +417,7 @@ export const ExecutiveDashboard: React.FC<{ onLogout: () => void }> = ({ onLogou
               {/* HISTORIAL Y SEGUIMIENTO */}
               <div>
                 <h4 style={{ fontSize: '0.85rem', color: '#94a3b8', textTransform: 'uppercase', fontFamily: 'Montserrat, sans-serif', marginBottom: '0.75rem' }}>
-                  Historial de Dictámenes y Actuaciones
+                  Historial Cronológico de Dictámenes y Actuaciones
                 </h4>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                   {selectedTicket.historial.map((h, i) => (
@@ -507,7 +511,7 @@ export const ExecutiveDashboard: React.FC<{ onLogout: () => void }> = ({ onLogou
                           <td style={{ padding: '14px 12px' }}>
                             {esAlerta ? (
                               <span style={{ color: '#f87171', fontWeight: 700, fontSize: '0.75rem', background: 'rgba(239, 68, 68, 0.15)', padding: '4px 8px', borderRadius: '4px', border: '1px solid rgba(239, 68, 68, 0.3)' }}>
-                                ⚠️ ALERTA: {item.diasAbierto} DÍAS
+                                ALERTA: {item.diasAbierto} DÍAS
                               </span>
                             ) : (
                               <span style={{ color: '#94a3b8', fontSize: '0.8rem' }}>{item.diasAbierto} días</span>
@@ -569,73 +573,159 @@ export const ExecutiveDashboard: React.FC<{ onLogout: () => void }> = ({ onLogou
           </div>
         ) : currentSection === 'graficas' ? (
           <div>
-            {/* VISTA GRAFICAS & REPORTES */}
-            <h2 className="formal-header-font" style={{ fontSize: '1.5rem', color: '#ffffff', marginBottom: '0.5rem' }}>
-              Estadísticas y Reportes por Tipo de Asunto y Días
-            </h2>
-            <p style={{ fontSize: '0.8rem', color: '#94a3b8', marginBottom: '1.5rem' }}>
-              Métricas de desempeño del departamento legal
-            </p>
-
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
-              <div style={{ background: '#141a24', border: '1px solid #263347', padding: '1.5rem', borderRadius: '8px' }}>
-                <h4 style={{ fontSize: '0.9rem', color: '#c29b47', textTransform: 'uppercase', fontFamily: 'Montserrat, sans-serif', marginBottom: '1rem' }}>
-                  Distribución por Tipo de Ticket
-                </h4>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', color: '#ffffff', marginBottom: '4px' }}>
-                      <span>Demandas & Litigios (DEMANDA)</span>
-                      <strong>40%</strong>
-                    </div>
-                    <div style={{ background: '#0b0e14', height: '8px', borderRadius: '4px', overflow: 'hidden' }}>
-                      <div style={{ background: '#f87171', width: '40%', height: '100%' }}></div>
-                    </div>
-                  </div>
-
-                  <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', color: '#ffffff', marginBottom: '4px' }}>
-                      <span>Recursos Humanos (RH)</span>
-                      <strong>25%</strong>
-                    </div>
-                    <div style={{ background: '#0b0e14', height: '8px', borderRadius: '4px', overflow: 'hidden' }}>
-                      <div style={{ background: '#fbbf24', width: '25%', height: '100%' }}></div>
-                    </div>
-                  </div>
-
-                  <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', color: '#ffffff', marginBottom: '4px' }}>
-                      <span>Revisión de Contratos (CONTRATO)</span>
-                      <strong>20%</strong>
-                    </div>
-                    <div style={{ background: '#0b0e14', height: '8px', borderRadius: '4px', overflow: 'hidden' }}>
-                      <div style={{ background: '#60a5fa', width: '20%', height: '100%' }}></div>
-                    </div>
-                  </div>
-
-                  <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', color: '#ffffff', marginBottom: '4px' }}>
-                      <span>Solicitudes Notariales (SOLICITUD)</span>
-                      <strong>15%</strong>
-                    </div>
-                    <div style={{ background: '#0b0e14', height: '8px', borderRadius: '4px', overflow: 'hidden' }}>
-                      <div style={{ background: '#4ade80', width: '15%', height: '100%' }}></div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div style={{ background: '#141a24', border: '1px solid #263347', padding: '1.5rem', borderRadius: '8px' }}>
-                <h4 style={{ fontSize: '0.9rem', color: '#c29b47', textTransform: 'uppercase', fontFamily: 'Montserrat, sans-serif', marginBottom: '1rem' }}>
-                  Tiempo Promedio de Resolución (Días)
-                </h4>
-                <div style={{ fontSize: '2.5rem', fontWeight: 700, color: '#ffffff', fontFamily: 'Cormorant Garamond, serif' }}>
-                  3.4 <span style={{ fontSize: '1rem', color: '#94a3b8', fontFamily: 'Inter, sans-serif' }}>Días Hábiles</span>
-                </div>
-                <p style={{ fontSize: '0.8rem', color: '#4ade80', marginTop: '0.5rem' }}>
-                  ✓ 92% de trámites concluidos dentro del SLA corporativo.
+            {/* PANEL DE GRÁFICAS MÚLTIPLES E INTERACTIVAS */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
+              <div>
+                <h2 className="formal-header-font" style={{ fontSize: '1.5rem', color: '#ffffff' }}>
+                  Estadísticas y Métricas Corporativas
+                </h2>
+                <p style={{ fontSize: '0.8rem', color: '#94a3b8' }}>
+                  Análisis consolidado por Agencia, Usuario Resolutor, Tipo de Trámite y SLA de Días
                 </p>
               </div>
+
+              {/* FILTROS TEMPORALES */}
+              <div style={{ display: 'flex', gap: '8px', background: '#141a24', border: '1px solid #263347', padding: '4px', borderRadius: '6px' }}>
+                {(['mes', 'trimestre', 'anio'] as const).map(r => (
+                  <button
+                    key={r}
+                    onClick={() => setRangoGraficas(r)}
+                    style={{
+                      background: rangoGraficas === r ? '#19212d' : 'transparent',
+                      border: rangoGraficas === r ? '1px solid #334155' : 'none',
+                      color: rangoGraficas === r ? '#c29b47' : '#94a3b8',
+                      padding: '6px 14px',
+                      borderRadius: '4px',
+                      fontSize: '0.75rem',
+                      fontFamily: 'Montserrat, sans-serif',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      textTransform: 'uppercase'
+                    }}
+                  >
+                    {r === 'mes' ? 'Este Mes' : r === 'trimestre' ? 'Trimestral' : 'Año 2026'}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* GRID DE 4 GRAFICAS DIVERSAS */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(460px, 1fr))', gap: '1.5rem' }}>
+              
+              {/* GRAFICA 1: VOLUMEN POR AGENCIA */}
+              <div style={{ background: '#141a24', border: '1px solid #263347', padding: '1.75rem', borderRadius: '8px' }}>
+                <h4 style={{ fontSize: '0.875rem', color: '#c29b47', textTransform: 'uppercase', fontFamily: 'Montserrat, sans-serif', marginBottom: '1.25rem' }}>
+                  Volumen de Asuntos por Agencia / Sucursal
+                </h4>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  {[
+                    { agencia: 'Suzuki Montevideo', casos: 14, pct: '85%' },
+                    { agencia: 'Divol Norte', casos: 12, pct: '72%' },
+                    { agencia: 'Divol Lindavista', casos: 9, pct: '55%' },
+                    { agencia: 'Cupra La Villa', casos: 8, pct: '48%' },
+                    { agencia: 'Mazda Guadalajara', casos: 6, pct: '38%' },
+                    { agencia: 'Omoda Esmeralda', casos: 5, pct: '30%' },
+                    { agencia: 'Divol Truks', casos: 4, pct: '24%' },
+                    { agencia: 'Divol Tlalnepantla', casos: 3, pct: '18%' }
+                  ].map((item, idx) => (
+                    <div key={idx}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.775rem', color: '#cbd5e1', marginBottom: '4px' }}>
+                        <span>{item.agencia}</span>
+                        <span style={{ fontWeight: 600, color: '#ffffff' }}>{item.casos} Expedientes</span>
+                      </div>
+                      <div style={{ background: '#0b0e14', height: '7px', borderRadius: '4px', overflow: 'hidden' }}>
+                        <div style={{ background: '#c29b47', width: item.pct, height: '100%', borderRadius: '4px' }}></div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* GRAFICA 2: CARGA DE ASUNTOS POR ABOGADO / USUARIO */}
+              <div style={{ background: '#141a24', border: '1px solid #263347', padding: '1.75rem', borderRadius: '8px' }}>
+                <h4 style={{ fontSize: '0.875rem', color: '#c29b47', textTransform: 'uppercase', fontFamily: 'Montserrat, sans-serif', marginBottom: '1.25rem' }}>
+                  Carga y Efectividad por Abogado Resolutor
+                </h4>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                  {[
+                    { abogado: 'Lic. Mariana Fernández', asignados: 18, resueltos: 16, sla: '94%' },
+                    { abogado: 'Lic. Roberto Garza', asignados: 14, resueltos: 12, sla: '91%' },
+                    { abogado: 'Lic. Carlos Mendoza', asignados: 11, resueltos: 11, sla: '98%' }
+                  ].map((abg, idx) => (
+                    <div key={idx} style={{ background: '#0b0e14', border: '1px solid #263347', padding: '1rem', borderRadius: '6px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                        <strong style={{ fontSize: '0.875rem', color: '#ffffff' }}>{abg.abogado}</strong>
+                        <span style={{ fontSize: '0.75rem', color: '#4ade80', fontWeight: 600 }}>SLA: {abg.sla}</span>
+                      </div>
+
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: '#94a3b8', marginBottom: '6px' }}>
+                        <span>Asignados: {abg.asignados}</span>
+                        <span>Dictaminados: {abg.resueltos}</span>
+                      </div>
+
+                      <div style={{ background: '#19212d', height: '8px', borderRadius: '4px', overflow: 'hidden' }}>
+                        <div style={{ background: '#60a5fa', width: abg.sla, height: '100%' }}></div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* GRAFICA 3: DISTRIBUCION POR TIPO DE TICKET */}
+              <div style={{ background: '#141a24', border: '1px solid #263347', padding: '1.75rem', borderRadius: '8px' }}>
+                <h4 style={{ fontSize: '0.875rem', color: '#c29b47', textTransform: 'uppercase', fontFamily: 'Montserrat, sans-serif', marginBottom: '1.25rem' }}>
+                  Clasificación por Tipo de Asunto Legal
+                </h4>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  {[
+                    { tipo: 'DEMANDA (Demandas & Litigios Mercantiles)', pct: '38%', color: '#f87171' },
+                    { tipo: 'RH (Recursos Humanos & Rescisiones)', pct: '28%', color: '#fbbf24' },
+                    { tipo: 'CONTRATO (Revisión de Arrendamientos & Convenios)', pct: '20%', color: '#60a5fa' },
+                    { tipo: 'SOLICITUD (Poderes Notariales & Dictámenes)', pct: '14%', color: '#4ade80' }
+                  ].map((t, idx) => (
+                    <div key={idx}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.775rem', color: '#ffffff', marginBottom: '4px' }}>
+                        <span>{t.tipo}</span>
+                        <strong style={{ color: t.color }}>{t.pct}</strong>
+                      </div>
+                      <div style={{ background: '#0b0e14', height: '8px', borderRadius: '4px', overflow: 'hidden' }}>
+                        <div style={{ background: t.color, width: t.pct, height: '100%' }}></div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* GRAFICA 4: ANTIGÜEDAD Y SLA POR DIAS */}
+              <div style={{ background: '#141a24', border: '1px solid #263347', padding: '1.75rem', borderRadius: '8px' }}>
+                <h4 style={{ fontSize: '0.875rem', color: '#c29b47', textTransform: 'uppercase', fontFamily: 'Montserrat, sans-serif', marginBottom: '1.25rem' }}>
+                  Control de Días Transcurridos y Alertas SLA
+                </h4>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem', textAlign: 'center' }}>
+                  <div style={{ background: '#0b0e14', border: '1px solid #263347', padding: '1rem 0.5rem', borderRadius: '6px' }}>
+                    <div style={{ fontSize: '0.7rem', color: '#4ade80', textTransform: 'uppercase', fontWeight: 600 }}>0 a 3 Días</div>
+                    <div style={{ fontSize: '1.6rem', fontWeight: 700, color: '#ffffff', margin: '4px 0', fontFamily: 'Cormorant Garamond, serif' }}>75%</div>
+                    <div style={{ fontSize: '0.675rem', color: '#94a3b8' }}>A tiempo</div>
+                  </div>
+
+                  <div style={{ background: '#0b0e14', border: '1px solid #263347', padding: '1rem 0.5rem', borderRadius: '6px' }}>
+                    <div style={{ fontSize: '0.7rem', color: '#fbbf24', textTransform: 'uppercase', fontWeight: 600 }}>4 a 7 Días</div>
+                    <div style={{ fontSize: '1.6rem', fontWeight: 700, color: '#ffffff', margin: '4px 0', fontFamily: 'Cormorant Garamond, serif' }}>18%</div>
+                    <div style={{ fontSize: '0.675rem', color: '#94a3b8' }}>Próximo a límite</div>
+                  </div>
+
+                  <div style={{ background: '#0b0e14', border: '1px solid rgba(239, 68, 68, 0.3)', padding: '1rem 0.5rem', borderRadius: '6px' }}>
+                    <div style={{ fontSize: '0.7rem', color: '#f87171', textTransform: 'uppercase', fontWeight: 600 }}>+7 Días</div>
+                    <div style={{ fontSize: '1.6rem', fontWeight: 700, color: '#f87171', margin: '4px 0', fontFamily: 'Cormorant Garamond, serif' }}>7%</div>
+                    <div style={{ fontSize: '0.675rem', color: '#f87171' }}>Alerta Vencida</div>
+                  </div>
+                </div>
+              </div>
+
             </div>
           </div>
         ) : (
@@ -705,10 +795,10 @@ export const ExecutiveDashboard: React.FC<{ onLogout: () => void }> = ({ onLogou
 
       {/* MODAL DAR DE ALTA USUARIO */}
       {showAddUserModal && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 999 }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.82)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 999 }}>
           <div style={{ background: '#141a24', border: '1px solid #263347', borderRadius: '8px', width: '100%', maxWidth: '500px', padding: '2rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem', borderBottom: '1px solid #263347', paddingBottom: '0.75rem' }}>
-              <h3 className="formal-header-font" style={{ fontSize: '1.25rem', color: '#ffffff' }}>Dar de Alta Nuevo Usuario</h3>
+              <h3 className="formal-header-font" style={{ fontSize: '1.3rem', color: '#ffffff' }}>Dar de Alta Nuevo Usuario</h3>
               <button onClick={() => setShowAddUserModal(false)} style={{ background: 'transparent', border: 'none', color: '#94a3b8', fontSize: '1.2rem', cursor: 'pointer' }}>✕</button>
             </div>
 
