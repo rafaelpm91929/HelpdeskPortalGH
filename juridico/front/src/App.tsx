@@ -1,10 +1,17 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { ExecutiveLogin } from './components/ExecutiveLogin';
+import { ExecutiveDashboard } from './components/ExecutiveDashboard';
 
 export const App: React.FC = () => {
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
+
   return (
     <main>
-      <ExecutiveLogin />
+      {isLoggedIn ? (
+        <ExecutiveDashboard onLogout={() => setIsLoggedIn(false)} />
+      ) : (
+        <ExecutiveLogin onLoginSuccess={() => setIsLoggedIn(true)} />
+      )}
     </main>
   );
 };
