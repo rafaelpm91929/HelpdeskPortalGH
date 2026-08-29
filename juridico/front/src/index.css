@@ -36,40 +36,50 @@ body {
   font-family: 'Montserrat', sans-serif;
 }
 
-/* LAYOUT SPLIT PANTALLA COMPLETA ESTILO REFERENCIA */
+/* CONTENEDOR PRINCIPAL CENTRADO SISMÉTRICO EN PANTALLA */
 .login-page-wrapper {
   min-height: 100vh;
   width: 100vw;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 4rem 6rem;
+  justify-content: center;
   background: 
-    radial-gradient(circle at 15% 50%, rgba(30, 41, 59, 0.6) 0%, transparent 60%),
-    radial-gradient(circle at 85% 50%, rgba(194, 155, 71, 0.06) 0%, transparent 55%),
+    radial-gradient(circle at 50% 30%, rgba(30, 41, 59, 0.6) 0%, transparent 65%),
+    radial-gradient(circle at 80% 80%, rgba(194, 155, 71, 0.05) 0%, transparent 50%),
     linear-gradient(135deg, #07090e 0%, #0d121c 100%);
   position: relative;
+  padding: 2rem 1.5rem;
 }
 
-/* EFECTO DE CUADRÍCULA / GRID DE FONDO COMO LA IMAGEN DE REFERENCIA */
+/* EFECTO DE CUADRÍCULA / GRID DE FONDO */
 .login-page-wrapper::before {
   content: '';
   position: absolute;
   top: 0; left: 0; right: 0; bottom: 0;
   background-image: 
-    linear-gradient(rgba(38, 51, 71, 0.25) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(38, 51, 71, 0.25) 1px, transparent 1px);
-  background-size: 40px 40px;
+    linear-gradient(rgba(38, 51, 71, 0.22) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(38, 51, 71, 0.22) 1px, transparent 1px);
+  background-size: 38px 38px;
   pointer-events: none;
-  opacity: 0.7;
+  opacity: 0.65;
 }
 
-/* SECCIÓN IZQUIERDA: HERO / TEXTO INFORMATIVO CON EFECTO CRISTAL */
+/* CONTENEDOR CENTRADO DE DOS COLUMNAS HARMONIOSAS */
+.login-content-centered {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3.5rem;
+  max-width: 1100px;
+  width: 100%;
+  z-index: 2;
+  margin: 0 auto;
+}
+
+/* SECCIÓN IZQUIERDA: HERO / TEXTO INFORMATIVO CRISTAL */
 .login-hero-section {
   flex: 1;
-  max-width: 560px;
-  z-index: 2;
-  padding-right: 2rem;
+  max-width: 520px;
 }
 
 .hero-glass-card {
@@ -78,70 +88,70 @@ body {
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid rgba(194, 155, 71, 0.2);
   border-radius: 16px;
-  padding: 3rem;
+  padding: 2.75rem 2.5rem;
   box-shadow: 
-    0 30px 60px rgba(0, 0, 0, 0.6),
+    0 25px 50px rgba(0, 0, 0, 0.6),
     inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
 .hero-brand-tag {
-  font-size: 0.775rem;
+  font-size: 0.75rem;
   font-weight: 700;
   color: var(--accent-gold);
   text-transform: uppercase;
   letter-spacing: 0.15em;
-  margin-bottom: 1rem;
+  margin-bottom: 0.85rem;
   font-family: 'Montserrat', sans-serif;
 }
 
 .hero-title {
-  font-size: 2.85rem;
+  font-size: 2.65rem;
   font-weight: 700;
   color: #ffffff;
   line-height: 1.15;
-  margin-bottom: 1.25rem;
+  margin-bottom: 1rem;
 }
 
 .hero-description {
-  font-size: 1rem;
+  font-size: 0.95rem;
   color: var(--text-muted);
   line-height: 1.6;
-  margin-bottom: 2rem;
+  margin-bottom: 1.75rem;
 }
 
 .hero-tags-container {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 8px;
 }
 
 .hero-tag-pill {
   background: rgba(25, 33, 45, 0.7);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  padding: 6px 16px;
+  padding: 5px 14px;
   border-radius: 20px;
-  font-size: 0.775rem;
+  font-size: 0.75rem;
   color: #cbd5e1;
   font-family: 'Montserrat', sans-serif;
   backdrop-filter: blur(8px);
 }
 
-/* SECCIÓN DERECHA: TARJETA DE LOGIN CON EFECTO CRISTAL Y DEGRADADOS */
+/* SECCIÓN DERECHA: TARJETA DE LOGIN CRISTAL CENTRADA */
 .login-container-wrapper {
-  z-index: 2;
+  flex-shrink: 0;
 }
 
 .login-container {
-  width: 440px;
-  padding: 3rem 2.5rem;
+  width: 420px;
+  padding: 2.75rem 2.25rem;
   background: rgba(20, 26, 36, 0.65);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid rgba(194, 155, 71, 0.3);
   border-radius: 16px;
   box-shadow: 
-    0 35px 70px -15px rgba(0, 0, 0, 0.9),
-    0 0 35px var(--shadow-glow),
+    0 30px 60px -15px rgba(0, 0, 0, 0.9),
+    0 0 30px var(--shadow-glow),
     inset 0 1px 0 rgba(255, 255, 255, 0.12);
   position: relative;
   overflow: hidden;
@@ -161,21 +171,21 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 6px 14px;
+  padding: 5px 12px;
   background: rgba(194, 155, 71, 0.1);
   border: 1px solid rgba(194, 155, 71, 0.3);
   border-radius: 6px;
   color: var(--accent-gold);
-  font-size: 0.725rem;
+  font-size: 0.7rem;
   font-weight: 600;
   letter-spacing: 1px;
   text-transform: uppercase;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1.25rem;
   font-family: 'Montserrat', sans-serif;
 }
 
 .brand-title {
-  font-size: 1.85rem;
+  font-size: 1.75rem;
   font-weight: 700;
   letter-spacing: 0.03em;
   color: #ffffff;
@@ -183,9 +193,9 @@ body {
 }
 
 .brand-subtitle {
-  font-size: 0.825rem;
+  font-size: 0.8rem;
   color: var(--text-muted);
-  margin-bottom: 2.25rem;
+  margin-bottom: 2rem;
   letter-spacing: 0.02em;
 }
 
@@ -199,7 +209,7 @@ body {
   font-size: 0.75rem;
   font-weight: 600;
   color: #94a3b8;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.45rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   font-family: 'Montserrat', sans-serif;
@@ -220,12 +230,12 @@ body {
 
 .custom-input {
   width: 100%;
-  padding: 13px 14px 13px 42px;
+  padding: 12px 14px 12px 42px;
   background-color: rgba(25, 33, 45, 0.6);
   border: 1px solid var(--border-color);
   border-radius: 8px;
   color: #ffffff;
-  font-size: 0.9rem;
+  font-size: 0.875rem;
   font-family: 'Inter', sans-serif;
   transition: all 0.25s ease-in-out;
   backdrop-filter: blur(6px);
@@ -242,8 +252,8 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 1.75rem;
-  font-size: 0.8rem;
+  margin-bottom: 1.5rem;
+  font-size: 0.775rem;
 }
 
 .remember-me {
@@ -271,12 +281,12 @@ body {
 
 .btn-executive {
   width: 100%;
-  padding: 14px;
+  padding: 13px;
   background: linear-gradient(135deg, #d8b25a 0%, var(--accent-gold) 50%, #9e7b30 100%);
   border: none;
   border-radius: 8px;
   color: #0b0e14;
-  font-size: 0.875rem;
+  font-size: 0.85rem;
   font-weight: 700;
   letter-spacing: 0.05em;
   text-transform: uppercase;
@@ -287,7 +297,7 @@ body {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  box-shadow: 0 6px 20px rgba(194, 155, 71, 0.25);
+  box-shadow: 0 5px 18px rgba(194, 155, 71, 0.25);
 }
 
 .btn-executive:hover {
@@ -297,10 +307,10 @@ body {
 }
 
 .footer-notice {
-  margin-top: 2.25rem;
-  padding-top: 1.25rem;
+  margin-top: 2rem;
+  padding-top: 1.15rem;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
-  font-size: 0.725rem;
+  font-size: 0.7rem;
   color: #64748b;
   display: flex;
   align-items: center;
@@ -311,18 +321,15 @@ body {
 
 /* RESPONSIVO PARA PANTALLAS PEQUEÑAS */
 @media (max-width: 960px) {
-  .login-page-wrapper {
+  .login-content-centered {
     flex-direction: column;
-    justify-content: center;
-    padding: 2rem 1.5rem;
-    gap: 2.5rem;
+    gap: 2rem;
   }
   .login-hero-section {
-    padding-right: 0;
     max-width: 100%;
   }
   .login-container {
     width: 100%;
-    max-width: 440px;
+    max-width: 420px;
   }
 }
