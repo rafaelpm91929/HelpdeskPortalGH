@@ -24,9 +24,6 @@ body {
   min-height: 100vh;
   overflow-x: hidden;
   letter-spacing: -0.01em;
-  background-image: 
-    radial-gradient(circle at 50% 0%, rgba(30, 41, 59, 0.4) 0%, transparent 75%),
-    radial-gradient(circle at 100% 100%, rgba(194, 155, 71, 0.03) 0%, transparent 50%);
 }
 
 .formal-header-font {
@@ -39,17 +36,113 @@ body {
   font-family: 'Montserrat', sans-serif;
 }
 
-.login-container {
-  width: 100%;
-  max-width: 440px;
-  margin: 4rem auto;
-  padding: 2.75rem 2.5rem;
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
+/* LAYOUT SPLIT PANTALLA COMPLETA ESTILO REFERENCIA */
+.login-page-wrapper {
+  min-height: 100vh;
+  width: 100vw;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4rem 6rem;
+  background: 
+    radial-gradient(circle at 15% 50%, rgba(30, 41, 59, 0.6) 0%, transparent 60%),
+    radial-gradient(circle at 85% 50%, rgba(194, 155, 71, 0.06) 0%, transparent 55%),
+    linear-gradient(135deg, #07090e 0%, #0d121c 100%);
+  position: relative;
+}
+
+/* EFECTO DE CUADRÍCULA / GRID DE FONDO COMO LA IMAGEN DE REFERENCIA */
+.login-page-wrapper::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-image: 
+    linear-gradient(rgba(38, 51, 71, 0.25) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(38, 51, 71, 0.25) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+  opacity: 0.7;
+}
+
+/* SECCIÓN IZQUIERDA: HERO / TEXTO INFORMATIVO CON EFECTO CRISTAL */
+.login-hero-section {
+  flex: 1;
+  max-width: 560px;
+  z-index: 2;
+  padding-right: 2rem;
+}
+
+.hero-glass-card {
+  background: rgba(20, 26, 36, 0.45);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(194, 155, 71, 0.2);
+  border-radius: 16px;
+  padding: 3rem;
   box-shadow: 
-    0 20px 45px -10px rgba(0, 0, 0, 0.8),
-    0 0 25px var(--shadow-glow);
+    0 30px 60px rgba(0, 0, 0, 0.6),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.hero-brand-tag {
+  font-size: 0.775rem;
+  font-weight: 700;
+  color: var(--accent-gold);
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  margin-bottom: 1rem;
+  font-family: 'Montserrat', sans-serif;
+}
+
+.hero-title {
+  font-size: 2.85rem;
+  font-weight: 700;
+  color: #ffffff;
+  line-height: 1.15;
+  margin-bottom: 1.25rem;
+}
+
+.hero-description {
+  font-size: 1rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+  margin-bottom: 2rem;
+}
+
+.hero-tags-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.hero-tag-pill {
+  background: rgba(25, 33, 45, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-size: 0.775rem;
+  color: #cbd5e1;
+  font-family: 'Montserrat', sans-serif;
+  backdrop-filter: blur(8px);
+}
+
+/* SECCIÓN DERECHA: TARJETA DE LOGIN CON EFECTO CRISTAL Y DEGRADADOS */
+.login-container-wrapper {
+  z-index: 2;
+}
+
+.login-container {
+  width: 440px;
+  padding: 3rem 2.5rem;
+  background: rgba(20, 26, 36, 0.65);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(194, 155, 71, 0.3);
+  border-radius: 16px;
+  box-shadow: 
+    0 35px 70px -15px rgba(0, 0, 0, 0.9),
+    0 0 35px var(--shadow-glow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
   position: relative;
   overflow: hidden;
 }
@@ -60,7 +153,7 @@ body {
   top: 0;
   left: 0;
   right: 0;
-  height: 2px;
+  height: 3px;
   background: linear-gradient(90deg, transparent, var(--border-gold), transparent);
 }
 
@@ -68,10 +161,10 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 5px 14px;
-  background: rgba(194, 155, 71, 0.08);
-  border: 1px solid rgba(194, 155, 71, 0.25);
-  border-radius: 4px;
+  padding: 6px 14px;
+  background: rgba(194, 155, 71, 0.1);
+  border: 1px solid rgba(194, 155, 71, 0.3);
+  border-radius: 6px;
   color: var(--accent-gold);
   font-size: 0.725rem;
   font-weight: 600;
@@ -127,20 +220,22 @@ body {
 
 .custom-input {
   width: 100%;
-  padding: 12px 14px 12px 42px;
-  background-color: var(--bg-input);
+  padding: 13px 14px 13px 42px;
+  background-color: rgba(25, 33, 45, 0.6);
   border: 1px solid var(--border-color);
-  border-radius: 6px;
+  border-radius: 8px;
   color: #ffffff;
   font-size: 0.9rem;
   font-family: 'Inter', sans-serif;
-  transition: all 0.2s ease-in-out;
+  transition: all 0.25s ease-in-out;
+  backdrop-filter: blur(6px);
 }
 
 .custom-input:focus {
   outline: none;
   border-color: var(--border-gold);
-  box-shadow: 0 0 0 2px rgba(194, 155, 71, 0.15);
+  box-shadow: 0 0 0 3px rgba(194, 155, 71, 0.18);
+  background-color: rgba(25, 33, 45, 0.85);
 }
 
 .form-options {
@@ -176,10 +271,10 @@ body {
 
 .btn-executive {
   width: 100%;
-  padding: 13px;
-  background: linear-gradient(135deg, var(--accent-gold), #9e7b30);
+  padding: 14px;
+  background: linear-gradient(135deg, #d8b25a 0%, var(--accent-gold) 50%, #9e7b30 100%);
   border: none;
-  border-radius: 6px;
+  border-radius: 8px;
   color: #0b0e14;
   font-size: 0.875rem;
   font-weight: 700;
@@ -187,24 +282,24 @@ body {
   text-transform: uppercase;
   font-family: 'Montserrat', sans-serif;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.25s ease;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  box-shadow: 0 4px 15px rgba(194, 155, 71, 0.2);
+  box-shadow: 0 6px 20px rgba(194, 155, 71, 0.25);
 }
 
 .btn-executive:hover {
-  background: linear-gradient(135deg, #d8b25a, var(--accent-gold));
-  transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(194, 155, 71, 0.3);
+  background: linear-gradient(135deg, #e6c267 0%, #d8b25a 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(194, 155, 71, 0.38);
 }
 
 .footer-notice {
   margin-top: 2.25rem;
   padding-top: 1.25rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
   font-size: 0.725rem;
   color: #64748b;
   display: flex;
@@ -212,4 +307,22 @@ body {
   justify-content: center;
   gap: 6px;
   letter-spacing: 0.02em;
+}
+
+/* RESPONSIVO PARA PANTALLAS PEQUEÑAS */
+@media (max-width: 960px) {
+  .login-page-wrapper {
+    flex-direction: column;
+    justify-content: center;
+    padding: 2rem 1.5rem;
+    gap: 2.5rem;
+  }
+  .login-hero-section {
+    padding-right: 0;
+    max-width: 100%;
+  }
+  .login-container {
+    width: 100%;
+    max-width: 440px;
+  }
 }
