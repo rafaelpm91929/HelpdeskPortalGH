@@ -5,6 +5,8 @@ export interface TicketItem {
   id: string;
   folio: string;
   agencia: string;
+  autoridad?: string;
+  asuntoTipo?: string;
   tipo: 'RH' | 'DEMANDA' | 'SOLICITUD' | 'CONTRATO';
   titulo: string;
   solicitante: string;
@@ -13,10 +15,11 @@ export interface TicketItem {
   correosCopia?: string;
   descripcion: string;
   fechaCreacion: string;
+  fechaCompromiso?: string;
   diasAbierto: number;
   estado: 'En Revisión' | 'En Dictamen' | 'Requiere Información' | 'Concluido' | 'Urgente';
   abogadoAsignado: string;
-  prioridad: 'Normal' | 'Urgente';
+  prioridad: 'Media' | 'Alta' | 'Urgente' | 'Vencido';
   documentos: string[];
   historial: { fecha: string; autor: string; mensaje: string }[];
 }

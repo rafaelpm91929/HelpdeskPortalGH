@@ -2,115 +2,201 @@ import React, { useState } from 'react';
 import { AGENCIAS_OFICIALES } from './ExecutiveDashboard';
 import logoGrupoHuerta from '../assets/logo_grupo_huerta.jpg';
 
-interface UserTicket {
+export type AutoridadTipo = 'PROFECO' | 'IMSS' | 'SAT' | 'Ayuntamiento / Alcaldía' | 'Fiscalía' | 'Laboral' | 'Ninguna / Corporativo';
+
+export type AsuntoTipo = 
+  | 'Solicitud'
+  | 'Revisión'
+  | 'Visto Bueno'
+  | 'Elaboración'
+  | 'Visita'
+  | 'Inspección'
+  | 'Demanda / Denuncia'
+  | 'Informe'
+  | 'Conciliación'
+  | 'Elaboración de Contrato'
+  | 'Consulta';
+
+export type PrioridadTipo = 'Alta' | 'Media' | 'Urgente' | 'Vencido';
+
+export interface UserTicket {
   id: string;
   folio: string;
   agencia: string;
-  tipo: 'RH' | 'DEMANDA' | 'SOLICITUD' | 'CONTRATO';
+  autoridad: AutoridadTipo;
+  asuntoTipo: AsuntoTipo;
   titulo: string;
   correosCopia: string;
   descripcion: string;
-  fechaCreacion: string;
+  fechaSolicitud: string;
+  fechaCompromiso: string;
   diasAbierto: number;
   estado: 'En Revisión' | 'En Dictamen' | 'Requiere Información' | 'Concluido';
-  prioridad: 'Normal' | 'Urgente';
+  prioridad: PrioridadTipo;
   documentos: string[];
   historial: { fecha: string; autor: string; mensaje: string }[];
 }
 
+export const AUTORIDADES_LISTA: AutoridadTipo[] = [
+  'PROFECO',
+  'IMSS',
+  'SAT',
+  'Ayuntamiento / Alcaldía',
+  'Fiscalía',
+  'Laboral',
+  'Ninguna / Corporativo'
+];
+
+export const ASUNTOS_LISTA: AsuntoTipo[] = [
+  'Solicitud',
+  'Revisión',
+  'Visto Bueno',
+  'Elaboración',
+  'Visita',
+  'Inspección',
+  'Demanda / Denuncia',
+  'Informe',
+  'Conciliación',
+  'Elaboración de Contrato',
+  'Consulta'
+];
+
 export const UserPortal: React.FC<{ onLogout: () => void; onSwitchRole?: () => void }> = ({ onLogout, onSwitchRole }) => {
-  const [activeView, setActiveView] = useState<'lista' | 'nuevo' | 'detalle' | 'perfil'>('lista');
+  const [activeView, setActiveView] = useState<'principal' | 'nuevo' | 'detalle' | 'perfil'>('principal');
   const [selectedTicket, setSelectedTicket] = useState<UserTicket | null>(null);
 
-  // Form State
+  // User Profile State
   const [empresaUsuario] = useState('Divol Norte');
   const [usuarioNombre] = useState('Ing. Carlos Mendoza');
   const [usuarioCorreo] = useState('cmendoza@divol.com');
   const [usuarioCargo] = useState<'Gerente General' | 'Gerente Administrativo' | 'Recursos Humanos'>('Gerente Administrativo');
   
-  const [tipo, setTipo] = useState<UserTicket['tipo']>('CONTRATO');
+  // New Ticket Form State
+  const [autoridad, setAutoridad] = useState<AutoridadTipo>('PROFECO');
+  const [asuntoTipo, setAsuntoTipo] = useState<AsuntoTipo>('Revisión');
+  const [prioridad, setPrioridad] = useState<PrioridadTipo>('Alta');
+  const [fechaCompromiso, setFechaCompromiso] = useState('05/09/2026');
   const [correosCopia, setCorreosCopia] = useState('gerencia@divol.com, contabilidad@divol.com');
-  const [asunto, setAsunto] = useState('');
+  const [titulo, setTitulo] = useState('');
   const [descripcion, setDescripcion] = useState('');
-  const [prioridad, setPrioridad] = useState<'Normal' | 'Urgente'>('Normal');
   const [archivosSimulados, setArchivosSimulados] = useState<string[]>([]);
 
-  // List of user's tickets with full cronological history
+  // State for new comment input in ticket detail
+  const [nuevoComentario, setNuevoComentario] = useState('');
+
+  // User tickets list
   const [myTickets, setMyTickets] = useState<UserTicket[]>([
     {
       id: '1',
       folio: 'SOL-JUR-089',
       agencia: 'Divol Norte',
-      tipo: 'DEMANDA',
-      titulo: 'Notificación Mercantil de Juicio Ejecutivo',
+      autoridad: 'Laboral',
+      asuntoTipo: 'Demanda / Denuncia',
+      titulo: 'Notificación Mercantil y Emplazamiento Judicial',
       correosCopia: 'gerencia@divol.com, contabilidad@divol.com',
-      descripcion: 'Se recibió emplazamiento respecto al expediente mercantil 402/2026. Se requiere contestación de demanda antes del 02/09/2026.',
-      fechaCreacion: '20/08/2026',
+      descripcion: 'Se recibió emplazamiento respecto al expediente mercantil 402/2026. Se requiere contestación de demanda antes de la fecha compromiso.',
+      fechaSolicitud: '20/08/2026',
+      fechaCompromiso: '02/09/2026',
       diasAbierto: 9,
       estado: 'En Dictamen',
       prioridad: 'Urgente',
       documentos: ['Emplazamiento_Notificacion.pdf', 'Anexo_Documental.pdf'],
       historial: [
         { fecha: '20/08/2026 09:30', autor: 'Carlos Mendoza (Gerente Admin)', mensaje: 'Se registró la solicitud inicial adjuntando la cédula de notificación judicial.' },
-        { fecha: '20/08/2026 14:15', autor: 'Lic. Mariana Fernández (Dirección Jurídica)', mensaje: 'Solicitud recibida. Asunto clasificado como Prioridad Alta y asignado a expediente JUR-2026-089.' },
-        { fecha: '21/08/2026 11:00', autor: 'Lic. Mariana Fernández (Dirección Jurídica)', mensaje: 'Se formuló la contestación de la demanda. En proceso de certificación notarial de poderes.' }
+        { fecha: '20/08/2026 14:15', autor: 'Lic. Mariana Fernández (Dirección Jurídica)', mensaje: 'Solicitud recibida. Clasificada en prioridad Urgente y asignada a contestación.' },
+        { fecha: '21/08/2026 11:00', autor: 'Lic. Mariana Fernández (Dirección Jurídica)', mensaje: 'Se formuló la contestación de la demanda. En proceso de certificación notarial.' }
       ]
     },
     {
       id: '2',
       folio: 'SOL-JUR-076',
       agencia: 'Divol Norte',
-      tipo: 'RH',
-      titulo: 'Rescisión y Finiquito por Abandono de Empleo',
+      autoridad: 'PROFECO',
+      asuntoTipo: 'Inspección',
+      titulo: 'Visita de Inspección de Precios y Garantías',
       correosCopia: 'rh@divol.com, gerencia@divol.com',
-      descripcion: 'Solicitud de convenio de rescisión laboral sin responsabilidad patronal por inasistencias consecutivas.',
-      fechaCreacion: '25/08/2026',
+      descripcion: 'Solicitud de asesoría jurídica para contestación de acta de inspección ordinaria PROFECO.',
+      fechaSolicitud: '25/08/2026',
+      fechaCompromiso: '04/09/2026',
       diasAbierto: 4,
       estado: 'En Revisión',
-      prioridad: 'Normal',
-      documentos: ['Acta_Administrativa.pdf'],
+      prioridad: 'Media',
+      documentos: ['Acta_Inspeccion_Profeco.pdf'],
       historial: [
-        { fecha: '25/08/2026 10:00', autor: 'Carlos Mendoza (Gerente Admin)', mensaje: 'Ingreso de acta administrativa para cálculo de liquidación.' },
-        { fecha: '26/08/2026 16:45', autor: 'Lic. Roberto Garza (Dirección Jurídica)', mensaje: 'Convenio de finiquito elaborado y disponible para su firma.' }
+        { fecha: '25/08/2026 10:00', autor: 'Carlos Mendoza (Gerente Admin)', mensaje: 'Ingreso de acta de inspección para elaboración de informe de cumplimiento.' },
+        { fecha: '26/08/2026 16:45', autor: 'Lic. Roberto Garza (Dirección Jurídica)', mensaje: 'Escrito de desahogo de observaciones elaborado y listo para su entrega.' }
       ]
     }
   ]);
 
+  // Last submitted ticket (Ultimo Ticket)
+  const ultimoTicket = myTickets.length > 0 ? myTickets[0] : null;
+
   const handleCreateTicket = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!asunto.trim() || !descripcion.trim()) return;
+    if (!titulo.trim() || !descripcion.trim()) return;
 
     const newT: UserTicket = {
       id: Date.now().toString(),
       folio: `SOL-JUR-${Math.floor(100 + Math.random() * 900)}`,
       agencia: empresaUsuario,
-      tipo,
-      titulo: asunto,
+      autoridad,
+      asuntoTipo,
+      titulo,
       correosCopia,
       descripcion,
-      fechaCreacion: new Date().toLocaleDateString('es-MX'),
+      fechaSolicitud: new Date().toLocaleDateString('es-MX'),
+      fechaCompromiso: fechaCompromiso || '08/09/2026',
       diasAbierto: 0,
       estado: 'En Revisión',
       prioridad,
-      documentos: archivosSimulados.length > 0 ? archivosSimulados : ['Expediente_Borrador_Legal.pdf'],
+      documentos: archivosSimulados.length > 0 ? archivosSimulados : ['Expediente_Documental_Inicial.pdf'],
       historial: [
         { 
           fecha: `${new Date().toLocaleDateString('es-MX')} ${new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })}`,
           autor: `${usuarioNombre} (${usuarioCargo})`,
-          mensaje: 'Registro de solicitud enviado con copias a las direcciones especificadas.'
+          mensaje: `Registro de solicitud enviado a Jurídico para Autoridad [${autoridad}] y Asunto [${asuntoTipo}].`
         }
       ]
     };
 
     setMyTickets([newT, ...myTickets]);
-    setActiveView('lista');
-    setAsunto('');
+    setActiveView('principal');
+    setTitulo('');
     setDescripcion('');
     setArchivosSimulados([]);
   };
 
+  const handleAddComment = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!nuevoComentario.trim() || !selectedTicket) return;
+
+    const comentarioObj = {
+      fecha: `${new Date().toLocaleDateString('es-MX')} ${new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })}`,
+      autor: `${usuarioNombre} (${usuarioCargo})`,
+      mensaje: nuevoComentario
+    };
+
+    const updatedTickets = myTickets.map(t => {
+      if (t.id === selectedTicket.id) {
+        return {
+          ...t,
+          historial: [...t.historial, comentarioObj]
+        };
+      }
+      return t;
+    });
+
+    setMyTickets(updatedTickets);
+    setSelectedTicket({
+      ...selectedTicket,
+      historial: [...selectedTicket.historial, comentarioObj]
+    });
+    setNuevoComentario('');
+  };
+
   return (
-    <div style={{ width: '100%', maxWidth: '1150px', margin: '0 auto', padding: '2rem 1.5rem' }}>
+    <div style={{ width: '100%', maxWidth: '1180px', margin: '0 auto', padding: '2rem 1.5rem' }}>
       
       {/* NAVBAR USUARIO */}
       <header style={{
@@ -206,7 +292,7 @@ export const UserPortal: React.FC<{ onLogout: () => void; onSwitchRole?: () => v
       {activeView === 'perfil' ? (
         <div>
           <button
-            onClick={() => setActiveView('lista')}
+            onClick={() => setActiveView('principal')}
             style={{
               display: 'inline-flex',
               alignItems: 'center',
@@ -222,7 +308,7 @@ export const UserPortal: React.FC<{ onLogout: () => void; onSwitchRole?: () => v
               fontFamily: 'Montserrat, sans-serif'
             }}
           >
-            ← Volver a Mis Solicitudes
+            ← Volver a la Vista Principal
           </button>
 
           <div style={{ background: '#141a24', border: '1px solid #263347', borderRadius: '8px', padding: '2.25rem' }}>
@@ -260,10 +346,10 @@ export const UserPortal: React.FC<{ onLogout: () => void; onSwitchRole?: () => v
         </div>
       ) : activeView === 'detalle' && selectedTicket ? (
 
-        /* VISTA 2: HISTORIAL CRONOLOGICO COMPLETO DE LA SOLICITUD */
+        /* VISTA 2: HISTORIAL CRONOLOGICO COMPLETO + SECCIÓN DE COMENTARIOS EN EL TICKET */
         <div>
           <button
-            onClick={() => setActiveView('lista')}
+            onClick={() => setActiveView('principal')}
             style={{
               display: 'inline-flex',
               alignItems: 'center',
@@ -279,36 +365,51 @@ export const UserPortal: React.FC<{ onLogout: () => void; onSwitchRole?: () => v
               fontFamily: 'Montserrat, sans-serif'
             }}
           >
-            ← Volver a Mis Solicitudes
+            ← Volver a la Vista Principal
           </button>
 
           <div style={{ background: '#141a24', border: '1px solid #263347', borderRadius: '8px', padding: '2rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid #263347', paddingBottom: '1.25rem', marginBottom: '1.5rem' }}>
               <div>
-                <span style={{ fontSize: '0.75rem', color: '#c29b47', fontWeight: 600, fontFamily: 'Montserrat, sans-serif' }}>{selectedTicket.folio}</span>
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '4px' }}>
+                  <span style={{ fontSize: '0.8rem', color: '#c29b47', fontWeight: 700, fontFamily: 'Montserrat, sans-serif' }}>{selectedTicket.folio}</span>
+                  <span style={{ padding: '2px 8px', background: '#19212d', border: '1px solid #334155', borderRadius: '4px', fontSize: '0.7rem', color: '#ffffff', fontWeight: 600 }}>
+                    {selectedTicket.autoridad}
+                  </span>
+                  <span style={{ padding: '2px 8px', background: 'rgba(194, 155, 71, 0.12)', border: '1px solid rgba(194, 155, 71, 0.3)', borderRadius: '4px', fontSize: '0.7rem', color: '#c29b47', fontWeight: 600 }}>
+                    {selectedTicket.asuntoTipo}
+                  </span>
+                </div>
                 <h3 className="formal-header-font" style={{ fontSize: '1.5rem', color: '#ffffff', marginTop: '2px' }}>{selectedTicket.titulo}</h3>
               </div>
-              <span style={{ padding: '6px 12px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 600, background: 'rgba(59, 130, 246, 0.12)', color: '#60a5fa', border: '1px solid rgba(59, 130, 246, 0.35)', fontFamily: 'Montserrat, sans-serif' }}>
-                {selectedTicket.estado}
-              </span>
+
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <span style={{ padding: '6px 12px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 700, background: selectedTicket.prioridad === 'Urgente' || selectedTicket.prioridad === 'Vencido' ? 'rgba(239, 68, 68, 0.2)' : 'rgba(59, 130, 246, 0.2)', color: selectedTicket.prioridad === 'Urgente' || selectedTicket.prioridad === 'Vencido' ? '#f87171' : '#60a5fa', border: selectedTicket.prioridad === 'Urgente' || selectedTicket.prioridad === 'Vencido' ? '1px solid rgba(239, 68, 68, 0.4)' : '1px solid rgba(59, 130, 246, 0.4)', fontFamily: 'Montserrat, sans-serif' }}>
+                  PRIORIDAD: {selectedTicket.prioridad}
+                </span>
+
+                <span style={{ padding: '6px 12px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 600, background: 'rgba(59, 130, 246, 0.12)', color: '#60a5fa', border: '1px solid rgba(59, 130, 246, 0.35)', fontFamily: 'Montserrat, sans-serif' }}>
+                  {selectedTicket.estado}
+                </span>
+              </div>
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', background: '#0b0e14', padding: '1.25rem', borderRadius: '6px', border: '1px solid #263347', marginBottom: '1.5rem' }}>
               <div>
-                <span style={{ fontSize: '0.7rem', color: '#94a3b8', textTransform: 'uppercase', fontFamily: 'Montserrat, sans-serif' }}>Empresa</span>
+                <span style={{ fontSize: '0.7rem', color: '#94a3b8', textTransform: 'uppercase', fontFamily: 'Montserrat, sans-serif' }}>Empresa / Sucursal</span>
                 <div style={{ color: '#ffffff', fontWeight: 600 }}>{selectedTicket.agencia}</div>
               </div>
               <div>
-                <span style={{ fontSize: '0.7rem', color: '#94a3b8', textTransform: 'uppercase', fontFamily: 'Montserrat, sans-serif' }}>Tipo de Trámite</span>
-                <div style={{ color: '#c29b47', fontWeight: 600 }}>{selectedTicket.tipo}</div>
+                <span style={{ fontSize: '0.7rem', color: '#94a3b8', textTransform: 'uppercase', fontFamily: 'Montserrat, sans-serif' }}>Fecha de Solicitud</span>
+                <div style={{ color: '#cbd5e1' }}>{selectedTicket.fechaSolicitud}</div>
+              </div>
+              <div>
+                <span style={{ fontSize: '0.7rem', color: '#fbbf24', textTransform: 'uppercase', fontWeight: 700, fontFamily: 'Montserrat, sans-serif' }}>Fecha Compromiso</span>
+                <div style={{ color: '#fbbf24', fontWeight: 700 }}>{selectedTicket.fechaCompromiso}</div>
               </div>
               <div>
                 <span style={{ fontSize: '0.7rem', color: '#94a3b8', textTransform: 'uppercase', fontFamily: 'Montserrat, sans-serif' }}>Correos en Copia (CC)</span>
                 <div style={{ color: '#cbd5e1', fontSize: '0.8rem' }}>{selectedTicket.correosCopia || 'Sin copias en correo'}</div>
-              </div>
-              <div>
-                <span style={{ fontSize: '0.7rem', color: '#94a3b8', textTransform: 'uppercase', fontFamily: 'Montserrat, sans-serif' }}>Fecha de Envío</span>
-                <div style={{ color: '#cbd5e1' }}>{selectedTicket.fechaCreacion}</div>
               </div>
             </div>
 
@@ -332,7 +433,7 @@ export const UserPortal: React.FC<{ onLogout: () => void; onSwitchRole?: () => v
             </div>
 
             {/* HISTORIAL CRONOLOGICO COMPLETO */}
-            <div>
+            <div style={{ marginBottom: '2rem' }}>
               <h4 style={{ fontSize: '0.8rem', color: '#94a3b8', textTransform: 'uppercase', fontFamily: 'Montserrat, sans-serif', marginBottom: '0.75rem' }}>
                 Historial Cronológico de Dictámenes y Actuaciones
               </h4>
@@ -348,14 +449,52 @@ export const UserPortal: React.FC<{ onLogout: () => void; onSwitchRole?: () => v
                 ))}
               </div>
             </div>
+
+            {/* SECCIÓN INTERACTIVA PARA AGREGAR COMENTARIOS EN EL TICKET */}
+            <div style={{ background: '#0b0e14', border: '1px solid #263347', borderRadius: '6px', padding: '1.25rem' }}>
+              <h4 style={{ fontSize: '0.85rem', color: '#ffffff', fontFamily: 'Montserrat, sans-serif', marginBottom: '0.5rem' }}>
+                Agregar Comentario o Evidencia Adicional
+              </h4>
+              <form onSubmit={handleAddComment}>
+                <textarea
+                  rows={3}
+                  required
+                  className="custom-input"
+                  style={{ paddingLeft: '12px', resize: 'vertical', marginBottom: '1rem' }}
+                  placeholder="Escribe una actualización o respuesta para la Dirección Jurídica..."
+                  value={nuevoComentario}
+                  onChange={e => setNuevoComentario(e.target.value)}
+                />
+                <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                  <button
+                    type="submit"
+                    style={{
+                      background: '#c29b47',
+                      border: 'none',
+                      color: '#0b0e14',
+                      padding: '8px 20px',
+                      borderRadius: '4px',
+                      fontWeight: 700,
+                      fontFamily: 'Montserrat, sans-serif',
+                      fontSize: '0.75rem',
+                      textTransform: 'uppercase',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Enviar Comentario
+                  </button>
+                </div>
+              </form>
+            </div>
+
           </div>
         </div>
       ) : activeView === 'nuevo' ? (
 
-        /* VISTA 3: FORMULARIO COMPLETO PARA NUEVA SOLICITUD CON COPIA A CORREOS */
+        /* VISTA 3: FORMULARIO COMPLETO PARA NUEVA SOLICITUD (CAMPOS REQUERIDOS) */
         <div>
           <button
-            onClick={() => setActiveView('lista')}
+            onClick={() => setActiveView('principal')}
             style={{
               display: 'inline-flex',
               alignItems: 'center',
@@ -371,7 +510,7 @@ export const UserPortal: React.FC<{ onLogout: () => void; onSwitchRole?: () => v
               fontFamily: 'Montserrat, sans-serif'
             }}
           >
-            ← Volver a Mis Solicitudes
+            ← Volver a la Vista Principal
           </button>
 
           <div style={{ background: '#141a24', border: '1px solid #263347', borderRadius: '8px', padding: '2.25rem' }}>
@@ -380,7 +519,7 @@ export const UserPortal: React.FC<{ onLogout: () => void; onSwitchRole?: () => v
                 Registro Formal de Solicitud Legal
               </h3>
               <p style={{ fontSize: '0.8rem', color: '#94a3b8' }}>
-                Formulario de envío de trámites corporativos al Departamento Jurídico de Grupo Huerta
+                Completa los campos institucionales para el envío de trámites al Departamento Jurídico de Grupo Huerta
               </p>
             </div>
 
@@ -398,48 +537,96 @@ export const UserPortal: React.FC<{ onLogout: () => void; onSwitchRole?: () => v
                 </div>
               </div>
 
+              {/* AUTORIDAD Y ASUNTO */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem', marginBottom: '1.25rem' }}>
                 <div>
-                  <label className="input-label">Tipo de Trámite Legal</label>
+                  <label className="input-label">Autoridad Competente</label>
                   <select 
                     className="custom-input" 
-                    value={tipo} 
-                    onChange={e => setTipo(e.target.value as any)}
+                    value={autoridad} 
+                    onChange={e => setAutoridad(e.target.value as AutoridadTipo)}
                     style={{ paddingLeft: '12px' }}
                   >
-                    <option value="RH">Recursos Humanos (RH / Rescisiones / Finiquitos)</option>
-                    <option value="DEMANDA">Demandas & Litigios (Notificaciones Judiciales)</option>
-                    <option value="SOLICITUD">Solicitud Notarial / Poderes / Asesoría</option>
-                    <option value="CONTRATO">Revisión de Contratos / Convenios</option>
+                    {AUTORIDADES_LISTA.map(a => (
+                      <option key={a} value={a}>{a}</option>
+                    ))}
                   </select>
                 </div>
 
                 <div>
-                  <label className="input-label">Copiar a Correos Adicionales (CC)</label>
-                  <input 
-                    type="text" 
+                  <label className="input-label">Tipo de Asunto / Trámite</label>
+                  <select 
                     className="custom-input" 
+                    value={asuntoTipo} 
+                    onChange={e => setAsuntoTipo(e.target.value as AsuntoTipo)}
                     style={{ paddingLeft: '12px' }}
-                    placeholder="ejemplo: gerencia@divol.com, rh@divol.com, contabilidad@divol.com"
-                    value={correosCopia}
-                    onChange={e => setCorreosCopia(e.target.value)}
-                  />
-                  <span style={{ fontSize: '0.7rem', color: '#64748b', marginTop: '4px', display: 'block' }}>
-                    Separa múltiples direcciones de correo con coma (,)
-                  </span>
+                  >
+                    {ASUNTOS_LISTA.map(ast => (
+                      <option key={ast} value={ast}>{ast}</option>
+                    ))}
+                  </select>
                 </div>
               </div>
 
+              {/* PRIORIDAD Y FECHA COMPROMISO */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem', marginBottom: '1.25rem' }}>
+                <div>
+                  <label className="input-label">Prioridad Requerida</label>
+                  <select 
+                    className="custom-input" 
+                    value={prioridad} 
+                    onChange={e => setPrioridad(e.target.value as PrioridadTipo)}
+                    style={{ paddingLeft: '12px' }}
+                  >
+                    <option value="Media">Media (SLA normal de atención)</option>
+                    <option value="Alta">Alta (Atención prioritaria corporativa)</option>
+                    <option value="Urgente">Urgente (Notificación judicial / Inspección en curso)</option>
+                    <option value="Vencido">Vencido (Atención inmediata / Término venciendo)</option>
+                  </select>
+                  <span style={{ fontSize: '0.7rem', color: '#64748b', marginTop: '4px', display: 'block' }}>
+                    * El Abogado Administrador podrá reclasificar la prioridad según términos legales.
+                  </span>
+                </div>
+
+                <div>
+                  <label className="input-label">Fecha Compromiso (¿Para cuándo requiere estar listo?)</label>
+                  <input 
+                    type="date" 
+                    required 
+                    className="custom-input" 
+                    style={{ paddingLeft: '12px' }}
+                    value="2026-09-05"
+                    onChange={e => setFechaCompromiso(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              {/* COPIAR EN CORREOS CC */}
               <div className="input-group">
-                <label className="input-label">Asunto / Título del Trámite</label>
+                <label className="input-label">Copiar a Correos Adicionales (CC)</label>
+                <input 
+                  type="text" 
+                  className="custom-input" 
+                  style={{ paddingLeft: '12px' }}
+                  placeholder="ejemplo: gerencia@divol.com, rh@divol.com, contabilidad@divol.com"
+                  value={correosCopia}
+                  onChange={e => setCorreosCopia(e.target.value)}
+                />
+                <span style={{ fontSize: '0.7rem', color: '#64748b', marginTop: '4px', display: 'block' }}>
+                  Separa múltiples direcciones de correo con coma (,)
+                </span>
+              </div>
+
+              <div className="input-group">
+                <label className="input-label">Título / Resumen del Trámite</label>
                 <input 
                   type="text" 
                   required 
                   className="custom-input" 
                   style={{ paddingLeft: '12px' }}
-                  placeholder="Ej: Revisión de Contrato de Arrendamiento Comercial Sucursal Norte"
-                  value={asunto}
-                  onChange={e => setAsunto(e.target.value)}
+                  placeholder="Ej: Revisión de Acta de Inspección Ordinaria PROFECO Sucursal Norte"
+                  value={titulo}
+                  onChange={e => setTitulo(e.target.value)}
                 />
               </div>
 
@@ -447,37 +634,13 @@ export const UserPortal: React.FC<{ onLogout: () => void; onSwitchRole?: () => v
                 <label className="input-label">Descripción Detallada y Antecedentes del Caso</label>
                 <textarea 
                   required
-                  rows={5}
+                  rows={4}
                   className="custom-input" 
                   style={{ paddingLeft: '12px', resize: 'vertical', lineHeight: 1.5 }}
-                  placeholder="Desglose los antecedentes jurídicos, fechas relevantes y requerimientos específicos para el abogado asignado..."
+                  placeholder="Desglose los antecedentes jurídicos, notificaciones recibidas, números de acta y especificaciones para el abogado..."
                   value={descripcion}
                   onChange={e => setDescripcion(e.target.value)}
                 />
-              </div>
-
-              <div className="input-group">
-                <label className="input-label">Prioridad de Atención</label>
-                <div style={{ display: 'flex', gap: '2rem' }}>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#cbd5e1', cursor: 'pointer', fontSize: '0.825rem' }}>
-                    <input 
-                      type="radio" 
-                      name="prioridad" 
-                      checked={prioridad === 'Normal'} 
-                      onChange={() => setPrioridad('Normal')} 
-                    />
-                    <span>Normal (SLA de atención: 3 a 5 días hábiles)</span>
-                  </label>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#f87171', cursor: 'pointer', fontSize: '0.825rem' }}>
-                    <input 
-                      type="radio" 
-                      name="prioridad" 
-                      checked={prioridad === 'Urgente'} 
-                      onChange={() => setPrioridad('Urgente')} 
-                    />
-                    <span>Urgente (Notificaciones judiciales / Plazo legal venciendo)</span>
-                  </label>
-                </div>
               </div>
 
               {/* UPLOAD DE DOCUMENTOS */}
@@ -490,7 +653,7 @@ export const UserPortal: React.FC<{ onLogout: () => void; onSwitchRole?: () => v
                 marginBottom: '1.75rem',
                 cursor: 'pointer'
               }}
-              onClick={() => setArchivosSimulados(['Expediente_Documental_Respaldado.pdf'])}
+              onClick={() => setArchivosSimulados(['Acta_Inspeccion_Notificacion.pdf'])}
               >
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2" style={{ margin: '0 auto 8px auto', display: 'block' }}>
                   <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
@@ -498,10 +661,10 @@ export const UserPortal: React.FC<{ onLogout: () => void; onSwitchRole?: () => v
                   <line x1="12" y1="3" x2="12" y2="15"/>
                 </svg>
                 <span style={{ fontSize: '0.8rem', color: '#cbd5e1', display: 'block', fontWeight: 600 }}>
-                  Adjuntar Expedientes y Borradores (PDF, Word, ZIP)
+                  Adjuntar Expedientes y Notificaciones (PDF, Word, ZIP)
                 </span>
                 <span style={{ fontSize: '0.725rem', color: '#64748b', display: 'block', marginTop: '4px' }}>
-                  Haz clic para simular la carga de un archivo adjunto
+                  Haz clic para simular la carga del archivo adjunto
                 </span>
                 {archivosSimulados.length > 0 && (
                   <div style={{ marginTop: '8px', color: '#4ade80', fontSize: '0.75rem', fontWeight: 600 }}>
@@ -513,7 +676,7 @@ export const UserPortal: React.FC<{ onLogout: () => void; onSwitchRole?: () => v
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
                 <button 
                   type="button" 
-                  onClick={() => setActiveView('lista')}
+                  onClick={() => setActiveView('principal')}
                   style={{ background: 'transparent', border: '1px solid #334155', color: '#cbd5e1', padding: '10px 18px', borderRadius: '4px', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', fontSize: '0.775rem' }}
                 >
                   Cancelar
@@ -530,14 +693,15 @@ export const UserPortal: React.FC<{ onLogout: () => void; onSwitchRole?: () => v
         </div>
       ) : (
 
-        /* VISTA PRINCIPAL: LISTADO DE MIS TRÁMITES */
+        /* VISTA PRINCIPAL DEL USUARIO (ESTATUS DEL ÚLTIMO TICKET + BOTÓN CREAR TICKET + LISTA TICKETS) */
         <div>
-          {/* BANNER DE ACCIÓN */}
+          
+          {/* BANNER DE ACCIÓN: CREAR TICKET */}
           <div style={{
             background: '#141a24',
             border: '1px solid #263347',
             borderRadius: '8px',
-            padding: '1.75rem 2rem',
+            padding: '1.5rem 2rem',
             marginBottom: '2rem',
             display: 'flex',
             alignItems: 'center',
@@ -546,11 +710,11 @@ export const UserPortal: React.FC<{ onLogout: () => void; onSwitchRole?: () => v
             gap: '1rem'
           }}>
             <div>
-              <h3 className="formal-header-font" style={{ fontSize: '1.35rem', color: '#ffffff', marginBottom: '0.3rem' }}>
+              <h3 className="formal-header-font" style={{ fontSize: '1.35rem', color: '#ffffff', marginBottom: '0.2rem' }}>
                 Atención a Solicitudes Legales
               </h3>
-              <p style={{ fontSize: '0.825rem', color: '#94a3b8', maxWidth: '640px' }}>
-                Registra un nuevo trámite o consulta el dictamen emitido por la Dirección Jurídica
+              <p style={{ fontSize: '0.8rem', color: '#94a3b8' }}>
+                Registra un nuevo trámite legal completando la autoridad, tipo de asunto y fecha compromiso
               </p>
             </div>
 
@@ -578,14 +742,80 @@ export const UserPortal: React.FC<{ onLogout: () => void; onSwitchRole?: () => v
                 <line x1="12" y1="5" x2="12" y2="19"/>
                 <line x1="5" y1="12" x2="19" y2="12"/>
               </svg>
-              <span>Nueva Solicitud Legal</span>
+              <span>+ Crear Ticket</span>
             </button>
           </div>
 
-          {/* REGISTRO DE TRÁMITES */}
+          {/* APARTADO 1: ESTATUS DE SU ÚLTIMO TICKET */}
+          {ultimoTicket && (
+            <div style={{ background: '#141a24', border: '1px solid rgba(194, 155, 71, 0.35)', borderRadius: '8px', padding: '1.75rem', marginBottom: '2rem', position: 'relative' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #263347', paddingBottom: '1rem', marginBottom: '1.25rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <div style={{ background: 'rgba(194, 155, 71, 0.15)', padding: '6px 10px', borderRadius: '4px', border: '1px solid rgba(194, 155, 71, 0.3)', color: '#c29b47', fontSize: '0.725rem', fontWeight: 700, fontFamily: 'Montserrat, sans-serif' }}>
+                    📌 ESTATUS DE TU ÚLTIMO TICKET ENVIADO
+                  </div>
+                  <span style={{ fontSize: '0.8rem', color: '#cbd5e1', fontWeight: 600 }}>{ultimoTicket.folio}</span>
+                </div>
+
+                <span style={{ padding: '4px 12px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 700, background: 'rgba(59, 130, 246, 0.15)', color: '#60a5fa', border: '1px solid rgba(59, 130, 246, 0.35)', fontFamily: 'Montserrat, sans-serif' }}>
+                  {ultimoTicket.estado}
+                </span>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.25rem', marginBottom: '1.25rem' }}>
+                <div>
+                  <span style={{ fontSize: '0.7rem', color: '#94a3b8', textTransform: 'uppercase', fontFamily: 'Montserrat, sans-serif' }}>Título del Asunto</span>
+                  <h4 style={{ fontSize: '1.05rem', color: '#ffffff', fontWeight: 600, marginTop: '2px' }}>{ultimoTicket.titulo}</h4>
+                </div>
+
+                <div>
+                  <span style={{ fontSize: '0.7rem', color: '#94a3b8', textTransform: 'uppercase', fontFamily: 'Montserrat, sans-serif' }}>Autoridad & Asunto</span>
+                  <div style={{ fontSize: '0.85rem', color: '#c29b47', fontWeight: 600, marginTop: '2px' }}>{ultimoTicket.autoridad} • {ultimoTicket.asuntoTipo}</div>
+                </div>
+
+                <div>
+                  <span style={{ fontSize: '0.7rem', color: '#fbbf24', textTransform: 'uppercase', fontWeight: 700, fontFamily: 'Montserrat, sans-serif' }}>Fecha Compromiso</span>
+                  <div style={{ fontSize: '0.9rem', color: '#fbbf24', fontWeight: 700, marginTop: '2px' }}>{ultimoTicket.fechaCompromiso}</div>
+                </div>
+              </div>
+
+              {/* ULTIMA RESPUESTA DEL ABOGADO */}
+              {ultimoTicket.historial.length > 0 && (
+                <div style={{ background: '#0b0e14', border: '1px solid #263347', padding: '1rem', borderRadius: '6px', marginBottom: '1.25rem' }}>
+                  <div style={{ fontSize: '0.725rem', color: '#94a3b8', textTransform: 'uppercase', fontFamily: 'Montserrat, sans-serif', marginBottom: '4px' }}>
+                    Última Actuación del Departamento Jurídico ({ultimoTicket.historial[ultimoTicket.historial.length - 1].fecha}):
+                  </div>
+                  <p style={{ fontSize: '0.85rem', color: '#cbd5e1', margin: 0 }}>
+                    <strong>{ultimoTicket.historial[ultimoTicket.historial.length - 1].autor}:</strong> {ultimoTicket.historial[ultimoTicket.historial.length - 1].mensaje}
+                  </p>
+                </div>
+              )}
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                <button
+                  onClick={() => { setSelectedTicket(ultimoTicket); setActiveView('detalle'); }}
+                  style={{
+                    background: 'rgba(194, 155, 71, 0.08)',
+                    border: '1px solid rgba(194, 155, 71, 0.3)',
+                    color: '#c29b47',
+                    padding: '8px 16px',
+                    borderRadius: '4px',
+                    fontSize: '0.775rem',
+                    fontFamily: 'Montserrat, sans-serif',
+                    cursor: 'pointer',
+                    fontWeight: 600
+                  }}
+                >
+                  Ver Expediente Completo y Comentarios ➔
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* APARTADO 2: LISTADO DE TICKETS / EXPEDIENTES */}
           <div style={{ background: '#141a24', border: '1px solid #263347', borderRadius: '8px', padding: '1.75rem' }}>
             <h4 className="formal-header-font" style={{ fontSize: '1.25rem', color: '#ffffff', marginBottom: '1.25rem' }}>
-              Mis Trámites Legales Registrados
+              TICKETS / EXPEDIENTES REGISTRADOS
             </h4>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -607,8 +837,9 @@ export const UserPortal: React.FC<{ onLogout: () => void; onSwitchRole?: () => v
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '0.4rem' }}>
                       <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#c29b47', fontFamily: 'Montserrat, sans-serif' }}>{item.folio}</span>
-                      <span style={{ fontSize: '0.725rem', padding: '2px 6px', background: '#19212d', border: '1px solid #334155', borderRadius: '4px', color: '#ffffff' }}>{item.tipo}</span>
-                      <span style={{ fontSize: '0.725rem', color: '#64748b' }}>• Registrado el {item.fechaCreacion}</span>
+                      <span style={{ fontSize: '0.725rem', padding: '2px 6px', background: '#19212d', border: '1px solid #334155', borderRadius: '4px', color: '#ffffff' }}>{item.autoridad}</span>
+                      <span style={{ fontSize: '0.725rem', padding: '2px 6px', background: 'rgba(194, 155, 71, 0.1)', border: '1px solid rgba(194, 155, 71, 0.25)', borderRadius: '4px', color: '#c29b47' }}>{item.asuntoTipo}</span>
+                      <span style={{ fontSize: '0.725rem', color: '#64748b' }}>• Solicitado el {item.fechaSolicitud}</span>
                     </div>
 
                     <h5 style={{ fontSize: '0.975rem', color: '#ffffff', fontWeight: 600, marginBottom: '0.3rem' }}>
@@ -616,7 +847,7 @@ export const UserPortal: React.FC<{ onLogout: () => void; onSwitchRole?: () => v
                     </h5>
 
                     <p style={{ fontSize: '0.8rem', color: '#94a3b8' }}>
-                      Sucursal: <span style={{ color: '#cbd5e1' }}>{item.agencia}</span>
+                      Fecha Compromiso: <span style={{ color: '#fbbf24', fontWeight: 700 }}>{item.fechaCompromiso}</span> • Sucursal: <span style={{ color: '#cbd5e1' }}>{item.agencia}</span>
                     </p>
                   </div>
 
