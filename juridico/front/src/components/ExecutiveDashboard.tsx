@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import logoGrupoHuerta from '../assets/logo_grupo_huerta.jpg';
 
 export interface TicketItem {
   id: string;
@@ -42,7 +41,7 @@ export const AGENCIAS_OFICIALES = [
 ];
 
 export const ExecutiveDashboard: React.FC<{ onLogout: () => void }> = ({ onLogout }) => {
-  const [currentSection, setCurrentSection] = useState<'expedientes' | 'agencias' | 'graficas' | 'usuarios'>('expedientes');
+  const [currentSection, setCurrentSection] = useState<'principal' | 'expedientes' | 'agencias' | 'graficas' | 'usuarios'>('principal');
   const [selectedTicket, setSelectedTicket] = useState<TicketItem | null>(null);
   const [filtroTipo, setFiltroTipo] = useState<string>('TODOS');
   const [filtroAgencia, setFiltroAgencia] = useState<string>('TODOS');
@@ -57,6 +56,10 @@ export const ExecutiveDashboard: React.FC<{ onLogout: () => void }> = ({ onLogou
   const [nuevaAgencia, setNuevaAgencia] = useState(AGENCIAS_OFICIALES[0]);
   const [nuevoCargo, setNuevoCargo] = useState<UsuarioItem['cargo']>('Gerente Administrativo');
 
+  // Modal para Asignar Abogado a Ticket Sin Atender
+  const [assigningTicketFolio, setAssigningTicketFolio] = useState<string | null>(null);
+  const [selectedAbogado, setSelectedAbogado] = useState('Lic. Mariana Fernández');
+
   // Datos de prueba: Usuarios sin el apellido Huerta
   const [usuarios, setUsuarios] = useState<UsuarioItem[]>([
     { id: '1', nombre: 'Lic. Ricardo Morales', correo: 'rmorales@grupohuerta.com', agencia: 'Corporativo Grupo Huerta', cargo: 'Gerente General', estatus: 'Activo' },
@@ -67,7 +70,7 @@ export const ExecutiveDashboard: React.FC<{ onLogout: () => void }> = ({ onLogou
   ]);
 
   // Datos de prueba: Tickets/Expedientes
-  const [tickets] = useState<TicketItem[]>([
+  const [tickets, setTickets] = useState<TicketItem[]>([
     {
       id: '1',
       folio: 'JUR-2026-089',
@@ -155,6 +158,40 @@ export const ExecutiveDashboard: React.FC<{ onLogout: () => void }> = ({ onLogou
     }
   ]);
 
+  // Datos de prueba: Tickets Abiertos Sin Atender
+  const [unattendedTickets, setUnattendedTickets] = useState([
+    {
+      folio: 'SOL-JUR-095',
+      agencia: 'Omoda Esmeralda',
+      tipo: 'CONTRATO',
+      titulo: 'Revisión Urgente de Contrato de Fianza y Licencia de Software',
+      solicitante: 'Ing. Fernando Torres (Gerente Admin)',
+      correo: 'ftorres@omodaesmeralda.com',
+      horasSinAtender: 4,
+      fecha: 'Hoy 08:30 AM'
+    },
+    {
+      folio: 'SOL-JUR-094',
+      agencia: 'Divol Truks',
+      tipo: 'SOLICITUD',
+      titulo: 'Dictamen de Modificación de Poderes Notariales',
+      solicitante: 'Lic. Arturo Gómez (Gerente General)',
+      correo: 'agomez@divoltruks.com',
+      horasSinAtender: 2,
+      fecha: 'Hoy 10:15 AM'
+    },
+    {
+      folio: 'SOL-JUR-093',
+      agencia: 'Divol Norte',
+      tipo: 'RH',
+      titulo: 'Convenio de Finiquito por Muestras de Insubordinación',
+      solicitante: 'Lic. Sofía Ramírez (RH)',
+      correo: 'sramirez@divol.com',
+      horasSinAtender: 18,
+      fecha: 'Ayer 17:40 PM'
+    }
+  ]);
+
   const handleAddUser = (e: React.FormEvent) => {
     e.preventDefault();
     if (!nuevoNombre.trim() || !nuevoCorreo.trim()) return;
@@ -172,6 +209,12 @@ export const ExecutiveDashboard: React.FC<{ onLogout: () => void }> = ({ onLogou
     setShowAddUserModal(false);
     setNuevoNombre('');
     setNuevoCorreo('');
+  };
+
+  const handleAssignLawyer = () => {
+    if (!assigningTicketFolio) return;
+    setUnattendedTickets(unattendedTickets.filter(t => t.folio !== assigningTicketFolio));
+    setAssigningTicketFolio(null);
   };
 
   const filteredTickets = tickets.filter(t => {
@@ -207,6 +250,29 @@ export const ExecutiveDashboard: React.FC<{ onLogout: () => void }> = ({ onLogou
 
           {/* OPCIONES DE MENU */}
           <nav style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <button
+              onClick={() => { setCurrentSection('principal'); setSelectedTicket(null); }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                width: '100%',
+                padding: '10px 14px',
+                borderRadius: '6px',
+                border: 'none',
+                background: currentSection === 'principal' && !selectedTicket ? '#19212d' : 'transparent',
+                color: currentSection === 'principal' && !selectedTicket ? '#c29b47' : '#94a3b8',
+                fontWeight: currentSection === 'principal' && !selectedTicket ? 600 : 400,
+                fontSize: '0.825rem',
+                fontFamily: 'Montserrat, sans-serif',
+                cursor: 'pointer',
+                textAlign: 'left'
+              }}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+              <span>Vista Principal</span>
+            </button>
+
             <button
               onClick={() => { setCurrentSection('expedientes'); setSelectedTicket(null); }}
               style={{
@@ -317,8 +383,230 @@ export const ExecutiveDashboard: React.FC<{ onLogout: () => void }> = ({ onLogou
       {/* CONTENIDO PRINCIPAL */}
       <main style={{ flex: 1, padding: '2rem 2.5rem', overflowY: 'auto' }}>
         
-        {/* VISTA 1: DETALLE DE EXPEDIENTE (PESTAÑA DEDICADA) */}
-        {selectedTicket ? (
+        {/* VISTA 1: VISTA PRINCIPAL CON LAS 3 SECCIONES SOLICITADAS */}
+        {currentSection === 'principal' && !selectedTicket ? (
+          <div>
+            <div style={{ marginBottom: '2rem' }}>
+              <h2 className="formal-header-font" style={{ fontSize: '1.6rem', color: '#ffffff' }}>
+                Resumen Ejecutivo — Panel Principal
+              </h2>
+              <p style={{ fontSize: '0.8rem', color: '#94a3b8' }}>
+                Monitoreo prioritario de urgencias por vencer, calendario de audiencias y tickets abiertos sin atender
+              </p>
+            </div>
+
+            {/* SECCIÓN 1: URGENTES POR VENCER */}
+            <section style={{ marginBottom: '2.5rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '1rem' }}>
+                <div style={{ background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.35)', padding: '6px', borderRadius: '6px', color: '#f87171' }}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                </div>
+                <div>
+                  <h3 className="formal-header-font" style={{ fontSize: '1.25rem', color: '#ffffff', margin: 0 }}>
+                    Urgentes por Vencer
+                  </h3>
+                  <span style={{ fontSize: '0.75rem', color: '#f87171', fontWeight: 600, fontFamily: 'Montserrat, sans-serif' }}>
+                    TÉRMINOS LEGALES CON VENCIMIENTO PRÓXIMO EN MENOS DE 48 HORAS
+                  </span>
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.25rem' }}>
+                {/* URGENTE 1 */}
+                <div style={{ background: '#141a24', border: '1px solid rgba(239, 68, 68, 0.4)', borderRadius: '8px', padding: '1.5rem', position: 'relative' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                    <span style={{ fontSize: '0.75rem', color: '#c29b47', fontWeight: 700, fontFamily: 'Montserrat, sans-serif' }}>JUR-2026-089</span>
+                    <span style={{ padding: '3px 8px', borderRadius: '4px', fontSize: '0.7rem', fontWeight: 700, background: 'rgba(239, 68, 68, 0.2)', color: '#f87171', border: '1px solid rgba(239, 68, 68, 0.4)', fontFamily: 'Montserrat, sans-serif' }}>
+                      VENCE MAÑANA 01/09
+                    </span>
+                  </div>
+                  <h4 style={{ fontSize: '1rem', color: '#ffffff', fontWeight: 600, marginBottom: '0.5rem' }}>
+                    Contestación de Demanda Mercantil Juicio 402/2026
+                  </h4>
+                  <div style={{ fontSize: '0.8rem', color: '#cbd5e1', marginBottom: '1rem' }}>
+                    Empresa: <strong>Divol Norte</strong> • Abogado: <strong>Lic. Mariana Fernández</strong>
+                  </div>
+                  <button 
+                    onClick={() => { setSelectedTicket(tickets[0]); setCurrentSection('expedientes'); }}
+                    style={{ width: '100%', background: 'rgba(239, 68, 68, 0.12)', border: '1px solid rgba(239, 68, 68, 0.35)', color: '#f87171', padding: '8px', borderRadius: '4px', fontSize: '0.775rem', fontWeight: 700, fontFamily: 'Montserrat, sans-serif', textTransform: 'uppercase', cursor: 'pointer' }}
+                  >
+                    Atender Vencimiento Urgente
+                  </button>
+                </div>
+
+                {/* URGENTE 2 */}
+                <div style={{ background: '#141a24', border: '1px solid rgba(245, 158, 11, 0.4)', borderRadius: '8px', padding: '1.5rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                    <span style={{ fontSize: '0.75rem', color: '#c29b47', fontWeight: 700, fontFamily: 'Montserrat, sans-serif' }}>JUR-2026-092</span>
+                    <span style={{ padding: '3px 8px', borderRadius: '4px', fontSize: '0.7rem', fontWeight: 700, background: 'rgba(245, 158, 11, 0.2)', color: '#fbbf24', border: '1px solid rgba(245, 158, 11, 0.4)', fontFamily: 'Montserrat, sans-serif' }}>
+                      FALTAN 42 HORAS
+                    </span>
+                  </div>
+                  <h4 style={{ fontSize: '1rem', color: '#ffffff', fontWeight: 600, marginBottom: '0.5rem' }}>
+                    Término para Impugnación de Multa Administrativa
+                  </h4>
+                  <div style={{ fontSize: '0.8rem', color: '#cbd5e1', marginBottom: '1rem' }}>
+                    Empresa: <strong>Suzuki Montevideo</strong> • Abogado: <strong>Lic. Roberto Garza</strong>
+                  </div>
+                  <button 
+                    onClick={() => alert('Abriendo expediente JUR-2026-092...')}
+                    style={{ width: '100%', background: 'rgba(245, 158, 11, 0.12)', border: '1px solid rgba(245, 158, 11, 0.35)', color: '#fbbf24', padding: '8px', borderRadius: '4px', fontSize: '0.775rem', fontWeight: 700, fontFamily: 'Montserrat, sans-serif', textTransform: 'uppercase', cursor: 'pointer' }}
+                  >
+                    Revisar Impugnación
+                  </button>
+                </div>
+
+                {/* URGENTE 3 */}
+                <div style={{ background: '#141a24', border: '1px solid rgba(245, 158, 11, 0.4)', borderRadius: '8px', padding: '1.5rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                    <span style={{ fontSize: '0.75rem', color: '#c29b47', fontWeight: 700, fontFamily: 'Montserrat, sans-serif' }}>JUR-2026-084</span>
+                    <span style={{ padding: '3px 8px', borderRadius: '4px', fontSize: '0.7rem', fontWeight: 700, background: 'rgba(245, 158, 11, 0.2)', color: '#fbbf24', border: '1px solid rgba(245, 158, 11, 0.4)', fontFamily: 'Montserrat, sans-serif' }}>
+                      FALTAN 3 DÍAS
+                    </span>
+                  </div>
+                  <h4 style={{ fontSize: '1rem', color: '#ffffff', fontWeight: 600, marginBottom: '0.5rem' }}>
+                    Firma de Convenio de Rescisión Laboral
+                  </h4>
+                  <div style={{ fontSize: '0.8rem', color: '#cbd5e1', marginBottom: '1rem' }}>
+                    Empresa: <strong>Divol Lindavista</strong> • Abogado: <strong>Lic. Roberto Garza</strong>
+                  </div>
+                  <button 
+                    onClick={() => { setSelectedTicket(tickets[1]); setCurrentSection('expedientes'); }}
+                    style={{ width: '100%', background: '#19212d', border: '1px solid #334155', color: '#cbd5e1', padding: '8px', borderRadius: '4px', fontSize: '0.775rem', fontWeight: 700, fontFamily: 'Montserrat, sans-serif', textTransform: 'uppercase', cursor: 'pointer' }}
+                  >
+                    Ver Convenio
+                  </button>
+                </div>
+              </div>
+            </section>
+
+            {/* SECCIÓN 2: CALENDARIO DE AUDIENCIAS */}
+            <section style={{ marginBottom: '2.5rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '1rem' }}>
+                <div style={{ background: 'rgba(59, 130, 246, 0.15)', border: '1px solid rgba(59, 130, 246, 0.35)', padding: '6px', borderRadius: '6px', color: '#60a5fa' }}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                </div>
+                <div>
+                  <h3 className="formal-header-font" style={{ fontSize: '1.25rem', color: '#ffffff', margin: 0 }}>
+                    Calendario de Audiencias y Citas Notariales
+                  </h3>
+                  <span style={{ fontSize: '0.75rem', color: '#94a3b8', fontFamily: 'Montserrat, sans-serif' }}>
+                    PROGRAMACIÓN DE COMPARECENCIAS JUDICIALES Y CUMPLIMIENTO NORMANDO
+                  </span>
+                </div>
+              </div>
+
+              <div style={{ background: '#141a24', border: '1px solid #263347', borderRadius: '8px', padding: '1.5rem' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  {[
+                    { fecha: '02/09/2026', hora: '10:00 AM', titulo: 'Audiencia Conciliatoria de Juicio Laboral', tribunal: 'Tribunal Laboral N° 4 - Cuautitlán', agencia: 'Divol Perinorte', abogado: 'Lic. Roberto Garza', asunto: 'Exp. Laboral 145/2026' },
+                    { fecha: '05/09/2026', hora: '12:30 PM', titulo: 'Audiencia de Desahogo de Pruebas Mercantil', tribunal: 'Juzgado 3° de lo Civil CDMX', agencia: 'Suzuki Montevideo', abogado: 'Lic. Mariana Fernández', asunto: 'Exp. Mercantil 589/2025' },
+                    { fecha: '09/09/2026', hora: '09:00 AM', titulo: 'Cita de Ratificación y Certificación de Poderes', tribunal: 'Notaría Pública N° 142 CDMX', agencia: 'Corporativo Grupo Huerta', abogado: 'Lic. Carlos Mendoza', asunto: 'Poderes Generales' },
+                    { fecha: '12/09/2026', hora: '11:30 AM', titulo: 'Comparecencia de Inspección Ordinaria STPS', tribunal: 'Delegación Federal del Trabajo', agencia: 'Divol Tlalnepantla', abogado: 'Lic. Roberto Garza', asunto: 'Auditoría Normativa STPS' }
+                  ].map((aud, idx) => (
+                    <div key={idx} style={{ background: '#0b0e14', border: '1px solid #263347', borderRadius: '6px', padding: '1.25rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+                        <div style={{ background: '#19212d', border: '1px solid #334155', padding: '8px 14px', borderRadius: '6px', textAlign: 'center', minWidth: '100px' }}>
+                          <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#c29b47', fontFamily: 'Montserrat, sans-serif' }}>{aud.fecha}</div>
+                          <div style={{ fontSize: '0.725rem', color: '#cbd5e1' }}>{aud.hora}</div>
+                        </div>
+
+                        <div>
+                          <div style={{ fontSize: '0.725rem', color: '#64748b', textTransform: 'uppercase', fontFamily: 'Montserrat, sans-serif' }}>
+                            {aud.agencia} • {aud.asunto}
+                          </div>
+                          <h4 style={{ fontSize: '1rem', color: '#ffffff', fontWeight: 600, margin: '2px 0' }}>
+                            {aud.titulo}
+                          </h4>
+                          <div style={{ fontSize: '0.8rem', color: '#94a3b8' }}>
+                            Instancia: <span style={{ color: '#cbd5e1' }}>{aud.tribunal}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div style={{ textAlign: 'right' }}>
+                        <span style={{ fontSize: '0.75rem', color: '#c29b47', fontWeight: 600, display: 'block', marginBottom: '4px', fontFamily: 'Montserrat, sans-serif' }}>
+                          {aud.abogado}
+                        </span>
+                        <span style={{ padding: '3px 8px', borderRadius: '4px', fontSize: '0.7rem', background: 'rgba(59, 130, 246, 0.12)', color: '#60a5fa', border: '1px solid rgba(59, 130, 246, 0.3)' }}>
+                          Audiencia Programada
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </section>
+
+            {/* SECCIÓN 3: TICKETS ABIERTOS, SIN ATENDER */}
+            <section style={{ marginBottom: '1.5rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '1rem' }}>
+                <div style={{ background: 'rgba(245, 158, 11, 0.15)', border: '1px solid rgba(245, 158, 11, 0.35)', padding: '6px', borderRadius: '6px', color: '#fbbf24' }}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                </div>
+                <div>
+                  <h3 className="formal-header-font" style={{ fontSize: '1.25rem', color: '#ffffff', margin: 0 }}>
+                    Tickets Abiertos, Sin Atender
+                  </h3>
+                  <span style={{ fontSize: '0.75rem', color: '#fbbf24', fontWeight: 600, fontFamily: 'Montserrat, sans-serif' }}>
+                    SOLICITUDES NUEVAS PENDIENTES DE ASIGNACIÓN Y PRIMERA REVISIÓN
+                  </span>
+                </div>
+              </div>
+
+              <div style={{ background: '#141a24', border: '1px solid #263347', borderRadius: '8px', padding: '1.5rem' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  {unattendedTickets.map((item, idx) => (
+                    <div key={idx} style={{ background: '#0b0e14', border: '1px solid #263347', borderRadius: '6px', padding: '1.25rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '0.4rem' }}>
+                          <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#c29b47', fontFamily: 'Montserrat, sans-serif' }}>{item.folio}</span>
+                          <span style={{ fontSize: '0.725rem', padding: '2px 6px', background: '#19212d', border: '1px solid #334155', borderRadius: '4px', color: '#ffffff' }}>{item.tipo}</span>
+                          <span style={{ fontSize: '0.725rem', color: '#fbbf24', fontWeight: 600 }}>⏱ {item.horasSinAtender} horas sin atender</span>
+                        </div>
+
+                        <h4 style={{ fontSize: '1rem', color: '#ffffff', fontWeight: 600, marginBottom: '0.3rem' }}>
+                          {item.titulo}
+                        </h4>
+
+                        <div style={{ fontSize: '0.8rem', color: '#94a3b8' }}>
+                          Solicita: <strong style={{ color: '#cbd5e1' }}>{item.solicitante}</strong> • Empresa: <strong style={{ color: '#ffffff' }}>{item.agencia}</strong>
+                        </div>
+                      </div>
+
+                      <div>
+                        <button
+                          onClick={() => setAssigningTicketFolio(item.folio)}
+                          style={{
+                            background: '#c29b47',
+                            border: 'none',
+                            color: '#0b0e14',
+                            padding: '9px 18px',
+                            borderRadius: '6px',
+                            fontSize: '0.775rem',
+                            fontWeight: 700,
+                            fontFamily: 'Montserrat, sans-serif',
+                            textTransform: 'uppercase',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          Asignar Abogado
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                  {unattendedTickets.length === 0 && (
+                    <div style={{ textTransform: 'uppercase', fontSize: '0.85rem', color: '#4ade80', textAlign: 'center', padding: '1rem' }}>
+                      ✓ Todos los tickets abiertos han sido asignados correctamente.
+                    </div>
+                  )}
+                </div>
+              </div>
+            </section>
+          </div>
+
+        /* VISTA 2: DETALLE DE EXPEDIENTE EN PESTAÑA DEDICADA */
+        ) : selectedTicket ? (
           <div>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
               <button
@@ -434,7 +722,7 @@ export const ExecutiveDashboard: React.FC<{ onLogout: () => void }> = ({ onLogou
           </div>
         ) : currentSection === 'expedientes' ? (
           <div>
-            {/* SECCION PRINCIPAL DE EXPEDIENTES */}
+            {/* SECCIÓN EXPEDIENTES Y TICKETS */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
               <div>
                 <h2 className="formal-header-font" style={{ fontSize: '1.5rem', color: '#ffffff' }}>
@@ -837,6 +1125,39 @@ export const ExecutiveDashboard: React.FC<{ onLogout: () => void }> = ({ onLogou
                 <button type="submit" style={{ background: '#c29b47', border: 'none', color: '#0b0e14', padding: '8px 20px', borderRadius: '4px', fontWeight: 700, cursor: 'pointer' }}>Guardar Usuario</button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL ASIGNAR ABOGADO A TICKET SIN ATENDER */}
+      {assigningTicketFolio && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.82)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 999 }}>
+          <div style={{ background: '#141a24', border: '1px solid #263347', borderRadius: '8px', width: '100%', maxWidth: '450px', padding: '2rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem', borderBottom: '1px solid #263347', paddingBottom: '0.75rem' }}>
+              <h3 className="formal-header-font" style={{ fontSize: '1.25rem', color: '#ffffff' }}>Asignar Abogado a Ticket</h3>
+              <button onClick={() => setAssigningTicketFolio(null)} style={{ background: 'transparent', border: 'none', color: '#94a3b8', fontSize: '1.2rem', cursor: 'pointer' }}>✕</button>
+            </div>
+
+            <div style={{ marginBottom: '1.25rem' }}>
+              <span style={{ fontSize: '0.75rem', color: '#c29b47', fontWeight: 700, fontFamily: 'Montserrat, sans-serif' }}>FOLIO: {assigningTicketFolio}</span>
+              <p style={{ fontSize: '0.85rem', color: '#cbd5e1', marginTop: '4px' }}>
+                Selecciona el abogado de la Dirección Jurídica que tomará la responsabilidad de este expediente:
+              </p>
+            </div>
+
+            <div className="input-group">
+              <label className="input-label">Abogado Responsable</label>
+              <select className="custom-input" style={{ paddingLeft: '12px' }} value={selectedAbogado} onChange={e => setSelectedAbogado(e.target.value)}>
+                <option value="Lic. Mariana Fernández">Lic. Mariana Fernández (Especialista Mercantil)</option>
+                <option value="Lic. Roberto Garza">Lic. Roberto Garza (Especialista Laboral / RH)</option>
+                <option value="Lic. Carlos Mendoza">Lic. Carlos Mendoza (Especialista Corporativo)</option>
+              </select>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1.5rem' }}>
+              <button type="button" onClick={() => setAssigningTicketFolio(null)} style={{ background: 'transparent', border: '1px solid #334155', color: '#cbd5e1', padding: '8px 16px', borderRadius: '4px', cursor: 'pointer' }}>Cancelar</button>
+              <button type="button" onClick={handleAssignLawyer} style={{ background: '#c29b47', border: 'none', color: '#0b0e14', padding: '8px 20px', borderRadius: '4px', fontWeight: 700, cursor: 'pointer' }}>Confirmar Asignación</button>
+            </div>
           </div>
         </div>
       )}
