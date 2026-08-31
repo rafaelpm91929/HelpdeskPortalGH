@@ -39,7 +39,7 @@ export interface EventoCalendario {
   agencia: string;
   tipoEvento: 'Audiencia' | 'Incidencia' | 'Cita Notarial' | 'Reunión';
   titulo: string;
-  fecha: string; // Formato DD/MM/YYYY ej: "02/09/2026"
+  fecha: string;
   diaNumero: number;
   hora: string;
   lugar: string;
@@ -58,14 +58,26 @@ export const AGENCIAS_OFICIALES = [
   'Divol Tlalnepantla'
 ];
 
+export const ABOGADOS_LISTA = [
+  'TODOS (Alta Dirección)',
+  'Lic. Mariana Fernández',
+  'Lic. Roberto Garza',
+  'Lic. Carlos Mendoza'
+];
+
 export const ExecutiveDashboard: React.FC<{ onLogout: () => void }> = ({ onLogout }) => {
-  const [currentSection, setCurrentSection] = useState<'principal' | 'calendario' | 'expedientes' | 'agencias' | 'graficas' | 'usuarios'>('principal');
+  const [currentSection, setCurrentSection] = useState<'principal' | 'mis_expedientes' | 'calendario' | 'expedientes' | 'agencias' | 'graficas' | 'usuarios'>('principal');
   const [selectedTicket, setSelectedTicket] = useState<TicketItem | null>(null);
+  
+  // Abogado Activo en el Selector (Vista de Abogado)
+  const [abogadoFiltro, setAbogadoFiltro] = useState<string>('Lic. Mariana Fernández');
+
   const [filtroTipo, setFiltroTipo] = useState<string>('TODOS');
   const [filtroAgencia, setFiltroAgencia] = useState<string>('TODOS');
+  const [filtroEstatusAbogado, setFiltroEstatusAbogado] = useState<'TODOS' | 'ACTUALES' | 'CONCLUIDOS'>('ACTUALES');
 
   // Filtros de la vista Calendario
-  const [modoCalendario, setModoCalendario] = useState<'grid' | 'lista'>('grid'); // 'grid' = vista calendario mensual en grande, 'lista' = vista desglosada
+  const [modoCalendario, setModoCalendario] = useState<'grid' | 'lista'>('grid');
   const [filtroTipoEvento, setFiltroTipoEvento] = useState<string>('TODOS');
   const [selectedEventoModal, setSelectedEventoModal] = useState<EventoCalendario | null>(null);
 
@@ -81,7 +93,11 @@ export const ExecutiveDashboard: React.FC<{ onLogout: () => void }> = ({ onLogou
 
   // Modal para Asignar Abogado a Ticket Sin Atender
   const [assigningTicketFolio, setAssigningTicketFolio] = useState<string | null>(null);
-  const [selectedAbogado, setSelectedAbogado] = useState('Lic. Mariana Fernández');
+  const [selectedAbogadoAssign, setSelectedAbogadoAssign] = useState('Lic. Mariana Fernández');
+
+  // Estado para responder / dictaminar ticket en el expediente
+  const [nuevoDictamen, setNuevoDictamen] = useState('');
+  const [nuevoEstadoTicket, setNuevoEstadoTicket] = useState<TicketItem['estado']>('En Dictamen');
 
   // Datos de prueba: Usuarios sin el apellido Huerta
   const [usuarios, setUsuarios] = useState<UsuarioItem[]>([
@@ -98,14 +114,17 @@ export const ExecutiveDashboard: React.FC<{ onLogout: () => void }> = ({ onLogou
       id: '1',
       folio: 'JUR-2026-089',
       agencia: 'Divol Norte',
+      autoridad: 'Laboral',
+      asuntoTipo: 'Demanda / Denuncia',
       tipo: 'DEMANDA',
       titulo: 'Notificación Mercantil de Juicio Ejecutivo',
       solicitante: 'Carlos Mendoza',
       cargoSolicitante: 'Gerente Administrativo',
       correoSolicitante: 'cmendoza@divol.com',
       correosCopia: 'direccion@divol.com, contabilidad@divol.com',
-      descripcion: 'Se recibió emplazamiento respecto al expediente mercantil 402/2026. Se requiere contestación de demanda antes del 02/09/2026.',
+      descripcion: 'Se recibió emplazamiento respecto al expediente mercantil 402/2026. Se requiere contestación de demanda antes de la fecha compromiso.',
       fechaCreacion: '20/08/2026',
+      fechaCompromiso: '02/09/2026',
       diasAbierto: 9,
       estado: 'Urgente',
       abogadoAsignado: 'Lic. Mariana Fernández',
@@ -121,6 +140,8 @@ export const ExecutiveDashboard: React.FC<{ onLogout: () => void }> = ({ onLogou
       id: '2',
       folio: 'JUR-2026-084',
       agencia: 'Divol Lindavista',
+      autoridad: 'Laboral',
+      asuntoTipo: 'Elaboración',
       tipo: 'RH',
       titulo: 'Rescisión Laboral de Asesor de Ventas por Faltas Injustificadas',
       solicitante: 'Sofía Ramírez',
@@ -129,10 +150,11 @@ export const ExecutiveDashboard: React.FC<{ onLogout: () => void }> = ({ onLogou
       correosCopia: 'gerencia@divollindavista.com',
       descripcion: 'Solicitud de elaboración de convenio de finiquito y acta administrativa de rescisión de contrato sin responsabilidad para la empresa.',
       fechaCreacion: '24/08/2026',
+      fechaCompromiso: '03/09/2026',
       diasAbierto: 5,
       estado: 'En Dictamen',
       abogadoAsignado: 'Lic. Roberto Garza',
-      prioridad: 'Normal',
+      prioridad: 'Media',
       documentos: ['Acta_Administrativa_Faltas.pdf', 'Kardex_Asistencia.pdf'],
       historial: [
         { fecha: '24/08/2026 10:00', autor: 'Sofía Ramírez (RH)', mensaje: 'Envío de expediente laboral para cálculo de finiquito y finiquito legal.' }
@@ -142,6 +164,8 @@ export const ExecutiveDashboard: React.FC<{ onLogout: () => void }> = ({ onLogou
       id: '3',
       folio: 'JUR-2026-081',
       agencia: 'Suzuki Montevideo',
+      autoridad: 'Ninguna / Corporativo',
+      asuntoTipo: 'Revisión',
       tipo: 'CONTRATO',
       titulo: 'Revisión y Convenio Modificatorio de Arrendamiento de Instalaciones',
       solicitante: 'Roberto Garza',
@@ -149,10 +173,11 @@ export const ExecutiveDashboard: React.FC<{ onLogout: () => void }> = ({ onLogou
       correoSolicitante: 'rgarza@suzukimontevideo.com',
       descripcion: 'Revisión de cláusula de plazo forzoso e incremento de renta anual para la sucursal de refacciones.',
       fechaCreacion: '27/08/2026',
+      fechaCompromiso: '05/09/2026',
       diasAbierto: 2,
       estado: 'En Revisión',
       abogadoAsignado: 'Lic. Mariana Fernández',
-      prioridad: 'Normal',
+      prioridad: 'Alta',
       documentos: ['Borrador_Convenio_Arrendamiento.docx'],
       historial: [
         { fecha: '27/08/2026 16:20', autor: 'Roberto Garza (Gerente General)', mensaje: 'Envío de borrador de contrato para análisis de cláusulas.' }
@@ -162,6 +187,8 @@ export const ExecutiveDashboard: React.FC<{ onLogout: () => void }> = ({ onLogou
       id: '4',
       folio: 'JUR-2026-075',
       agencia: 'Cupra La Villa',
+      autoridad: 'Ninguna / Corporativo',
+      asuntoTipo: 'Visto Bueno',
       tipo: 'SOLICITUD',
       titulo: 'Dictamen de Poderes Notariales para Representante Legal',
       solicitante: 'Fernando Alonso',
@@ -169,14 +196,39 @@ export const ExecutiveDashboard: React.FC<{ onLogout: () => void }> = ({ onLogou
       correoSolicitante: 'falonso@cupralavilla.com',
       descripcion: 'Validación de facultades para actos de administración y pleitos y cobranzas ante autoridades tributarias.',
       fechaCreacion: '22/08/2026',
+      fechaCompromiso: '28/08/2026',
       diasAbierto: 7,
       estado: 'Concluido',
       abogadoAsignado: 'Lic. Carlos Mendoza',
-      prioridad: 'Normal',
+      prioridad: 'Media',
       documentos: ['Escritura_Poder_Notarial_584.pdf'],
       historial: [
         { fecha: '22/08/2026 11:00', autor: 'Fernando Alonso (Gerente Admin)', mensaje: 'Registro de solicitud de validación de testimonio notarial.' },
         { fecha: '25/08/2026 17:00', autor: 'Lic. Carlos Mendoza (Abogado)', mensaje: 'Poder emitido y certificado. Dictamen concluido con éxito.' }
+      ]
+    },
+    {
+      id: '5',
+      folio: 'JUR-2026-068',
+      agencia: 'Divol Norte',
+      autoridad: 'PROFECO',
+      asuntoTipo: 'Conciliación',
+      tipo: 'SOLICITUD',
+      titulo: 'Audiencia de Conciliación PROFECO Exp. 892/2026',
+      solicitante: 'Carlos Mendoza',
+      cargoSolicitante: 'Gerente Administrativo',
+      correoSolicitante: 'cmendoza@divol.com',
+      descripcion: 'Atención de queja de cliente sobre garantía de mantenimiento de vehículo.',
+      fechaCreacion: '10/08/2026',
+      fechaCompromiso: '18/08/2026',
+      diasAbierto: 15,
+      estado: 'Concluido',
+      abogadoAsignado: 'Lic. Mariana Fernández',
+      prioridad: 'Media',
+      documentos: ['Convenio_Profeco_Concluido.pdf'],
+      historial: [
+        { fecha: '10/08/2026 10:00', autor: 'Carlos Mendoza (Gerente Admin)', mensaje: 'Apertura de caso de queja PROFECO.' },
+        { fecha: '18/08/2026 13:00', autor: 'Lic. Mariana Fernández (Abogado)', mensaje: 'Convenio conciliatorio firmado en PROFECO sin multa para la empresa.' }
       ]
     }
   ]);
@@ -335,20 +387,66 @@ export const ExecutiveDashboard: React.FC<{ onLogout: () => void }> = ({ onLogou
     setAssigningTicketFolio(null);
   };
 
-  const filteredTickets = tickets.filter(t => {
+  const handleAddLawyerDictamen = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!nuevoDictamen.trim() || !selectedTicket) return;
+
+    const entradaHistorial = {
+      fecha: `${new Date().toLocaleDateString('es-MX')} ${new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })}`,
+      autor: `${abogadoFiltro.includes('TODOS') ? 'Lic. Mariana Fernández' : abogadoFiltro} (Abogado Dictaminador)`,
+      mensaje: nuevoDictamen
+    };
+
+    const updatedTickets = tickets.map(t => {
+      if (t.id === selectedTicket.id) {
+        return {
+          ...t,
+          estado: nuevoEstadoTicket,
+          historial: [...t.historial, entradaHistorial]
+        };
+      }
+      return t;
+    });
+
+    setTickets(updatedTickets);
+    setSelectedTicket({
+      ...selectedTicket,
+      estado: nuevoEstadoTicket,
+      historial: [...selectedTicket.historial, entradaHistorial]
+    });
+    setNuevoDictamen('');
+  };
+
+  // Filtrado de expedientes por abogado y estatus (actuales vs concluidos)
+  const ticketsDelAbogado = tickets.filter(t => {
+    const esDelAbogado = abogadoFiltro.includes('TODOS') || t.abogadoAsignado === abogadoFiltro;
+    if (!esDelAbogado) return false;
+
+    if (filtroEstatusAbogado === 'ACTUALES') {
+      return t.estado !== 'Concluido';
+    }
+    if (filtroEstatusAbogado === 'CONCLUIDOS') {
+      return t.estado === 'Concluido';
+    }
+    return true;
+  });
+
+  const filteredTicketsGeneral = tickets.filter(t => {
     const matchTipo = filtroTipo === 'TODOS' || t.tipo === filtroTipo;
     const matchAgencia = filtroAgencia === 'TODOS' || t.agencia === filtroAgencia;
     return matchTipo && matchAgencia;
   });
 
-  const filteredEventos = eventosCalendario.filter(e => {
-    return filtroTipoEvento === 'TODOS' || e.tipoEvento === filtroTipoEvento;
+  // Eventos del calendario filtrados por abogado
+  const eventosDelAbogado = eventosCalendario.filter(e => {
+    const esDelAbogado = abogadoFiltro.includes('TODOS') || e.abogado === abogadoFiltro;
+    const matchTipo = filtroTipoEvento === 'TODOS' || e.tipoEvento === filtroTipoEvento;
+    return esDelAbogado && matchTipo;
   });
 
-  // Estructura de Días para el Calendario Mensual de Septiembre 2026 (empieza en Martes = índice 2)
-  // Septiembre tiene 30 días
+  // Estructura de Días para el Calendario Mensual de Septiembre 2026
   const diasMesSeptiembre: (number | null)[] = [
-    null, null, // Dom, Lun vacíos (empieza en Martes 1)
+    null, null,
     1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30
   ];
 
@@ -402,7 +500,31 @@ export const ExecutiveDashboard: React.FC<{ onLogout: () => void }> = ({ onLogou
               <span>Vista Principal</span>
             </button>
 
-            {/* BOTON CALENDARIO LITERAL EN LA BARRA LATERAL */}
+            {/* SECCIÓN NUEVA: MIS EXPEDIENTES ASIGNADOS (PERFIL DE ABOGADO) */}
+            <button
+              onClick={() => { setCurrentSection('mis_expedientes'); setSelectedTicket(null); }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                width: '100%',
+                padding: '10px 14px',
+                borderRadius: '6px',
+                border: 'none',
+                background: currentSection === 'mis_expedientes' && !selectedTicket ? '#19212d' : 'transparent',
+                color: currentSection === 'mis_expedientes' && !selectedTicket ? '#c29b47' : '#94a3b8',
+                fontWeight: currentSection === 'mis_expedientes' && !selectedTicket ? 600 : 400,
+                fontSize: '0.825rem',
+                fontFamily: 'Montserrat, sans-serif',
+                cursor: 'pointer',
+                textAlign: 'left'
+              }}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><polyline points="17 11 19 13 23 9"/></svg>
+              <span>Mis Tickets Asignados</span>
+            </button>
+
+            {/* BOTON CALENDARIO EN LA BARRA LATERAL */}
             <button
               onClick={() => { setCurrentSection('calendario'); setSelectedTicket(null); }}
               style={{
@@ -446,7 +568,7 @@ export const ExecutiveDashboard: React.FC<{ onLogout: () => void }> = ({ onLogou
               }}
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-              <span>Expedientes y Tickets</span>
+              <span>Todos los Expedientes</span>
             </button>
 
             <button
@@ -520,13 +642,35 @@ export const ExecutiveDashboard: React.FC<{ onLogout: () => void }> = ({ onLogou
           </nav>
         </div>
 
-        {/* PIE DE SIDEBAR */}
+        {/* PIE DE SIDEBAR CON CONMUTADOR DE ABOGADO */}
         <div style={{ borderTop: '1px solid #263347', paddingTop: '1rem' }}>
-          <div style={{ fontSize: '0.75rem', color: '#ffffff', fontWeight: 600, fontFamily: 'Montserrat, sans-serif' }}>Lic. Ricardo Morales</div>
-          <div style={{ fontSize: '0.7rem', color: '#c29b47' }}>Gerente General / Alta Dirección</div>
+          <div style={{ fontSize: '0.7rem', color: '#94a3b8', textTransform: 'uppercase', fontFamily: 'Montserrat, sans-serif', marginBottom: '4px' }}>
+            Vista de Abogado Activo:
+          </div>
+          <select 
+            value={abogadoFiltro}
+            onChange={e => setAbogadoFiltro(e.target.value)}
+            style={{
+              width: '100%',
+              background: '#0b0e14',
+              border: '1px solid #c29b47',
+              color: '#c29b47',
+              padding: '6px',
+              borderRadius: '4px',
+              fontSize: '0.75rem',
+              fontWeight: 700,
+              fontFamily: 'Montserrat, sans-serif',
+              marginBottom: '0.75rem'
+            }}
+          >
+            {ABOGADOS_LISTA.map(abg => (
+              <option key={abg} value={abg}>{abg}</option>
+            ))}
+          </select>
+
           <button 
             onClick={onLogout}
-            style={{ marginTop: '0.75rem', background: 'transparent', border: '1px solid #334155', color: '#f87171', padding: '6px 12px', borderRadius: '4px', fontSize: '0.725rem', width: '100%', cursor: 'pointer' }}
+            style={{ background: 'transparent', border: '1px solid #334155', color: '#f87171', padding: '6px 12px', borderRadius: '4px', fontSize: '0.725rem', width: '100%', cursor: 'pointer' }}
           >
             Cerrar Sesión
           </button>
@@ -536,7 +680,69 @@ export const ExecutiveDashboard: React.FC<{ onLogout: () => void }> = ({ onLogou
       {/* CONTENIDO PRINCIPAL */}
       <main style={{ flex: 1, padding: '2rem 2.5rem', overflowY: 'auto' }}>
         
-        {/* VISTA 1: VISTA PRINCIPAL CON LAS 3 SECCIONES SOLICITADAS */}
+        {/* BARRA SUPERIOR INDICADORA DE PERFIL DE ABOGADO */}
+        <div style={{
+          background: '#141a24',
+          border: '1px solid #263347',
+          borderRadius: '8px',
+          padding: '1rem 1.5rem',
+          marginBottom: '1.5rem',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{ background: 'rgba(194, 155, 71, 0.15)', padding: '8px 12px', borderRadius: '6px', border: '1px solid rgba(194, 155, 71, 0.3)', color: '#c29b47', fontSize: '0.8rem', fontWeight: 700, fontFamily: 'Montserrat, sans-serif' }}>
+              👤 ABOGADO ASIGNADO
+            </div>
+            <div>
+              <span style={{ fontSize: '0.95rem', color: '#ffffff', fontWeight: 700 }}>
+                {abogadoFiltro}
+              </span>
+              <span style={{ fontSize: '0.75rem', color: '#94a3b8', marginLeft: '10px' }}>
+                ({ticketsDelAbogado.filter(t => t.estado !== 'Concluido').length} expedientes activos asignados)
+              </span>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <button
+              onClick={() => { setCurrentSection('mis_expedientes'); setSelectedTicket(null); }}
+              style={{
+                background: currentSection === 'mis_expedientes' ? '#c29b47' : '#19212d',
+                color: currentSection === 'mis_expedientes' ? '#0b0e14' : '#cbd5e1',
+                border: '1px solid #334155',
+                padding: '6px 14px',
+                borderRadius: '4px',
+                fontSize: '0.75rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+                fontFamily: 'Montserrat, sans-serif'
+              }}
+            >
+              Mis Expedientes ({ticketsDelAbogado.length})
+            </button>
+
+            <button
+              onClick={() => { setCurrentSection('calendario'); setSelectedTicket(null); }}
+              style={{
+                background: currentSection === 'calendario' ? '#c29b47' : '#19212d',
+                color: currentSection === 'calendario' ? '#0b0e14' : '#cbd5e1',
+                border: '1px solid #334155',
+                padding: '6px 14px',
+                borderRadius: '4px',
+                fontSize: '0.75rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+                fontFamily: 'Montserrat, sans-serif'
+              }}
+            >
+              Mi Calendario ({eventosDelAbogado.length})
+            </button>
+          </div>
+        </div>
+
+        {/* VISTA 1: RESUMEN GENERAL (VISTA PRINCIPAL) */}
         {currentSection === 'principal' && !selectedTicket ? (
           <div>
             <div style={{ marginBottom: '2rem' }}>
@@ -758,16 +964,126 @@ export const ExecutiveDashboard: React.FC<{ onLogout: () => void }> = ({ onLogou
             </section>
           </div>
 
-        /* VISTA 2: VISTA DEDICADA DE CALENDARIO LEGAL (OPCIÓN GRID MENSUAL LITERAL vs LISTA) */
+        /* VISTA 2: MIS EXPEDIENTES / TICKETS ASIGNADOS (NUEVA VISTA DEDICADA PARA EL ABOGADO) */
+        ) : currentSection === 'mis_expedientes' && !selectedTicket ? (
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
+              <div>
+                <h2 className="formal-header-font" style={{ fontSize: '1.6rem', color: '#ffffff' }}>
+                  Mis Expedientes y Tickets Asignados
+                </h2>
+                <p style={{ fontSize: '0.8rem', color: '#94a3b8' }}>
+                  Historial de asuntos legales actuales y concluidos bajo la responsabilidad de <strong>{abogadoFiltro}</strong>
+                </p>
+              </div>
+
+              {/* FILTROS DE HISTORIAL (ACTUALES VS CONCLUIDOS VS TODOS) */}
+              <div style={{ display: 'flex', gap: '8px', background: '#141a24', border: '1px solid #263347', padding: '4px', borderRadius: '6px' }}>
+                {(['ACTUALES', 'CONCLUIDOS', 'TODOS'] as const).map(est => (
+                  <button
+                    key={est}
+                    onClick={() => setFiltroEstatusAbogado(est)}
+                    style={{
+                      background: filtroEstatusAbogado === est ? '#19212d' : 'transparent',
+                      border: filtroEstatusAbogado === est ? '1px solid #334155' : 'none',
+                      color: filtroEstatusAbogado === est ? '#c29b47' : '#94a3b8',
+                      padding: '6px 14px',
+                      borderRadius: '4px',
+                      fontSize: '0.75rem',
+                      fontFamily: 'Montserrat, sans-serif',
+                      fontWeight: 600,
+                      cursor: 'pointer'
+                    }}
+                  >
+                    {est === 'ACTUALES' ? 'En Proceso / Activos' : est === 'CONCLUIDOS' ? 'Historial Concluidos' : 'Ver Todos'}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* TABLA DE EXPEDIENTES ASIGNADOS */}
+            <div style={{ background: '#141a24', border: '1px solid #263347', borderRadius: '8px', padding: '1.5rem' }}>
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.85rem' }}>
+                  <thead>
+                    <tr style={{ borderBottom: '1px solid #263347', color: '#94a3b8', fontSize: '0.725rem', textTransform: 'uppercase', fontFamily: 'Montserrat, sans-serif' }}>
+                      <th style={{ padding: '12px' }}>Folio</th>
+                      <th style={{ padding: '12px' }}>Autoridad</th>
+                      <th style={{ padding: '12px' }}>Asunto Legal</th>
+                      <th style={{ padding: '12px' }}>Agencia / Empresa</th>
+                      <th style={{ padding: '12px' }}>Fecha Compromiso</th>
+                      <th style={{ padding: '12px' }}>Prioridad</th>
+                      <th style={{ padding: '12px' }}>Estatus</th>
+                      <th style={{ padding: '12px', textAlign: 'right' }}>Dictaminar / Responder</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {ticketsDelAbogado.map(item => {
+                      return (
+                        <tr key={item.id} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.04)' }}>
+                          <td style={{ padding: '14px 12px', fontWeight: 600, color: '#c29b47', fontFamily: 'Montserrat, sans-serif' }}>{item.folio}</td>
+                          <td style={{ padding: '14px 12px' }}>
+                            <span style={{ padding: '2px 8px', borderRadius: '4px', fontSize: '0.7rem', fontWeight: 700, background: '#19212d', border: '1px solid #334155', color: '#ffffff' }}>
+                              {item.autoridad || item.tipo}
+                            </span>
+                          </td>
+                          <td style={{ padding: '14px 12px', color: '#ffffff', fontWeight: 600, maxWidth: '240px' }}>{item.titulo}</td>
+                          <td style={{ padding: '14px 12px', color: '#cbd5e1' }}>{item.agencia}</td>
+                          <td style={{ padding: '14px 12px', color: '#fbbf24', fontWeight: 700 }}>{item.fechaCompromiso || 'N/A'}</td>
+                          <td style={{ padding: '14px 12px' }}>
+                            <span style={{ padding: '3px 8px', borderRadius: '4px', fontSize: '0.7rem', fontWeight: 700, background: item.prioridad === 'Urgente' || item.prioridad === 'Vencido' ? 'rgba(239, 68, 68, 0.2)' : 'rgba(59, 130, 246, 0.2)', color: item.prioridad === 'Urgente' || item.prioridad === 'Vencido' ? '#f87171' : '#60a5fa', border: item.prioridad === 'Urgente' || item.prioridad === 'Vencido' ? '1px solid rgba(239, 68, 68, 0.4)' : '1px solid rgba(59, 130, 246, 0.4)' }}>
+                              {item.prioridad}
+                            </span>
+                          </td>
+                          <td style={{ padding: '14px 12px' }}>
+                            <span style={{ padding: '4px 8px', borderRadius: '4px', fontSize: '0.7rem', fontWeight: 600, background: item.estado === 'Concluido' ? 'rgba(34, 197, 94, 0.12)' : 'rgba(59, 130, 246, 0.12)', color: item.estado === 'Concluido' ? '#4ade80' : '#60a5fa' }}>
+                              {item.estado}
+                            </span>
+                          </td>
+                          <td style={{ padding: '14px 12px', textAlign: 'right' }}>
+                            <button
+                              onClick={() => setSelectedTicket(item)}
+                              style={{
+                                background: '#c29b47',
+                                border: 'none',
+                                color: '#0b0e14',
+                                padding: '7px 14px',
+                                borderRadius: '4px',
+                                fontSize: '0.75rem',
+                                fontFamily: 'Montserrat, sans-serif',
+                                cursor: 'pointer',
+                                fontWeight: 700
+                              }}
+                            >
+                              Dictaminar Expediente
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                    {ticketsDelAbogado.length === 0 && (
+                      <tr>
+                        <td colSpan={8} style={{ padding: '2rem', textAlign: 'center', color: '#94a3b8', fontSize: '0.85rem' }}>
+                          No se encontraron expedientes asignados para el filtro seleccionado.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+        /* VISTA 3: CALENDARIO LEGAL DE AUDIENCIAS (GRID MENSUAL LITERAL O LISTADO) */
         ) : currentSection === 'calendario' && !selectedTicket ? (
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
               <div>
                 <h2 className="formal-header-font" style={{ fontSize: '1.6rem', color: '#ffffff' }}>
-                  Calendario Legal de Actuaciones y Eventos
+                  Calendario Legal de Audiencias y Eventos Asignados
                 </h2>
                 <p style={{ fontSize: '0.8rem', color: '#94a3b8' }}>
-                  Agenda central de audiencias, incidencias/términos, citas notariales y reuniones
+                  Agenda de comparecencias ante juzgados, citas notariales e incidencias asignadas a <strong>{abogadoFiltro}</strong>
                 </p>
               </div>
 
@@ -833,7 +1149,7 @@ export const ExecutiveDashboard: React.FC<{ onLogout: () => void }> = ({ onLogou
               </div>
             </div>
 
-            {/* MODO 1: VISTA CALENDARIO MENSUAL LITERAL (GRID DE MES COMPLETO) */}
+            {/* MODO 1: VISTA CALENDARIO MENSUAL LITERAL (GRID DE MES COMPLETO FILTRADO POR ABOGADO) */}
             {modoCalendario === 'grid' ? (
               <div style={{ background: '#141a24', border: '1px solid #263347', borderRadius: '8px', padding: '1.75rem' }}>
                 
@@ -844,7 +1160,7 @@ export const ExecutiveDashboard: React.FC<{ onLogout: () => void }> = ({ onLogou
                       SEPTIEMBRE 2026
                     </h3>
                     <span style={{ fontSize: '0.75rem', padding: '3px 10px', background: 'rgba(194, 155, 71, 0.1)', color: '#c29b47', border: '1px solid rgba(194, 155, 71, 0.3)', borderRadius: '4px', fontWeight: 600, fontFamily: 'Montserrat, sans-serif' }}>
-                      Mes Actual
+                      Agenda de {abogadoFiltro}
                     </span>
                   </div>
 
@@ -881,9 +1197,9 @@ export const ExecutiveDashboard: React.FC<{ onLogout: () => void }> = ({ onLogou
                       return <div key={index} style={{ background: '#0b0e14', opacity: 0.3, minHeight: '110px', borderRadius: '6px' }}></div>;
                     }
 
-                    // Buscar eventos de este día
-                    const eventosDelDia = filteredEventos.filter(e => e.diaNumero === numDia);
-                    const esHoy = numDia === 1; // Hoy 1 de Septiembre
+                    // Buscar eventos de este día para el abogado seleccionado
+                    const eventosDelDia = eventosDelAbogado.filter(e => e.diaNumero === numDia);
+                    const esHoy = numDia === 1;
 
                     return (
                       <div
@@ -958,7 +1274,7 @@ export const ExecutiveDashboard: React.FC<{ onLogout: () => void }> = ({ onLogou
               /* MODO 2: VISTA CRONOLÓGICA LISTADO DESGLOSADO */
               <div style={{ background: '#141a24', border: '1px solid #263347', borderRadius: '8px', padding: '1.75rem' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-                  {filteredEventos.map(ev => {
+                  {eventosDelAbogado.map(ev => {
                     const colorBadge = 
                       ev.tipoEvento === 'Incidencia' ? '#f87171' :
                       ev.tipoEvento === 'Audiencia' ? '#60a5fa' :
@@ -972,7 +1288,6 @@ export const ExecutiveDashboard: React.FC<{ onLogout: () => void }> = ({ onLogou
                     return (
                       <div key={ev.id} style={{ background: '#0b0e14', border: '1px solid #263347', borderRadius: '8px', padding: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1.25rem' }}>
                         <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
-                          {/* FECHA DESTACADA */}
                           <div style={{ background: '#19212d', border: `1px solid ${colorBadge}`, padding: '12px 18px', borderRadius: '8px', textAlign: 'center', minWidth: '110px' }}>
                             <div style={{ fontSize: '1rem', fontWeight: 700, color: colorBadge, fontFamily: 'Montserrat, sans-serif' }}>{ev.fecha}</div>
                             <div style={{ fontSize: '0.775rem', color: '#ffffff', fontWeight: 600, marginTop: '2px' }}>{ev.hora}</div>
@@ -1044,7 +1359,7 @@ export const ExecutiveDashboard: React.FC<{ onLogout: () => void }> = ({ onLogou
           </div>
         ) : selectedTicket ? (
 
-        /* VISTA 3: DETALLE DE EXPEDIENTE EN PESTAÑA DEDICADA */
+        /* VISTA 4: DETALLE Y DICTAMINACIÓN DEL EXPEDIENTE (CON SECCIÓN DE RESPUESTA DE ABOGADO) */
           <div>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
               <button
@@ -1080,7 +1395,7 @@ export const ExecutiveDashboard: React.FC<{ onLogout: () => void }> = ({ onLogou
             <div style={{ background: '#141a24', border: '1px solid #263347', borderRadius: '8px', padding: '2rem' }}>
               <div style={{ borderBottom: '1px solid #263347', paddingBottom: '1.25rem', marginBottom: '1.5rem' }}>
                 <div style={{ fontSize: '0.75rem', color: '#c29b47', textTransform: 'uppercase', letterSpacing: '0.05em', fontFamily: 'Montserrat, sans-serif' }}>
-                  EXPEDIENTE TIPO: {selectedTicket.tipo} — {selectedTicket.agencia}
+                  AUTORIDAD: {selectedTicket.autoridad || selectedTicket.tipo} — {selectedTicket.agencia}
                 </div>
                 <h2 className="formal-header-font" style={{ fontSize: '1.6rem', color: '#ffffff', marginTop: '4px' }}>
                   {selectedTicket.titulo}
@@ -1109,8 +1424,8 @@ export const ExecutiveDashboard: React.FC<{ onLogout: () => void }> = ({ onLogou
                 </div>
 
                 <div>
-                  <div style={{ fontSize: '0.7rem', color: '#94a3b8', textTransform: 'uppercase', fontFamily: 'Montserrat, sans-serif' }}>Fecha de Registro</div>
-                  <div style={{ fontSize: '0.85rem', color: '#cbd5e1' }}>{selectedTicket.fechaCreacion}</div>
+                  <div style={{ fontSize: '0.7rem', color: '#fbbf24', textTransform: 'uppercase', fontWeight: 700, fontFamily: 'Montserrat, sans-serif' }}>Fecha Compromiso</div>
+                  <div style={{ fontSize: '0.85rem', color: '#fbbf24', fontWeight: 700 }}>{selectedTicket.fechaCompromiso || selectedTicket.fechaCreacion}</div>
                 </div>
               </div>
 
@@ -1140,7 +1455,7 @@ export const ExecutiveDashboard: React.FC<{ onLogout: () => void }> = ({ onLogou
               </div>
 
               {/* HISTORIAL Y SEGUIMIENTO */}
-              <div>
+              <div style={{ marginBottom: '2rem' }}>
                 <h4 style={{ fontSize: '0.85rem', color: '#94a3b8', textTransform: 'uppercase', fontFamily: 'Montserrat, sans-serif', marginBottom: '0.75rem' }}>
                   Historial Cronológico de Dictámenes y Actuaciones
                 </h4>
@@ -1156,15 +1471,87 @@ export const ExecutiveDashboard: React.FC<{ onLogout: () => void }> = ({ onLogou
                   ))}
                 </div>
               </div>
+
+              {/* MÓDULO DE DICTAMINACIÓN Y EMISIÓN DE RESPUESTAS DEL ABOGADO */}
+              <div style={{ background: '#0b0e14', border: '1px solid rgba(194, 155, 71, 0.4)', borderRadius: '6px', padding: '1.5rem' }}>
+                <h4 className="formal-header-font" style={{ fontSize: '1.2rem', color: '#ffffff', marginBottom: '0.5rem' }}>
+                  Dictaminar Expediente y Actualizar Estatus (Abogado Resolutor)
+                </h4>
+                
+                <form onSubmit={handleAddLawyerDictamen}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+                    <div>
+                      <label className="input-label">Actualizar Estatus del Ticket</label>
+                      <select 
+                        className="custom-input" 
+                        style={{ paddingLeft: '12px' }}
+                        value={nuevoEstadoTicket} 
+                        onChange={e => setNuevoEstadoTicket(e.target.value as any)}
+                      >
+                        <option value="En Revisión">En Revisión</option>
+                        <option value="En Dictamen">En Dictamen</option>
+                        <option value="Requiere Información">Requiere Información Adicional</option>
+                        <option value="Urgente">Marcar Como Urgente</option>
+                        <option value="Concluido">Concluido / Dictaminado Final</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="input-label">Abogado Emisor</label>
+                      <input 
+                        type="text" 
+                        readOnly 
+                        className="custom-input" 
+                        style={{ background: '#19212d', color: '#c29b47', fontWeight: 600, paddingLeft: '12px' }}
+                        value={abogadoFiltro.includes('TODOS') ? 'Lic. Mariana Fernández' : abogadoFiltro} 
+                      />
+                    </div>
+                  </div>
+
+                  <div className="input-group">
+                    <label className="input-label">Dictamen Legal / Respuesta Formal para la Sucursal</label>
+                    <textarea 
+                      rows={4}
+                      required
+                      className="custom-input"
+                      style={{ paddingLeft: '12px', resize: 'vertical', lineHeight: 1.5 }}
+                      placeholder="Escriba aquí la respuesta jurídica, borrador de escrito, instrucciones de cumplimiento o dictamen formal..."
+                      value={nuevoDictamen}
+                      onChange={e => setNuevoDictamen(e.target.value)}
+                    />
+                  </div>
+
+                  <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                    <button
+                      type="submit"
+                      style={{
+                        background: '#c29b47',
+                        border: 'none',
+                        color: '#0b0e14',
+                        padding: '10px 24px',
+                        borderRadius: '4px',
+                        fontWeight: 700,
+                        fontFamily: 'Montserrat, sans-serif',
+                        fontSize: '0.775rem',
+                        textTransform: 'uppercase',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      Emitir Dictamen Formal
+                    </button>
+                  </div>
+                </form>
+              </div>
+
             </div>
           </div>
         ) : currentSection === 'expedientes' ? (
           <div>
-            {/* SECCIÓN EXPEDIENTES Y TICKETS */}
+            {/* SECCIÓN TODOS LOS EXPEDIENTES */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
               <div>
                 <h2 className="formal-header-font" style={{ fontSize: '1.5rem', color: '#ffffff' }}>
-                  Expedientes Legales y Solicitudes
+                  Todos los Expedientes Legales y Solicitudes
                 </h2>
                 <p style={{ fontSize: '0.8rem', color: '#94a3b8' }}>
                   Gestión central de asuntos por tipo, antigüedad y empresa
@@ -1200,38 +1587,37 @@ export const ExecutiveDashboard: React.FC<{ onLogout: () => void }> = ({ onLogou
               </div>
             </div>
 
-            {/* TABLA DE EXPEDIENTES */}
+            {/* TABLA DE EXPEDIENTES GENERALES */}
             <div style={{ background: '#141a24', border: '1px solid #263347', borderRadius: '8px', padding: '1.5rem' }}>
               <div style={{ overflowX: 'auto' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.85rem' }}>
                   <thead>
                     <tr style={{ borderBottom: '1px solid #263347', color: '#94a3b8', fontSize: '0.725rem', textTransform: 'uppercase', fontFamily: 'Montserrat, sans-serif' }}>
                       <th style={{ padding: '12px' }}>Folio</th>
-                      <th style={{ padding: '12px' }}>Tipo</th>
+                      <th style={{ padding: '12px' }}>Tipo / Autoridad</th>
                       <th style={{ padding: '12px' }}>Agencia / Empresa</th>
                       <th style={{ padding: '12px' }}>Asunto Legal</th>
-                      <th style={{ padding: '12px' }}>Solicitante & Cargo</th>
+                      <th style={{ padding: '12px' }}>Abogado Asignado</th>
                       <th style={{ padding: '12px' }}>Antigüedad</th>
                       <th style={{ padding: '12px' }}>Estatus</th>
                       <th style={{ padding: '12px', textAlign: 'right' }}>Pestaña de Expediente</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredTickets.map(item => {
+                    {filteredTicketsGeneral.map(item => {
                       const esAlerta = item.diasAbierto >= 5;
                       return (
                         <tr key={item.id} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.04)' }}>
                           <td style={{ padding: '14px 12px', fontWeight: 600, color: '#c29b47', fontFamily: 'Montserrat, sans-serif' }}>{item.folio}</td>
                           <td style={{ padding: '14px 12px' }}>
                             <span style={{ padding: '2px 8px', borderRadius: '4px', fontSize: '0.7rem', fontWeight: 700, background: '#19212d', border: '1px solid #334155', color: '#ffffff' }}>
-                              {item.tipo}
+                              {item.autoridad || item.tipo}
                             </span>
                           </td>
                           <td style={{ padding: '14px 12px', color: '#ffffff', fontWeight: 500 }}>{item.agencia}</td>
                           <td style={{ padding: '14px 12px', color: '#cbd5e1', maxWidth: '240px' }}>{item.titulo}</td>
                           <td style={{ padding: '14px 12px' }}>
-                            <div style={{ color: '#ffffff', fontWeight: 500 }}>{item.solicitante}</div>
-                            <div style={{ fontSize: '0.725rem', color: '#c29b47' }}>{item.cargoSolicitante}</div>
+                            <div style={{ color: '#ffffff', fontWeight: 500 }}>{item.abogadoAsignado}</div>
                           </td>
                           <td style={{ padding: '14px 12px' }}>
                             {esAlerta ? (
@@ -1653,7 +2039,7 @@ export const ExecutiveDashboard: React.FC<{ onLogout: () => void }> = ({ onLogou
 
             <div className="input-group">
               <label className="input-label">Abogado Responsable</label>
-              <select className="custom-input" style={{ paddingLeft: '12px' }} value={selectedAbogado} onChange={e => setSelectedAbogado(e.target.value)}>
+              <select className="custom-input" style={{ paddingLeft: '12px' }} value={selectedAbogadoAssign} onChange={e => setSelectedAbogadoAssign(e.target.value)}>
                 <option value="Lic. Mariana Fernández">Lic. Mariana Fernández (Especialista Mercantil)</option>
                 <option value="Lic. Roberto Garza">Lic. Roberto Garza (Especialista Laboral / RH)</option>
                 <option value="Lic. Carlos Mendoza">Lic. Carlos Mendoza (Especialista Corporativo)</option>
