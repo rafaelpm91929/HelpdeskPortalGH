@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import logoGrupoHuerta from '../assets/logo_grupo_huerta.jpg';
 
 export interface TicketItem {
   id: string;
