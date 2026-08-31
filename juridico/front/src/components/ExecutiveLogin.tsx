@@ -4,6 +4,8 @@ import logoVw from '../assets/logo_vw.png';
 import logoSeatCupra from '../assets/logo_seat_cupra.png';
 import logoSuzuki from '../assets/logo_suzuki.png';
 import logoGeely from '../assets/logo_geely.png';
+import logoChireyOmoda from '../assets/logo_chirey_omoda.png';
+import logoChangan from '../assets/logo_changan.png';
 
 export const ExecutiveLogin: React.FC<{ onLoginSuccess: () => void }> = ({ onLoginSuccess }) => {
   const [email, setEmail] = useState('');
@@ -23,52 +25,90 @@ export const ExecutiveLogin: React.FC<{ onLoginSuccess: () => void }> = ({ onLog
     <div className="login-page-wrapper">
       <div className="login-content-centered">
         
-        {/* SECCIÓN IZQUIERDA: HERO / TEXTO INFORMATIVO CRISTAL */}
+        {/* SECCIÓN IZQUIERDA: HERO CON LOGO GRUPO HUERTA AL CENTRO Y MARCAS EN GRANDE */}
         <div className="login-hero-section">
-          <div className="hero-glass-card">
-            <div className="hero-brand-tag">GRUPO HUERTA</div>
-            <h1 className="hero-title formal-header-font">Portal Jurídico</h1>
-            <p className="hero-description">
-              Gestión corporativa, atención de dictámenes y estado de cumplimiento legal de todas las agencias y sucursales, en un solo lugar.
-            </p>
-
-            {/* MARCAS OFICIALES Y AGENCIAS CON SUS LOGOTIPOS */}
-            <div style={{ marginTop: '1.5rem' }}>
-              <div style={{ fontSize: '0.725rem', color: '#c29b47', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 700, fontFamily: 'Montserrat, sans-serif', marginBottom: '0.75rem' }}>
-                Marcas Oficiales y Agencias del Grupo
-              </div>
-
-              {/* LOGOTIPOS OFICIALES EN CONTENEDORES CRISTAL / BLANCOS */}
-              <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center', marginBottom: '1.25rem' }}>
-                <div style={{ background: '#ffffff', padding: '6px 14px', borderRadius: '8px', border: '1px solid #c29b47', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.3)' }}>
-                  <img src={logoSuzuki} alt="Suzuki" style={{ height: '26px', width: 'auto', objectFit: 'contain' }} />
-                </div>
-
-                <div style={{ background: '#ffffff', padding: '6px 14px', borderRadius: '8px', border: '1px solid #c29b47', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.3)' }}>
-                  <img src={logoVw} alt="Volkswagen" style={{ height: '26px', width: 'auto', objectFit: 'contain' }} />
-                </div>
-
-                <div style={{ background: '#ffffff', padding: '6px 14px', borderRadius: '8px', border: '1px solid #c29b47', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.3)' }}>
-                  <img src={logoSeatCupra} alt="SEAT Cupra" style={{ height: '26px', width: 'auto', objectFit: 'contain' }} />
-                </div>
-
-                <div style={{ background: '#ffffff', padding: '6px 14px', borderRadius: '8px', border: '1px solid #c29b47', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.3)' }}>
-                  <img src={logoGeely} alt="Geely" style={{ height: '26px', width: 'auto', objectFit: 'contain' }} />
-                </div>
-              </div>
-
-              {/* SUCURSALES EN PILLS */}
-              <div className="hero-tags-container">
-                <span className="hero-tag-pill">Suzuki Montevideo</span>
-                <span className="hero-tag-pill">Divol Norte</span>
-                <span className="hero-tag-pill">Divol Perinorte</span>
-                <span className="hero-tag-pill">Divol Lindavista</span>
-                <span className="hero-tag-pill">Omoda Esmeralda</span>
-                <span className="hero-tag-pill">Divol Truks</span>
-                <span className="hero-tag-pill">Cupra La Villa</span>
-                <span className="hero-tag-pill">Divol Tlalnepantla</span>
+          <div className="hero-glass-card" style={{ textAlign: 'center', padding: '2.5rem 2rem' }}>
+            
+            {/* LOGO DE GRUPO HUERTA AL CENTRO Y DESTACADO */}
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.25rem' }}>
+              <div style={{
+                background: '#ffffff',
+                padding: '12px 28px',
+                borderRadius: '12px',
+                boxShadow: '0 8px 30px rgba(0, 0, 0, 0.5)',
+                border: '2px solid #c29b47',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}>
+                <img 
+                  src={logoGrupoHuerta} 
+                  alt="Grupo Huerta" 
+                  style={{ height: '62px', width: 'auto', objectFit: 'contain' }} 
+                />
               </div>
             </div>
+
+            <div className="hero-brand-tag" style={{ fontSize: '0.85rem', letterSpacing: '0.12em' }}>GRUPO HUERTA</div>
+            <h1 className="hero-title formal-header-font" style={{ fontSize: '2.2rem', marginBottom: '0.75rem' }}>Portal Jurídico</h1>
+            <p className="hero-description" style={{ fontSize: '0.9rem', color: '#cbd5e1', marginBottom: '2rem' }}>
+              Gestión corporativa, atención de dictámenes y estado de cumplimiento legal de todas las sucursales del grupo.
+            </p>
+
+            {/* RETÍCULA DE MARCAS AUTOMOTRICES GRANDES SIN TEXTOS PENDIENTES */}
+            <div style={{
+              background: 'rgba(15, 23, 42, 0.45)',
+              border: '1px solid rgba(194, 155, 71, 0.35)',
+              borderRadius: '12px',
+              padding: '1.5rem',
+              boxShadow: 'inset 0 2px 10px rgba(0,0,0,0.3)'
+            }}>
+              <div style={{
+                fontSize: '0.75rem',
+                color: '#c29b47',
+                textTransform: 'uppercase',
+                letterSpacing: '0.08em',
+                fontWeight: 700,
+                fontFamily: 'Montserrat, sans-serif',
+                marginBottom: '1.25rem',
+                textAlign: 'center'
+              }}>
+                MARCAS OFICIALES DEL GRUPO
+              </div>
+
+              {/* GRID DE LOGOTIPOS GRANDES (SUZUKI, VW, SEAT/CUPRA, GEELY, CHIREY/OMODA/JAECOO, CHANGAN) */}
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(3, 1fr)',
+                gap: '14px',
+                alignItems: 'center'
+              }}>
+                <div style={{ background: '#ffffff', padding: '10px 14px', borderRadius: '8px', border: '1px solid #c29b47', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '52px', boxShadow: '0 4px 12px rgba(0,0,0,0.3)' }}>
+                  <img src={logoSuzuki} alt="Suzuki" style={{ maxHeight: '38px', maxWidth: '100%', objectFit: 'contain' }} />
+                </div>
+
+                <div style={{ background: '#ffffff', padding: '10px 14px', borderRadius: '8px', border: '1px solid #c29b47', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '52px', boxShadow: '0 4px 12px rgba(0,0,0,0.3)' }}>
+                  <img src={logoVw} alt="Volkswagen" style={{ maxHeight: '38px', maxWidth: '100%', objectFit: 'contain' }} />
+                </div>
+
+                <div style={{ background: '#ffffff', padding: '10px 14px', borderRadius: '8px', border: '1px solid #c29b47', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '52px', boxShadow: '0 4px 12px rgba(0,0,0,0.3)' }}>
+                  <img src={logoSeatCupra} alt="SEAT Cupra" style={{ maxHeight: '38px', maxWidth: '100%', objectFit: 'contain' }} />
+                </div>
+
+                <div style={{ background: '#ffffff', padding: '10px 14px', borderRadius: '8px', border: '1px solid #c29b47', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '52px', boxShadow: '0 4px 12px rgba(0,0,0,0.3)' }}>
+                  <img src={logoGeely} alt="Geely" style={{ maxHeight: '38px', maxWidth: '100%', objectFit: 'contain' }} />
+                </div>
+
+                <div style={{ background: '#ffffff', padding: '10px 14px', borderRadius: '8px', border: '1px solid #c29b47', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '52px', boxShadow: '0 4px 12px rgba(0,0,0,0.3)' }}>
+                  <img src={logoChireyOmoda} alt="Chirey Omoda Jaecoo" style={{ maxHeight: '38px', maxWidth: '100%', objectFit: 'contain' }} />
+                </div>
+
+                <div style={{ background: '#ffffff', padding: '10px 14px', borderRadius: '8px', border: '1px solid #c29b47', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '52px', boxShadow: '0 4px 12px rgba(0,0,0,0.3)' }}>
+                  <img src={logoChangan} alt="Changan Auto" style={{ maxHeight: '38px', maxWidth: '100%', objectFit: 'contain' }} />
+                </div>
+              </div>
+            </div>
+
           </div>
         </div>
 
@@ -84,7 +124,7 @@ export const ExecutiveLogin: React.FC<{ onLoginSuccess: () => void }> = ({ onLog
                 <span>Acceso Restringido • Alta Dirección</span>
               </div>
 
-              {/* LOGO OFICIAL GRUPO HUERTA */}
+              {/* LOGO OFICIAL GRUPO HUERTA EN CABECERA DE LOGIN */}
               <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.25rem' }}>
                 <div style={{
                   background: '#ffffff',
