@@ -1525,7 +1525,6 @@ export const ExecutiveDashboard: React.FC<{ onLogout: () => void }> = ({ onLogou
                     { agencia: 'Divol Norte', casos: 12, pct: '72%' },
                     { agencia: 'Divol Lindavista', casos: 9, pct: '55%' },
                     { agencia: 'Cupra La Villa', casos: 8, pct: '48%' },
-                    { agencia: 'Mazda Guadalajara', casos: 6, pct: '38%' },
                     { agencia: 'Omoda Esmeralda', casos: 5, pct: '30%' },
                     { agencia: 'Divol Truks', casos: 4, pct: '24%' },
                     { agencia: 'Divol Tlalnepantla', casos: 3, pct: '18%' }

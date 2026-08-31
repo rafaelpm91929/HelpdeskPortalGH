@@ -1,5 +1,9 @@
 import React, { useState } from 'react';
 import logoGrupoHuerta from '../assets/logo_grupo_huerta.jpg';
+import logoVw from '../assets/logo_vw.png';
+import logoSeatCupra from '../assets/logo_seat_cupra.png';
+import logoSuzuki from '../assets/logo_suzuki.png';
+import logoGeely from '../assets/logo_geely.png';
 
 export const ExecutiveLogin: React.FC<{ onLoginSuccess: () => void }> = ({ onLoginSuccess }) => {
   const [email, setEmail] = useState('');
@@ -28,15 +32,42 @@ export const ExecutiveLogin: React.FC<{ onLoginSuccess: () => void }> = ({ onLog
               Gestión corporativa, atención de dictámenes y estado de cumplimiento legal de todas las agencias y sucursales, en un solo lugar.
             </p>
 
-            <div className="hero-tags-container">
-              <span className="hero-tag-pill">Suzuki Montevideo</span>
-              <span className="hero-tag-pill">Divol Norte</span>
-              <span className="hero-tag-pill">Divol Perinorte</span>
-              <span className="hero-tag-pill">Divol Lindavista</span>
-              <span className="hero-tag-pill">Omoda Esmeralda</span>
-              <span className="hero-tag-pill">Divol Truks</span>
-              <span className="hero-tag-pill">Cupra La Villa</span>
-              <span className="hero-tag-pill">Divol Tlalnepantla</span>
+            {/* MARCAS OFICIALES Y AGENCIAS CON SUS LOGOTIPOS */}
+            <div style={{ marginTop: '1.5rem' }}>
+              <div style={{ fontSize: '0.725rem', color: '#c29b47', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 700, fontFamily: 'Montserrat, sans-serif', marginBottom: '0.75rem' }}>
+                Marcas Oficiales y Agencias del Grupo
+              </div>
+
+              {/* LOGOTIPOS OFICIALES EN CONTENEDORES CRISTAL / BLANCOS */}
+              <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center', marginBottom: '1.25rem' }}>
+                <div style={{ background: '#ffffff', padding: '6px 14px', borderRadius: '8px', border: '1px solid #c29b47', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.3)' }}>
+                  <img src={logoSuzuki} alt="Suzuki" style={{ height: '26px', width: 'auto', objectFit: 'contain' }} />
+                </div>
+
+                <div style={{ background: '#ffffff', padding: '6px 14px', borderRadius: '8px', border: '1px solid #c29b47', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.3)' }}>
+                  <img src={logoVw} alt="Volkswagen" style={{ height: '26px', width: 'auto', objectFit: 'contain' }} />
+                </div>
+
+                <div style={{ background: '#ffffff', padding: '6px 14px', borderRadius: '8px', border: '1px solid #c29b47', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.3)' }}>
+                  <img src={logoSeatCupra} alt="SEAT Cupra" style={{ height: '26px', width: 'auto', objectFit: 'contain' }} />
+                </div>
+
+                <div style={{ background: '#ffffff', padding: '6px 14px', borderRadius: '8px', border: '1px solid #c29b47', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.3)' }}>
+                  <img src={logoGeely} alt="Geely" style={{ height: '26px', width: 'auto', objectFit: 'contain' }} />
+                </div>
+              </div>
+
+              {/* SUCURSALES EN PILLS */}
+              <div className="hero-tags-container">
+                <span className="hero-tag-pill">Suzuki Montevideo</span>
+                <span className="hero-tag-pill">Divol Norte</span>
+                <span className="hero-tag-pill">Divol Perinorte</span>
+                <span className="hero-tag-pill">Divol Lindavista</span>
+                <span className="hero-tag-pill">Omoda Esmeralda</span>
+                <span className="hero-tag-pill">Divol Truks</span>
+                <span className="hero-tag-pill">Cupra La Villa</span>
+                <span className="hero-tag-pill">Divol Tlalnepantla</span>
+              </div>
             </div>
           </div>
         </div>
@@ -107,7 +138,7 @@ export const ExecutiveLogin: React.FC<{ onLoginSuccess: () => void }> = ({ onLog
                 <div className="input-wrapper">
                   <span className="input-icon">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <rect width="18" height="11" x="3" y="11" rx="2" ry="2"/>
+                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
                       <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
                     </svg>
                   </span>
@@ -122,33 +153,32 @@ export const ExecutiveLogin: React.FC<{ onLoginSuccess: () => void }> = ({ onLog
                 </div>
               </div>
 
-              <div className="form-options">
-                <label className="remember-me">
-                  <input type="checkbox" defaultChecked />
-                  <span>Recordarme</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', fontSize: '0.8rem' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#94a3b8', cursor: 'pointer' }}>
+                  <input type="checkbox" defaultChecked style={{ accentColor: '#c29b47' }} />
+                  Recordar credenciales
                 </label>
-                <a href="#forgot" className="forgot-link" onClick={(e) => e.preventDefault()}>
+                <a href="#forgot" onClick={(e) => e.preventDefault()} style={{ color: '#c29b47', textDecoration: 'none' }}>
                   ¿Olvidaste tu contraseña?
                 </a>
               </div>
 
-              <button type="submit" className="btn-executive" disabled={loading}>
-                {loading ? (
-                  <span>Verificando Autenticación...</span>
-                ) : (
-                  <>
-                    <span>Iniciar sesión</span>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                      <path d="M5 12h14M12 5l7 7-7 7"/>
-                    </svg>
-                  </>
-                )}
+              <button
+                type="submit"
+                disabled={loading}
+                className="gold-btn-gradient"
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  fontSize: '0.875rem',
+                  fontWeight: 700,
+                  letterSpacing: '0.05em',
+                  fontFamily: 'Montserrat, sans-serif'
+                }}
+              >
+                {loading ? 'AUTENTICANDO...' : 'INGRESAR AL PORTAL'}
               </button>
             </form>
-
-            <div className="footer-notice">
-              <span>Acceso exclusivo para personal autorizado de Grupo Huerta</span>
-            </div>
           </div>
         </div>
 
