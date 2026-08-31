@@ -30,6 +30,19 @@ export interface UsuarioItem {
   estatus: 'Activo' | 'Inactivo';
 }
 
+export interface EventoCalendario {
+  id: string;
+  folio: string;
+  agencia: string;
+  tipoEvento: 'Audiencia' | 'Incidencia' | 'Cita Notarial' | 'Reunión';
+  titulo: string;
+  fecha: string;
+  hora: string;
+  lugar: string;
+  abogado: string;
+  detalles: string;
+}
+
 export const AGENCIAS_OFICIALES = [
   'Suzuki Montevideo',
   'Divol Norte',
@@ -42,10 +55,13 @@ export const AGENCIAS_OFICIALES = [
 ];
 
 export const ExecutiveDashboard: React.FC<{ onLogout: () => void }> = ({ onLogout }) => {
-  const [currentSection, setCurrentSection] = useState<'principal' | 'expedientes' | 'agencias' | 'graficas' | 'usuarios'>('principal');
+  const [currentSection, setCurrentSection] = useState<'principal' | 'calendario' | 'expedientes' | 'agencias' | 'graficas' | 'usuarios'>('principal');
   const [selectedTicket, setSelectedTicket] = useState<TicketItem | null>(null);
   const [filtroTipo, setFiltroTipo] = useState<string>('TODOS');
   const [filtroAgencia, setFiltroAgencia] = useState<string>('TODOS');
+
+  // Filtro específico para la vista de Calendario
+  const [filtroTipoEvento, setFiltroTipoEvento] = useState<string>('TODOS');
 
   // Filtros de Gráficas
   const [rangoGraficas, setRangoGraficas] = useState<'mes' | 'trimestre' | 'anio'>('mes');
@@ -159,6 +175,70 @@ export const ExecutiveDashboard: React.FC<{ onLogout: () => void }> = ({ onLogou
     }
   ]);
 
+  // Eventos del Calendario vinculados a expedientes/tickets
+  const [eventosCalendario] = useState<EventoCalendario[]>([
+    {
+      id: 'ev-1',
+      folio: 'JUR-2026-089',
+      agencia: 'Divol Norte',
+      tipoEvento: 'Incidencia',
+      titulo: 'Vencimiento de Término Legal de Emplazamiento Mercantil',
+      fecha: '01/09/2026',
+      hora: '23:59 PM',
+      lugar: 'Juzgado 4° de lo Mercantil CDMX',
+      abogado: 'Lic. Mariana Fernández',
+      detalles: 'Límite improrrogable para ingresar la contestación de demanda mercantil en la oficialía de partes.'
+    },
+    {
+      id: 'ev-2',
+      folio: 'JUR-2026-084',
+      agencia: 'Divol Perinorte',
+      tipoEvento: 'Audiencia',
+      titulo: 'Audiencia Conciliatoria de Juicio Laboral (Exp. 145/2026)',
+      fecha: '02/09/2026',
+      hora: '10:00 AM',
+      lugar: 'Tribunal Laboral N° 4 - Cuautitlán Izcalli',
+      abogado: 'Lic. Roberto Garza',
+      detalles: 'Comparecencia de la representación legal de la empresa para desahogo de convenio laboral.'
+    },
+    {
+      id: 'ev-3',
+      folio: 'JUR-2026-081',
+      agencia: 'Suzuki Montevideo',
+      tipoEvento: 'Reunión',
+      titulo: 'Reunión de Negociación con Arrendador de Inmueble Refacciones',
+      fecha: '03/09/2026',
+      hora: '16:00 PM',
+      lugar: 'Sala de Juntas - Suzuki Montevideo',
+      abogado: 'Lic. Mariana Fernández',
+      detalles: 'Mesa de trabajo para acordar ajuste a la cláusula de incremento anual de renta.'
+    },
+    {
+      id: 'ev-4',
+      folio: 'JUR-2026-075',
+      agencia: 'Cupra La Villa',
+      tipoEvento: 'Cita Notarial',
+      titulo: 'Firma y Protocolización de Poderes Notariales (Escritura 584)',
+      fecha: '09/09/2026',
+      hora: '09:00 AM',
+      lugar: 'Notaría Pública N° 142 CDMX',
+      abogado: 'Lic. Carlos Mendoza',
+      detalles: 'Entrega del libro de escrituras certificado con facultades de pleitos y cobranzas.'
+    },
+    {
+      id: 'ev-5',
+      folio: 'JUR-2026-092',
+      agencia: 'Divol Tlalnepantla',
+      tipoEvento: 'Audiencia',
+      titulo: 'Comparecencia de Inspección Ordinaria STPS',
+      fecha: '12/09/2026',
+      hora: '11:30 AM',
+      lugar: 'Delegación Federal del Trabajo - Estado de México',
+      abogado: 'Lic. Roberto Garza',
+      detalles: 'Presentación de evidencias de comisiones mixtas y capacitación laboral.'
+    }
+  ]);
+
   // Datos de prueba: Tickets Abiertos Sin Atender
   const [unattendedTickets, setUnattendedTickets] = useState([
     {
@@ -224,6 +304,10 @@ export const ExecutiveDashboard: React.FC<{ onLogout: () => void }> = ({ onLogou
     return matchTipo && matchAgencia;
   });
 
+  const filteredEventos = eventosCalendario.filter(e => {
+    return filtroTipoEvento === 'TODOS' || e.tipoEvento === filtroTipoEvento;
+  });
+
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: '#0b0e14' }}>
       
@@ -272,6 +356,30 @@ export const ExecutiveDashboard: React.FC<{ onLogout: () => void }> = ({ onLogou
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
               <span>Vista Principal</span>
+            </button>
+
+            {/* BOTON CALENDARIO LITERAL EN LA BARRA LATERAL */}
+            <button
+              onClick={() => { setCurrentSection('calendario'); setSelectedTicket(null); }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                width: '100%',
+                padding: '10px 14px',
+                borderRadius: '6px',
+                border: 'none',
+                background: currentSection === 'calendario' ? '#19212d' : 'transparent',
+                color: currentSection === 'calendario' ? '#c29b47' : '#94a3b8',
+                fontWeight: currentSection === 'calendario' ? 600 : 400,
+                fontSize: '0.825rem',
+                fontFamily: 'Montserrat, sans-serif',
+                cursor: 'pointer',
+                textAlign: 'left'
+              }}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              <span>Calendario</span>
             </button>
 
             <button
@@ -606,8 +714,161 @@ export const ExecutiveDashboard: React.FC<{ onLogout: () => void }> = ({ onLogou
             </section>
           </div>
 
-        /* VISTA 2: DETALLE DE EXPEDIENTE EN PESTAÑA DEDICADA */
+        /* VISTA 2: VISTA DEDICADA DE CALENDARIO LEGAL DE AUDIENCIAS, INCIDENCIAS, CITAS Y REUNIONES */
+        ) : currentSection === 'calendario' && !selectedTicket ? (
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
+              <div>
+                <h2 className="formal-header-font" style={{ fontSize: '1.6rem', color: '#ffffff' }}>
+                  Calendario Legal de Actuaciones y Eventos
+                </h2>
+                <p style={{ fontSize: '0.8rem', color: '#94a3b8' }}>
+                  Agenda central de audiencias judicializadas, incidencias/términos de tickets, citas notariales y reuniones
+                </p>
+              </div>
+
+              {/* FILTROS POR TIPO DE EVENTO */}
+              <div style={{ display: 'flex', gap: '8px', background: '#141a24', border: '1px solid #263347', padding: '4px', borderRadius: '6px' }}>
+                {(['TODOS', 'Audiencia', 'Incidencia', 'Cita Notarial', 'Reunión'] as const).map(t => (
+                  <button
+                    key={t}
+                    onClick={() => setFiltroTipoEvento(t)}
+                    style={{
+                      background: filtroTipoEvento === t ? '#19212d' : 'transparent',
+                      border: filtroTipoEvento === t ? '1px solid #334155' : 'none',
+                      color: filtroTipoEvento === t ? '#c29b47' : '#94a3b8',
+                      padding: '6px 12px',
+                      borderRadius: '4px',
+                      fontSize: '0.75rem',
+                      fontFamily: 'Montserrat, sans-serif',
+                      fontWeight: 600,
+                      cursor: 'pointer'
+                    }}
+                  >
+                    {t === 'TODOS' ? 'Todos los Eventos' : t}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* MÓDULO DE CALENDARIO VISUAL Y EVENTOS DETALLADOS */}
+            <div style={{ background: '#141a24', border: '1px solid #263347', borderRadius: '8px', padding: '1.75rem' }}>
+              
+              {/* TARJETAS RESUMEN DE CATEGORÍAS */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
+                <div style={{ background: '#0b0e14', border: '1px solid rgba(239, 68, 68, 0.3)', padding: '1.25rem', borderRadius: '6px' }}>
+                  <div style={{ fontSize: '0.7rem', color: '#f87171', textTransform: 'uppercase', fontWeight: 600 }}>Incidencias / Términos</div>
+                  <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#ffffff', margin: '4px 0', fontFamily: 'Cormorant Garamond, serif' }}>1 Pendiente</div>
+                  <div style={{ fontSize: '0.7rem', color: '#94a3b8' }}>Vencimiento de contestación</div>
+                </div>
+
+                <div style={{ background: '#0b0e14', border: '1px solid rgba(59, 130, 246, 0.3)', padding: '1.25rem', borderRadius: '6px' }}>
+                  <div style={{ fontSize: '0.7rem', color: '#60a5fa', textTransform: 'uppercase', fontWeight: 600 }}>Audiencias Judiciales</div>
+                  <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#ffffff', margin: '4px 0', fontFamily: 'Cormorant Garamond, serif' }}>2 Programadas</div>
+                  <div style={{ fontSize: '0.7rem', color: '#94a3b8' }}>Laborales y Mercantiles</div>
+                </div>
+
+                <div style={{ background: '#0b0e14', border: '1px solid rgba(245, 158, 11, 0.3)', padding: '1.25rem', borderRadius: '6px' }}>
+                  <div style={{ fontSize: '0.7rem', color: '#fbbf24', textTransform: 'uppercase', fontWeight: 600 }}>Citas Notariales</div>
+                  <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#ffffff', margin: '4px 0', fontFamily: 'Cormorant Garamond, serif' }}>1 Agendada</div>
+                  <div style={{ fontSize: '0.7rem', color: '#94a3b8' }}>Protocolización de Poderes</div>
+                </div>
+
+                <div style={{ background: '#0b0e14', border: '1px solid rgba(168, 85, 247, 0.3)', padding: '1.25rem', borderRadius: '6px' }}>
+                  <div style={{ fontSize: '0.7rem', color: '#c084fc', textTransform: 'uppercase', fontWeight: 600 }}>Reuniones Corporativas</div>
+                  <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#ffffff', margin: '4px 0', fontFamily: 'Cormorant Garamond, serif' }}>1 Agendada</div>
+                  <div style={{ fontSize: '0.7rem', color: '#94a3b8' }}>Negociación de Arrendamiento</div>
+                </div>
+              </div>
+
+              {/* LISTADO DETALLADO DE EVENTOS DEL CALENDARIO */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                {filteredEventos.map(ev => {
+                  const colorBadge = 
+                    ev.tipoEvento === 'Incidencia' ? '#f87171' :
+                    ev.tipoEvento === 'Audiencia' ? '#60a5fa' :
+                    ev.tipoEvento === 'Cita Notarial' ? '#fbbf24' : '#c084fc';
+                  
+                  const bgBadge = 
+                    ev.tipoEvento === 'Incidencia' ? 'rgba(239, 68, 68, 0.12)' :
+                    ev.tipoEvento === 'Audiencia' ? 'rgba(59, 130, 246, 0.12)' :
+                    ev.tipoEvento === 'Cita Notarial' ? 'rgba(245, 158, 11, 0.12)' : 'rgba(168, 85, 247, 0.12)';
+
+                  return (
+                    <div key={ev.id} style={{ background: '#0b0e14', border: '1px solid #263347', borderRadius: '8px', padding: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1.25rem' }}>
+                      <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
+                        {/* FECHA DESTACADA */}
+                        <div style={{ background: '#19212d', border: `1px solid ${colorBadge}`, padding: '12px 18px', borderRadius: '8px', textAlign: 'center', minWidth: '110px' }}>
+                          <div style={{ fontSize: '1rem', fontWeight: 700, color: colorBadge, fontFamily: 'Montserrat, sans-serif' }}>{ev.fecha}</div>
+                          <div style={{ fontSize: '0.775rem', color: '#ffffff', fontWeight: 600, marginTop: '2px' }}>{ev.hora}</div>
+                        </div>
+
+                        <div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
+                            <span style={{ padding: '3px 8px', borderRadius: '4px', fontSize: '0.7rem', fontWeight: 700, background: bgBadge, color: colorBadge, border: `1px solid ${colorBadge}`, fontFamily: 'Montserrat, sans-serif', textTransform: 'uppercase' }}>
+                              {ev.tipoEvento}
+                            </span>
+                            <span style={{ fontSize: '0.75rem', color: '#c29b47', fontWeight: 600, fontFamily: 'Montserrat, sans-serif' }}>
+                              FOLIO: {ev.folio}
+                            </span>
+                            <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
+                              • {ev.agencia}
+                            </span>
+                          </div>
+
+                          <h3 style={{ fontSize: '1.1rem', color: '#ffffff', fontWeight: 600, marginBottom: '4px' }}>
+                            {ev.titulo}
+                          </h3>
+
+                          <div style={{ fontSize: '0.825rem', color: '#cbd5e1', marginBottom: '4px' }}>
+                            📍 Sede / Lugar: <strong>{ev.lugar}</strong>
+                          </div>
+
+                          <div style={{ fontSize: '0.8rem', color: '#94a3b8' }}>
+                            {ev.detalles}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div style={{ textAlign: 'right' }}>
+                        <div style={{ fontSize: '0.75rem', color: '#94a3b8', textTransform: 'uppercase', fontFamily: 'Montserrat, sans-serif', marginBottom: '2px' }}>Abogado Responsable</div>
+                        <div style={{ fontSize: '0.875rem', color: '#ffffff', fontWeight: 600, marginBottom: '10px' }}>{ev.abogado}</div>
+                        
+                        <button
+                          onClick={() => {
+                            const foundTicket = tickets.find(t => t.folio === ev.folio);
+                            if (foundTicket) {
+                              setSelectedTicket(foundTicket);
+                              setCurrentSection('expedientes');
+                            } else {
+                              alert(`Abriendo expediente de folio ${ev.folio}...`);
+                            }
+                          }}
+                          style={{
+                            background: 'rgba(194, 155, 71, 0.08)',
+                            border: '1px solid rgba(194, 155, 71, 0.3)',
+                            color: '#c29b47',
+                            padding: '7px 14px',
+                            borderRadius: '4px',
+                            fontSize: '0.75rem',
+                            fontFamily: 'Montserrat, sans-serif',
+                            cursor: 'pointer',
+                            fontWeight: 600
+                          }}
+                        >
+                          Ver Expediente del Ticket
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+            </div>
+          </div>
         ) : selectedTicket ? (
+
+        /* VISTA 3: DETALLE DE EXPEDIENTE EN PESTAÑA DEDICADA */
           <div>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
               <button
