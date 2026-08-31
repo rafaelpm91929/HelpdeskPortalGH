@@ -47,6 +47,16 @@ export interface EventoCalendario {
   detalles: string;
 }
 
+export interface AgenciaInfo {
+  nombre: string;
+  razonSocial: string;
+  rfc: string;
+  representante: string;
+  actaConstitutiva: string;
+  constanciaFiscal: string;
+  poderesNotariales: string;
+}
+
 export const AGENCIAS_OFICIALES = [
   'Suzuki Montevideo',
   'Divol Norte',
@@ -58,9 +68,87 @@ export const AGENCIAS_OFICIALES = [
   'Divol Tlalnepantla'
 ];
 
+export const DETALLE_AGENCIAS: Record<string, AgenciaInfo> = {
+  'Suzuki Montevideo': {
+    nombre: 'Suzuki Montevideo',
+    razonSocial: 'Automotriz Montevideo S.A. de C.V.',
+    rfc: 'AMO120415HG8',
+    representante: 'Roberto Garza (Gerente General)',
+    actaConstitutiva: 'Acta_Constitutiva_Suzuki_Montevideo_Escritura_4892.pdf',
+    constanciaFiscal: 'CSF_SAT_Suzuki_Montevideo_2026.pdf',
+    poderesNotariales: 'Poderes_Generales_Administracion_4892.pdf'
+  },
+  'Divol Norte': {
+    nombre: 'Divol Norte',
+    razonSocial: 'Divol Distribuidora del Norte S.A. de C.V.',
+    rfc: 'DDN980820KL4',
+    representante: 'Ing. Carlos Mendoza (Gerente Admin)',
+    actaConstitutiva: 'Acta_Constitutiva_Divol_Norte_Escritura_1204.pdf',
+    constanciaFiscal: 'CSF_SAT_Divol_Norte_2026.pdf',
+    poderesNotariales: 'Poderes_Pleitos_y_Cobranzas_1204.pdf'
+  },
+  'Divol Perinorte': {
+    nombre: 'Divol Perinorte',
+    razonSocial: 'Divol Perinorte Automotriz S.A. de C.V.',
+    rfc: 'DPA040510MM9',
+    representante: 'Lic. Roberto Garza (Gerente General)',
+    actaConstitutiva: 'Acta_Constitutiva_Divol_Perinorte_Escritura_3391.pdf',
+    constanciaFiscal: 'CSF_SAT_Divol_Perinorte_2026.pdf',
+    poderesNotariales: 'Poderes_Notariales_Perinorte_3391.pdf'
+  },
+  'Divol Lindavista': {
+    nombre: 'Divol Lindavista',
+    razonSocial: 'Divol Lindavista Vehículos S.A. de C.V.',
+    rfc: 'DLV091102TY1',
+    representante: 'Lic. Sofía Ramírez (RH)',
+    actaConstitutiva: 'Acta_Constitutiva_Divol_Lindavista_Escritura_5921.pdf',
+    constanciaFiscal: 'CSF_SAT_Divol_Lindavista_2026.pdf',
+    poderesNotariales: 'Poderes_Laborales_y_Corporativos_5921.pdf'
+  },
+  'Omoda Esmeralda': {
+    nombre: 'Omoda Esmeralda',
+    razonSocial: 'Esmeralda Motors S.A. de C.V.',
+    rfc: 'EMO220118AA3',
+    representante: 'Ing. Fernando Torres (Gerente Admin)',
+    actaConstitutiva: 'Acta_Constitutiva_Omoda_Esmeralda_Escritura_8812.pdf',
+    constanciaFiscal: 'CSF_SAT_Omoda_Esmeralda_2026.pdf',
+    poderesNotariales: 'Poderes_Administracion_Omoda_8812.pdf'
+  },
+  'Divol Truks': {
+    nombre: 'Divol Truks',
+    razonSocial: 'Divol Camiones y Comercial S.A. de C.V.',
+    rfc: 'DCC150930PP2',
+    representante: 'Lic. Arturo Gómez (Gerente General)',
+    actaConstitutiva: 'Acta_Constitutiva_Divol_Truks_Escritura_7710.pdf',
+    constanciaFiscal: 'CSF_SAT_Divol_Truks_2026.pdf',
+    poderesNotariales: 'Poderes_Pleitos_Cobranzas_7710.pdf'
+  },
+  'Cupra La Villa': {
+    nombre: 'Cupra La Villa',
+    razonSocial: 'Motors La Villa S.A. de C.V.',
+    rfc: 'MLV190605RR8',
+    representante: 'Fernando Alonso (Gerente Admin)',
+    actaConstitutiva: 'Acta_Constitutiva_Cupra_La_Villa_Escritura_6641.pdf',
+    constanciaFiscal: 'CSF_SAT_Cupra_La_Villa_2026.pdf',
+    poderesNotariales: 'Poderes_Notariales_La_Villa_6641.pdf'
+  },
+  'Divol Tlalnepantla': {
+    nombre: 'Divol Tlalnepantla',
+    razonSocial: 'Divol Tlalnepantla Automotriz S.A. de C.V.',
+    rfc: 'DTA110312QQ5',
+    representante: 'Lic. Roberto Garza (Abogado/Gerencia)',
+    actaConstitutiva: 'Acta_Constitutiva_Divol_Tlalnepantla_Escritura_4419.pdf',
+    constanciaFiscal: 'CSF_SAT_Divol_Tlalnepantla_2026.pdf',
+    poderesNotariales: 'Poderes_Generales_Tlalnepantla_4419.pdf'
+  }
+};
+
 export const ExecutiveDashboard: React.FC<{ onLogout: () => void }> = ({ onLogout }) => {
   const [currentSection, setCurrentSection] = useState<'principal' | 'calendario' | 'expedientes' | 'agencias' | 'graficas' | 'usuarios'>('principal');
   const [selectedTicket, setSelectedTicket] = useState<TicketItem | null>(null);
+
+  // Modal / Pestaña de Detalle de Agencia Seleccionada
+  const [selectedAgenciaModal, setSelectedAgenciaModal] = useState<string | null>(null);
 
   const [filtroTipo, setFiltroTipo] = useState<string>('TODOS');
   const [filtroAgencia, setFiltroAgencia] = useState<string>('TODOS');
@@ -87,8 +175,13 @@ export const ExecutiveDashboard: React.FC<{ onLogout: () => void }> = ({ onLogou
   // Estado para responder / dictaminar ticket en el expediente
   const [nuevoDictamen, setNuevoDictamen] = useState('');
   const [nuevoEstadoTicket, setNuevoEstadoTicket] = useState<TicketItem['estado']>('En Dictamen');
+  
+  // Estado para editar abogado, prioridad y CC desde la vista del ticket
+  const [editAbogado, setEditAbogado] = useState('');
+  const [editPrioridad, setEditPrioridad] = useState<TicketItem['prioridad']>('Urgente');
+  const [editCorreosCopia, setEditCorreosCopia] = useState('');
 
-  // Datos de prueba: Usuarios sin el apellido Huerta
+  // Datos de prueba: Usuarios
   const [usuarios, setUsuarios] = useState<UsuarioItem[]>([
     { id: '1', nombre: 'Lic. Ricardo Morales', correo: 'rmorales@grupohuerta.com', agencia: 'Corporativo Grupo Huerta', cargo: 'Gerente General', estatus: 'Activo' },
     { id: '2', nombre: 'Ing. Carlos Mendoza', correo: 'cmendoza@divol.com', agencia: 'Divol Norte', cargo: 'Gerente Administrativo', estatus: 'Activo' },
@@ -352,22 +445,34 @@ export const ExecutiveDashboard: React.FC<{ onLogout: () => void }> = ({ onLogou
     setAssigningTicketFolio(null);
   };
 
-  const handleAddLawyerDictamen = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!nuevoDictamen.trim() || !selectedTicket) return;
+  const handleOpenTicketDetail = (ticket: TicketItem) => {
+    setSelectedTicket(ticket);
+    setEditAbogado(ticket.abogadoAsignado);
+    setEditPrioridad(ticket.prioridad);
+    setEditCorreosCopia(ticket.correosCopia || '');
+    setNuevoEstadoTicket(ticket.estado);
+  };
 
-    const entradaHistorial = {
+  const handleSaveTicketAdminChanges = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedTicket) return;
+
+    const tieneComentario = nuevoDictamen.trim().length > 0;
+    const entradaHistorial = tieneComentario ? [{
       fecha: `${new Date().toLocaleDateString('es-MX')} ${new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })}`,
-      autor: 'Lic. Ricardo Morales (Alta Dirección / Abogado)',
+      autor: 'Lic. Ricardo Morales (Alta Dirección / Admin)',
       mensaje: nuevoDictamen
-    };
+    }] : [];
 
     const updatedTickets = tickets.map(t => {
       if (t.id === selectedTicket.id) {
         return {
           ...t,
+          abogadoAsignado: editAbogado || t.abogadoAsignado,
+          prioridad: editPrioridad,
+          correosCopia: editCorreosCopia,
           estado: nuevoEstadoTicket,
-          historial: [...t.historial, entradaHistorial]
+          historial: [...t.historial, ...entradaHistorial]
         };
       }
       return t;
@@ -376,10 +481,14 @@ export const ExecutiveDashboard: React.FC<{ onLogout: () => void }> = ({ onLogou
     setTickets(updatedTickets);
     setSelectedTicket({
       ...selectedTicket,
+      abogadoAsignado: editAbogado || selectedTicket.abogadoAsignado,
+      prioridad: editPrioridad,
+      correosCopia: editCorreosCopia,
       estado: nuevoEstadoTicket,
-      historial: [...selectedTicket.historial, entradaHistorial]
+      historial: [...selectedTicket.historial, ...entradaHistorial]
     });
     setNuevoDictamen('');
+    alert('✓ Cambios guardados correctamente en el expediente.');
   };
 
   const filteredTicketsGeneral = tickets.filter(t => {
@@ -447,7 +556,6 @@ export const ExecutiveDashboard: React.FC<{ onLogout: () => void }> = ({ onLogou
               <span>Vista Principal</span>
             </button>
 
-            {/* BOTON CALENDARIO EN LA BARRA LATERAL */}
             <button
               onClick={() => { setCurrentSection('calendario'); setSelectedTicket(null); }}
               style={{
@@ -625,7 +733,7 @@ export const ExecutiveDashboard: React.FC<{ onLogout: () => void }> = ({ onLogou
                     Empresa: <strong>Divol Norte</strong> • Abogado: <strong>Lic. Mariana Fernández</strong>
                   </div>
                   <button 
-                    onClick={() => { setSelectedTicket(tickets[0]); setCurrentSection('expedientes'); }}
+                    onClick={() => handleOpenTicketDetail(tickets[0])}
                     style={{ width: '100%', background: 'rgba(239, 68, 68, 0.12)', border: '1px solid rgba(239, 68, 68, 0.35)', color: '#f87171', padding: '8px', borderRadius: '4px', fontSize: '0.775rem', fontWeight: 700, fontFamily: 'Montserrat, sans-serif', textTransform: 'uppercase', cursor: 'pointer' }}
                   >
                     Atender Vencimiento Urgente
@@ -669,7 +777,7 @@ export const ExecutiveDashboard: React.FC<{ onLogout: () => void }> = ({ onLogou
                     Empresa: <strong>Divol Lindavista</strong> • Abogado: <strong>Lic. Roberto Garza</strong>
                   </div>
                   <button 
-                    onClick={() => { setSelectedTicket(tickets[1]); setCurrentSection('expedientes'); }}
+                    onClick={() => handleOpenTicketDetail(tickets[1])}
                     style={{ width: '100%', background: '#19212d', border: '1px solid #334155', color: '#cbd5e1', padding: '8px', borderRadius: '4px', fontSize: '0.775rem', fontWeight: 700, fontFamily: 'Montserrat, sans-serif', textTransform: 'uppercase', cursor: 'pointer' }}
                   >
                     Ver Convenio
@@ -803,7 +911,7 @@ export const ExecutiveDashboard: React.FC<{ onLogout: () => void }> = ({ onLogou
             </section>
           </div>
 
-        /* VISTA 2: CALENDARIO LEGAL DE AUDIENCIAS CORPORATIVAS (GRID MENSUAL LITERAL O LISTADO) */
+        /* VISTA 2: CALENDARIO LEGAL CORPORATIVO */
         ) : currentSection === 'calendario' && !selectedTicket ? (
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
@@ -816,7 +924,6 @@ export const ExecutiveDashboard: React.FC<{ onLogout: () => void }> = ({ onLogou
                 </p>
               </div>
 
-              {/* OPCIONES DE NAVEGACIÓN ENTRE VISTA CALENDARIO MENSUAL Y LISTA */}
               <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
                 <div style={{ display: 'flex', background: '#141a24', border: '1px solid #263347', padding: '4px', borderRadius: '6px' }}>
                   <button
@@ -854,7 +961,6 @@ export const ExecutiveDashboard: React.FC<{ onLogout: () => void }> = ({ onLogou
                   </button>
                 </div>
 
-                {/* FILTROS POR TIPO DE EVENTO */}
                 <select
                   className="custom-input"
                   value={filtroTipoEvento}
@@ -870,7 +976,6 @@ export const ExecutiveDashboard: React.FC<{ onLogout: () => void }> = ({ onLogou
               </div>
             </div>
 
-            {/* MODO 1: VISTA CALENDARIO MENSUAL LITERAL (GRID DE MES COMPLETO) */}
             {modoCalendario === 'grid' ? (
               <div style={{ background: '#141a24', border: '1px solid #263347', borderRadius: '8px', padding: '1.75rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', borderBottom: '1px solid #263347', paddingBottom: '1rem' }}>
@@ -995,7 +1100,7 @@ export const ExecutiveDashboard: React.FC<{ onLogout: () => void }> = ({ onLogou
                         <button
                           onClick={() => {
                             const found = tickets.find(t => t.folio === ev.folio);
-                            if (found) setSelectedTicket(found);
+                            if (found) handleOpenTicketDetail(found);
                           }}
                           style={{ background: 'rgba(194, 155, 71, 0.08)', border: '1px solid rgba(194, 155, 71, 0.3)', color: '#c29b47', padding: '7px 14px', borderRadius: '4px', fontSize: '0.75rem', fontFamily: 'Montserrat, sans-serif', cursor: 'pointer', fontWeight: 600 }}
                         >
@@ -1011,7 +1116,7 @@ export const ExecutiveDashboard: React.FC<{ onLogout: () => void }> = ({ onLogou
           </div>
         ) : selectedTicket ? (
 
-        /* VISTA 3: DETALLE Y DICTAMINACIÓN DEL EXPEDIENTE */
+        /* VISTA 3: DETALLE Y ACCIONES DE ADMIN EN EL EXPEDIENTE */
           <div>
             <button
               onClick={() => setSelectedTicket(null)}
@@ -1030,6 +1135,114 @@ export const ExecutiveDashboard: React.FC<{ onLogout: () => void }> = ({ onLogou
                 </h2>
               </div>
 
+              {/* INFORMACION Y CONTROL DEL TICKET (ACCIONES DE ADMIN: RE-ASIGNAR ABOGADO, CAMBIAR PRIORIDAD, EDITAR CORREOS CC) */}
+              <form onSubmit={handleSaveTicketAdminChanges} style={{ marginBottom: '2rem' }}>
+                <div style={{ background: '#0b0e14', border: '1px solid rgba(194, 155, 71, 0.3)', padding: '1.5rem', borderRadius: '8px', marginBottom: '1.5rem' }}>
+                  <div style={{ fontSize: '0.8rem', color: '#c29b47', fontWeight: 700, textTransform: 'uppercase', fontFamily: 'Montserrat, sans-serif', marginBottom: '1rem' }}>
+                    ⚙️ PANEL DE GESTIÓN ADMINISTRATIVA DEL TICKET (MODIFICAR ASIGNACIÓN Y PRIORIDAD)
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.25rem' }}>
+                    {/* 1. ASIGNAR / RE-ASIGNAR ABOGADO */}
+                    <div>
+                      <label className="input-label">Abogado Responsable Asignado</label>
+                      <select
+                        className="custom-input"
+                        style={{ paddingLeft: '12px' }}
+                        value={editAbogado}
+                        onChange={e => setEditAbogado(e.target.value)}
+                      >
+                        <option value="Lic. Mariana Fernández">Lic. Mariana Fernández (Especialista Mercantil)</option>
+                        <option value="Lic. Roberto Garza">Lic. Roberto Garza (Especialista Laboral / RH)</option>
+                        <option value="Lic. Carlos Mendoza">Lic. Carlos Mendoza (Especialista Corporativo)</option>
+                      </select>
+                    </div>
+
+                    {/* 2. CAMBIAR PRIORIDAD */}
+                    <div>
+                      <label className="input-label">Prioridad Legal</label>
+                      <select
+                        className="custom-input"
+                        style={{ paddingLeft: '12px' }}
+                        value={editPrioridad}
+                        onChange={e => setEditPrioridad(e.target.value as any)}
+                      >
+                        <option value="Media">Media (Atención SLA Normal)</option>
+                        <option value="Alta">Alta Prioridad Corporativa</option>
+                        <option value="Urgente">Urgente (Notificación / Emplazamiento)</option>
+                        <option value="Vencido">Vencido (Atención Prioritaria Inmediata)</option>
+                      </select>
+                    </div>
+
+                    {/* 3. CAMBIAR ESTATUS */}
+                    <div>
+                      <label className="input-label">Estatus del Expediente</label>
+                      <select
+                        className="custom-input"
+                        style={{ paddingLeft: '12px' }}
+                        value={nuevoEstadoTicket}
+                        onChange={e => setNuevoEstadoTicket(e.target.value as any)}
+                      >
+                        <option value="En Revisión">En Revisión</option>
+                        <option value="En Dictamen">En Dictamen</option>
+                        <option value="Requiere Información">Requiere Información Adicional</option>
+                        <option value="Urgente">Marcar Como Urgente</option>
+                        <option value="Concluido">Concluido / Dictaminado</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* 4. COPIAR A MÁS CORREOS (CC) */}
+                  <div className="input-group" style={{ marginTop: '1.25rem' }}>
+                    <label className="input-label">Copiar a Más Correos Adicionales (CC)</label>
+                    <input
+                      type="text"
+                      className="custom-input"
+                      style={{ paddingLeft: '12px' }}
+                      placeholder="ejemplo: gerencia@divol.com, contabilidad@divol.com, auditoria@grupohuerta.com"
+                      value={editCorreosCopia}
+                      onChange={e => setEditCorreosCopia(e.target.value)}
+                    />
+                    <span style={{ fontSize: '0.7rem', color: '#64748b', marginTop: '4px', display: 'block' }}>
+                      Separa múltiples direcciones con coma (,) para notificar automáticamente al guardar.
+                    </span>
+                  </div>
+
+                  {/* 5. CONTESTAR / DICTAMINAR TICKET */}
+                  <div className="input-group" style={{ marginTop: '1rem' }}>
+                    <label className="input-label">Contestar / Redactar Dictamen Legal para la Sucursal</label>
+                    <textarea
+                      rows={4}
+                      className="custom-input"
+                      style={{ paddingLeft: '12px', resize: 'vertical', lineHeight: 1.5 }}
+                      placeholder="Escriba aquí la respuesta oficial de la Dirección Jurídica o dictamen formal..."
+                      value={nuevoDictamen}
+                      onChange={e => setNuevoDictamen(e.target.value)}
+                    />
+                  </div>
+
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1rem' }}>
+                    <button
+                      type="submit"
+                      style={{
+                        background: '#c29b47',
+                        border: 'none',
+                        color: '#0b0e14',
+                        padding: '10px 24px',
+                        borderRadius: '4px',
+                        fontWeight: 700,
+                        fontFamily: 'Montserrat, sans-serif',
+                        fontSize: '0.775rem',
+                        textTransform: 'uppercase',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      Guardar Cambios y Enviar Respuesta
+                    </button>
+                  </div>
+                </div>
+              </form>
+
               {/* INFORMACION DEL SOLICITANTE */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.25rem', background: '#0b0e14', padding: '1.25rem', borderRadius: '6px', border: '1px solid #263347', marginBottom: '1.5rem' }}>
                 <div>
@@ -1041,14 +1254,6 @@ export const ExecutiveDashboard: React.FC<{ onLogout: () => void }> = ({ onLogou
                 <div>
                   <div style={{ fontSize: '0.7rem', color: '#94a3b8', textTransform: 'uppercase', fontFamily: 'Montserrat, sans-serif' }}>Correo del Solicitante</div>
                   <div style={{ fontSize: '0.85rem', color: '#cbd5e1' }}>{selectedTicket.correoSolicitante}</div>
-                  {selectedTicket.correosCopia && (
-                    <div style={{ fontSize: '0.725rem', color: '#64748b' }}>CC: {selectedTicket.correosCopia}</div>
-                  )}
-                </div>
-
-                <div>
-                  <div style={{ fontSize: '0.7rem', color: '#94a3b8', textTransform: 'uppercase', fontFamily: 'Montserrat, sans-serif' }}>Abogado Asignado</div>
-                  <div style={{ fontSize: '0.85rem', color: '#ffffff', fontWeight: 600 }}>{selectedTicket.abogadoAsignado}</div>
                 </div>
 
                 <div>
@@ -1067,23 +1272,8 @@ export const ExecutiveDashboard: React.FC<{ onLogout: () => void }> = ({ onLogou
                 </div>
               </div>
 
-              {/* DOCUMENTOS ADJUNTOS */}
-              <div style={{ marginBottom: '2rem' }}>
-                <h4 style={{ fontSize: '0.85rem', color: '#94a3b8', textTransform: 'uppercase', fontFamily: 'Montserrat, sans-serif', marginBottom: '0.5rem' }}>
-                  Documentos y Expedientes Adjuntos
-                </h4>
-                <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-                  {selectedTicket.documentos.map((doc, idx) => (
-                    <div key={idx} style={{ background: '#0b0e14', border: '1px solid #263347', padding: '10px 14px', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '8px', color: '#c29b47', fontSize: '0.825rem' }}>
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                      <span>{doc}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
               {/* HISTORIAL Y SEGUIMIENTO */}
-              <div style={{ marginBottom: '2rem' }}>
+              <div>
                 <h4 style={{ fontSize: '0.85rem', color: '#94a3b8', textTransform: 'uppercase', fontFamily: 'Montserrat, sans-serif', marginBottom: '0.75rem' }}>
                   Historial Cronológico de Dictámenes y Actuaciones
                 </h4>
@@ -1099,61 +1289,6 @@ export const ExecutiveDashboard: React.FC<{ onLogout: () => void }> = ({ onLogou
                   ))}
                 </div>
               </div>
-
-              {/* MÓDULO DE DICTAMINACIÓN */}
-              <div style={{ background: '#0b0e14', border: '1px solid rgba(194, 155, 71, 0.4)', borderRadius: '6px', padding: '1.5rem' }}>
-                <h4 className="formal-header-font" style={{ fontSize: '1.2rem', color: '#ffffff', marginBottom: '0.5rem' }}>
-                  Dictaminar Expediente y Actualizar Estatus (Alta Dirección / Abogado)
-                </h4>
-
-                <form onSubmit={handleAddLawyerDictamen}>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
-                    <div>
-                      <label className="input-label">Actualizar Estatus del Ticket</label>
-                      <select 
-                        className="custom-input" 
-                        style={{ paddingLeft: '12px' }}
-                        value={nuevoEstadoTicket} 
-                        onChange={e => setNuevoEstadoTicket(e.target.value as any)}
-                      >
-                        <option value="En Revisión">En Revisión</option>
-                        <option value="En Dictamen">En Dictamen</option>
-                        <option value="Requiere Información">Requiere Información Adicional</option>
-                        <option value="Urgente">Marcar Como Urgente</option>
-                        <option value="Concluido">Concluido / Dictaminado Final</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="input-label">Autor de la Respuesta</label>
-                      <input type="text" readOnly className="custom-input" style={{ background: '#19212d', color: '#c29b47', fontWeight: 600, paddingLeft: '12px' }} value="Lic. Ricardo Morales (Alta Dirección)" />
-                    </div>
-                  </div>
-
-                  <div className="input-group">
-                    <label className="input-label">Dictamen Legal / Respuesta Formal</label>
-                    <textarea 
-                      rows={4}
-                      required
-                      className="custom-input"
-                      style={{ paddingLeft: '12px', resize: 'vertical', lineHeight: 1.5 }}
-                      placeholder="Escriba aquí el dictamen judicial, borrador de respuesta o indicación legal..."
-                      value={nuevoDictamen}
-                      onChange={e => setNuevoDictamen(e.target.value)}
-                    />
-                  </div>
-
-                  <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                    <button
-                      type="submit"
-                      style={{ background: '#c29b47', border: 'none', color: '#0b0e14', padding: '10px 24px', borderRadius: '4px', fontWeight: 700, fontFamily: 'Montserrat, sans-serif', fontSize: '0.775rem', textTransform: 'uppercase', cursor: 'pointer' }}
-                    >
-                      Emitir Dictamen Formal
-                    </button>
-                  </div>
-                </form>
-              </div>
-
             </div>
           </div>
         ) : currentSection === 'expedientes' ? (
@@ -1210,7 +1345,7 @@ export const ExecutiveDashboard: React.FC<{ onLogout: () => void }> = ({ onLogou
                       <th style={{ padding: '12px' }}>Abogado Asignado</th>
                       <th style={{ padding: '12px' }}>Antigüedad</th>
                       <th style={{ padding: '12px' }}>Estatus</th>
-                      <th style={{ padding: '12px', textAlign: 'right' }}>Acción</th>
+                      <th style={{ padding: '12px', textAlign: 'right' }}>Acción Admin</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1245,20 +1380,20 @@ export const ExecutiveDashboard: React.FC<{ onLogout: () => void }> = ({ onLogou
                           </td>
                           <td style={{ padding: '14px 12px', textAlign: 'right' }}>
                             <button
-                              onClick={() => setSelectedTicket(item)}
+                              onClick={() => handleOpenTicketDetail(item)}
                               style={{
-                                background: 'rgba(194, 155, 71, 0.08)',
-                                border: '1px solid rgba(194, 155, 71, 0.3)',
-                                color: '#c29b47',
+                                background: '#c29b47',
+                                border: 'none',
+                                color: '#0b0e14',
                                 padding: '6px 12px',
                                 borderRadius: '4px',
                                 fontSize: '0.75rem',
                                 fontFamily: 'Montserrat, sans-serif',
                                 cursor: 'pointer',
-                                fontWeight: 600
+                                fontWeight: 700
                               }}
                             >
-                              Abrir Expediente
+                              Gestionar / Contestar
                             </button>
                           </td>
                         </tr>
@@ -1269,27 +1404,73 @@ export const ExecutiveDashboard: React.FC<{ onLogout: () => void }> = ({ onLogou
               </div>
             </div>
           </div>
+
+        /* VISTA 4: CATÁLOGO DE AGENCIAS DEL GRUPO (AL APRETAR CADA AGENCIA SE DESPLIEGA SU DOSSIER LEGAL COMPLETO) */
         ) : currentSection === 'agencias' ? (
           <div>
-            {/* VISTA AGENCIAS */}
             <h2 className="formal-header-font" style={{ fontSize: '1.5rem', color: '#ffffff', marginBottom: '0.5rem' }}>
-              Catálogo de Agencias de Grupo Huerta
+              Catálogo e Expedientes por Agencia de Grupo Huerta
             </h2>
             <p style={{ fontSize: '0.8rem', color: '#94a3b8', marginBottom: '1.5rem' }}>
-              Listado de sucursales habilitadas para el envío de trámites legales
+              Haz clic en cualquier agencia para consultar su <strong>Acta Constitutiva, Constancia Fiscal, Usuarios Habilitados e Historico de Expedientes</strong>
             </p>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.25rem' }}>
-              {AGENCIAS_OFICIALES.map((agencia, i) => (
-                <div key={i} style={{ background: '#141a24', border: '1px solid #263347', padding: '1.5rem', borderRadius: '8px' }}>
-                  <div style={{ fontSize: '0.725rem', color: '#c29b47', textTransform: 'uppercase', fontFamily: 'Montserrat, sans-serif' }}>SUCURSAL REGISTRADA</div>
-                  <h3 style={{ fontSize: '1.15rem', color: '#ffffff', marginTop: '4px', marginBottom: '0.75rem' }}>{agencia}</h3>
-                  <div style={{ fontSize: '0.8rem', color: '#94a3b8', display: 'flex', justifyContent: 'space-between', borderTop: '1px solid #263347', paddingTop: '0.75rem' }}>
-                    <span>Estatus: <strong style={{ color: '#4ade80' }}>Activa</strong></span>
-                    <span>Modo: <strong>Multitenant</strong></span>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(290px, 1fr))', gap: '1.25rem' }}>
+              {AGENCIAS_OFICIALES.map((agenciaNombre, i) => {
+                const info = DETALLE_AGENCIAS[agenciaNombre];
+                const ticketsAgencia = tickets.filter(t => t.agencia === agenciaNombre);
+                const usuariosAgencia = usuarios.filter(u => u.agencia === agenciaNombre);
+
+                return (
+                  <div 
+                    key={i} 
+                    onClick={() => setSelectedAgenciaModal(agenciaNombre)}
+                    style={{ 
+                      background: '#141a24', 
+                      border: '1px solid #263347', 
+                      padding: '1.5rem', 
+                      borderRadius: '8px', 
+                      cursor: 'pointer',
+                      transition: 'all 0.2s'
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                      <span style={{ fontSize: '0.725rem', color: '#c29b47', textTransform: 'uppercase', fontFamily: 'Montserrat, sans-serif', fontWeight: 700 }}>
+                        SUCURSAL GRUPO HUERTA
+                      </span>
+                      <span style={{ fontSize: '0.7rem', padding: '2px 6px', background: 'rgba(34, 197, 94, 0.12)', color: '#4ade80', borderRadius: '4px', border: '1px solid rgba(34, 197, 94, 0.3)' }}>
+                        Activa
+                      </span>
+                    </div>
+
+                    <h3 style={{ fontSize: '1.2rem', color: '#ffffff', marginBottom: '0.4rem' }}>{agenciaNombre}</h3>
+                    <div style={{ fontSize: '0.775rem', color: '#cbd5e1', marginBottom: '1rem' }}>{info?.razonSocial || agenciaNombre}</div>
+
+                    <div style={{ background: '#0b0e14', padding: '10px 12px', borderRadius: '6px', border: '1px solid #263347', fontSize: '0.775rem', display: 'flex', justifyContent: 'space-between', color: '#94a3b8' }}>
+                      <span>📄 Documentos: <strong style={{ color: '#c29b47' }}>3 PDF Oficiales</strong></span>
+                      <span>📂 Expedientes: <strong style={{ color: '#ffffff' }}>{ticketsAgencia.length}</strong></span>
+                    </div>
+
+                    <button
+                      style={{
+                        marginTop: '1rem',
+                        width: '100%',
+                        background: 'rgba(194, 155, 71, 0.08)',
+                        border: '1px solid rgba(194, 155, 71, 0.3)',
+                        color: '#c29b47',
+                        padding: '8px',
+                        borderRadius: '4px',
+                        fontSize: '0.75rem',
+                        fontFamily: 'Montserrat, sans-serif',
+                        fontWeight: 600,
+                        cursor: 'pointer'
+                      }}
+                    >
+                      Ver Expediente de la Agencia ➔
+                    </button>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         ) : currentSection === 'graficas' ? (
@@ -1564,8 +1745,7 @@ export const ExecutiveDashboard: React.FC<{ onLogout: () => void }> = ({ onLogou
                   onClick={() => {
                     const foundTicket = tickets.find(t => t.folio === selectedEventoModal.folio);
                     if (foundTicket) {
-                      setSelectedTicket(foundTicket);
-                      setCurrentSection('expedientes');
+                      handleOpenTicketDetail(foundTicket);
                     } else {
                       alert(`Abriendo expediente del folio ${selectedEventoModal.folio}...`);
                     }
@@ -1576,6 +1756,173 @@ export const ExecutiveDashboard: React.FC<{ onLogout: () => void }> = ({ onLogou
                   Abrir Expediente
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL DETALLE DE LA AGENCIA SELECCIONADA (MUESTRA DOCUMENTOS PDF: ACTA CONSTITUTIVA, CSF SAT, PODERES + USUARIOS + EXPEDIENTES) */}
+      {selectedAgenciaModal && DETALLE_AGENCIAS[selectedAgenciaModal] && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(5px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 999 }}>
+          <div style={{ background: '#141a24', border: '1px solid #263347', borderRadius: '8px', width: '100%', maxWidth: '780px', maxHeight: '90vh', overflowY: 'auto', padding: '2rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #263347', paddingBottom: '1rem', marginBottom: '1.25rem' }}>
+              <div>
+                <span style={{ fontSize: '0.725rem', color: '#c29b47', fontWeight: 700, fontFamily: 'Montserrat, sans-serif', textTransform: 'uppercase' }}>
+                  DOSSIER CORPORATIVO Y LEGAL
+                </span>
+                <h3 className="formal-header-font" style={{ fontSize: '1.5rem', color: '#ffffff', marginTop: '2px' }}>
+                  {selectedAgenciaModal}
+                </h3>
+              </div>
+              <button onClick={() => setSelectedAgenciaModal(null)} style={{ background: 'transparent', border: 'none', color: '#94a3b8', fontSize: '1.3rem', cursor: 'pointer' }}>✕</button>
+            </div>
+
+            {/* FICHA CORPORATIVA */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem', background: '#0b0e14', padding: '1.25rem', borderRadius: '6px', border: '1px solid #263347', marginBottom: '1.5rem' }}>
+              <div>
+                <span style={{ fontSize: '0.7rem', color: '#94a3b8', textTransform: 'uppercase', fontFamily: 'Montserrat, sans-serif' }}>Razón Social</span>
+                <div style={{ fontSize: '0.9rem', color: '#ffffff', fontWeight: 600 }}>{DETALLE_AGENCIAS[selectedAgenciaModal].razonSocial}</div>
+              </div>
+
+              <div>
+                <span style={{ fontSize: '0.7rem', color: '#94a3b8', textTransform: 'uppercase', fontFamily: 'Montserrat, sans-serif' }}>RFC Institucional</span>
+                <div style={{ fontSize: '0.9rem', color: '#c29b47', fontWeight: 700 }}>{DETALLE_AGENCIAS[selectedAgenciaModal].rfc}</div>
+              </div>
+
+              <div>
+                <span style={{ fontSize: '0.7rem', color: '#94a3b8', textTransform: 'uppercase', fontFamily: 'Montserrat, sans-serif' }}>Representante Legal</span>
+                <div style={{ fontSize: '0.85rem', color: '#cbd5e1' }}>{DETALLE_AGENCIAS[selectedAgenciaModal].representante}</div>
+              </div>
+            </div>
+
+            {/* SECCIÓN 1: PAPELES Y DOCUMENTOS CONSTITUTIVOS DE LA AGENCIA */}
+            <div style={{ marginBottom: '1.75rem' }}>
+              <h4 style={{ fontSize: '0.85rem', color: '#c29b47', textTransform: 'uppercase', fontFamily: 'Montserrat, sans-serif', marginBottom: '0.75rem' }}>
+                📁 Documentación Constitutiva e Impositiva Oficial
+              </h4>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
+                {/* ACTA CONSTITUTIVA */}
+                <div style={{ background: '#0b0e14', border: '1px solid #263347', padding: '1rem', borderRadius: '6px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#60a5fa', marginBottom: '6px', fontSize: '0.8rem', fontWeight: 600 }}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                    <span>Acta Constitutiva</span>
+                  </div>
+                  <div style={{ fontSize: '0.75rem', color: '#cbd5e1', marginBottom: '8px', wordBreak: 'break-all' }}>
+                    {DETALLE_AGENCIAS[selectedAgenciaModal].actaConstitutiva}
+                  </div>
+                  <button onClick={() => alert(`Visualizando ${DETALLE_AGENCIAS[selectedAgenciaModal].actaConstitutiva}...`)} style={{ background: '#19212d', border: '1px solid #334155', color: '#c29b47', width: '100%', padding: '5px', borderRadius: '4px', fontSize: '0.725rem', cursor: 'pointer' }}>
+                    Ver Documento PDF ➔
+                  </button>
+                </div>
+
+                {/* CONSTANCIA FISCAL */}
+                <div style={{ background: '#0b0e14', border: '1px solid #263347', padding: '1rem', borderRadius: '6px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#4ade80', marginBottom: '6px', fontSize: '0.8rem', fontWeight: 600 }}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/></svg>
+                    <span>Constancia Fiscal (SAT)</span>
+                  </div>
+                  <div style={{ fontSize: '0.75rem', color: '#cbd5e1', marginBottom: '8px', wordBreak: 'break-all' }}>
+                    {DETALLE_AGENCIAS[selectedAgenciaModal].constanciaFiscal}
+                  </div>
+                  <button onClick={() => alert(`Visualizando ${DETALLE_AGENCIAS[selectedAgenciaModal].constanciaFiscal}...`)} style={{ background: '#19212d', border: '1px solid #334155', color: '#4ade80', width: '100%', padding: '5px', borderRadius: '4px', fontSize: '0.725rem', cursor: 'pointer' }}>
+                    Ver Documento PDF ➔
+                  </button>
+                </div>
+
+                {/* PODERES NOTARIALES */}
+                <div style={{ background: '#0b0e14', border: '1px solid #263347', padding: '1rem', borderRadius: '6px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#fbbf24', marginBottom: '6px', fontSize: '0.8rem', fontWeight: 600 }}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                    <span>Poderes Notariales</span>
+                  </div>
+                  <div style={{ fontSize: '0.75rem', color: '#cbd5e1', marginBottom: '8px', wordBreak: 'break-all' }}>
+                    {DETALLE_AGENCIAS[selectedAgenciaModal].poderesNotariales}
+                  </div>
+                  <button onClick={() => alert(`Visualizando ${DETALLE_AGENCIAS[selectedAgenciaModal].poderesNotariales}...`)} style={{ background: '#19212d', border: '1px solid #334155', color: '#fbbf24', width: '100%', padding: '5px', borderRadius: '4px', fontSize: '0.725rem', cursor: 'pointer' }}>
+                    Ver Documento PDF ➔
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* SECCIÓN 2: USUARIOS QUE ENVÍAN TRÁMITES EN ESTA SUCURSAL */}
+            <div style={{ marginBottom: '1.75rem' }}>
+              <h4 style={{ fontSize: '0.85rem', color: '#c29b47', textTransform: 'uppercase', fontFamily: 'Montserrat, sans-serif', marginBottom: '0.75rem' }}>
+                👥 Usuarios Autorizados para Envío de Trámites ({usuarios.filter(u => u.agencia === selectedAgenciaModal).length})
+              </h4>
+
+              <div style={{ background: '#0b0e14', border: '1px solid #263347', borderRadius: '6px', padding: '1rem' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8rem', textAlign: 'left' }}>
+                  <thead>
+                    <tr style={{ borderBottom: '1px solid #263347', color: '#94a3b8', textTransform: 'uppercase', fontSize: '0.7rem' }}>
+                      <th style={{ padding: '8px' }}>Nombre</th>
+                      <th style={{ padding: '8px' }}>Correo</th>
+                      <th style={{ padding: '8px' }}>Cargo</th>
+                      <th style={{ padding: '8px' }}>Estatus</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {usuarios.filter(u => u.agencia === selectedAgenciaModal).map(u => (
+                      <tr key={u.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                        <td style={{ padding: '8px', color: '#ffffff', fontWeight: 600 }}>{u.nombre}</td>
+                        <td style={{ padding: '8px', color: '#cbd5e1' }}>{u.correo}</td>
+                        <td style={{ padding: '8px', color: '#c29b47' }}>{u.cargo}</td>
+                        <td style={{ padding: '8px', color: '#4ade80' }}>● {u.estatus}</td>
+                      </tr>
+                    ))}
+                    {usuarios.filter(u => u.agencia === selectedAgenciaModal).length === 0 && (
+                      <tr>
+                        <td colSpan={4} style={{ padding: '1rem', color: '#94a3b8', textAlign: 'center' }}>
+                          No hay usuarios registrados específicamente para esta agencia.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* SECCIÓN 3: EXPEDIENTES Y TICKETS DE ESTA AGENCIA */}
+            <div>
+              <h4 style={{ fontSize: '0.85rem', color: '#c29b47', textTransform: 'uppercase', fontFamily: 'Montserrat, sans-serif', marginBottom: '0.75rem' }}>
+                📂 Historico de Expedientes Registrados ({tickets.filter(t => t.agencia === selectedAgenciaModal).length})
+              </h4>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {tickets.filter(t => t.agencia === selectedAgenciaModal).map(t => (
+                  <div key={t.id} style={{ background: '#0b0e14', border: '1px solid #263347', borderRadius: '6px', padding: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <div style={{ display: 'flex', gap: '8px', fontSize: '0.725rem', marginBottom: '2px' }}>
+                        <strong style={{ color: '#c29b47' }}>{t.folio}</strong>
+                        <span style={{ color: '#ffffff' }}>• {t.autoridad || t.tipo}</span>
+                      </div>
+                      <div style={{ color: '#ffffff', fontWeight: 600, fontSize: '0.875rem' }}>{t.titulo}</div>
+                    </div>
+
+                    <button
+                      onClick={() => {
+                        setSelectedAgenciaModal(null);
+                        handleOpenTicketDetail(t);
+                      }}
+                      style={{ background: '#c29b47', border: 'none', color: '#0b0e14', padding: '6px 12px', borderRadius: '4px', fontSize: '0.725rem', fontWeight: 700, cursor: 'pointer' }}
+                    >
+                      Abrir Expediente
+                    </button>
+                  </div>
+                ))}
+                {tickets.filter(t => t.agencia === selectedAgenciaModal).length === 0 && (
+                  <div style={{ padding: '1rem', color: '#94a3b8', textAlign: 'center', background: '#0b0e14', borderRadius: '6px', border: '1px solid #263347', fontSize: '0.8rem' }}>
+                    No existen tickets o expedientes registrados actualmente para esta sucursal.
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1.5rem' }}>
+              <button onClick={() => setSelectedAgenciaModal(null)} style={{ background: 'transparent', border: '1px solid #334155', color: '#cbd5e1', padding: '8px 18px', borderRadius: '4px', cursor: 'pointer', fontSize: '0.8rem' }}>
+                Cerrar Dossier
+              </button>
             </div>
           </div>
         </div>
