@@ -36,7 +36,8 @@ export interface EventoCalendario {
   agencia: string;
   tipoEvento: 'Audiencia' | 'Incidencia' | 'Cita Notarial' | 'Reunión';
   titulo: string;
-  fecha: string;
+  fecha: string; // Formato DD/MM/YYYY ej: "02/09/2026"
+  diaNumero: number;
   hora: string;
   lugar: string;
   abogado: string;
@@ -60,8 +61,10 @@ export const ExecutiveDashboard: React.FC<{ onLogout: () => void }> = ({ onLogou
   const [filtroTipo, setFiltroTipo] = useState<string>('TODOS');
   const [filtroAgencia, setFiltroAgencia] = useState<string>('TODOS');
 
-  // Filtro específico para la vista de Calendario
+  // Filtros de la vista Calendario
+  const [modoCalendario, setModoCalendario] = useState<'grid' | 'lista'>('grid'); // 'grid' = vista calendario mensual en grande, 'lista' = vista desglosada
   const [filtroTipoEvento, setFiltroTipoEvento] = useState<string>('TODOS');
+  const [selectedEventoModal, setSelectedEventoModal] = useState<EventoCalendario | null>(null);
 
   // Filtros de Gráficas
   const [rangoGraficas, setRangoGraficas] = useState<'mes' | 'trimestre' | 'anio'>('mes');
@@ -175,67 +178,98 @@ export const ExecutiveDashboard: React.FC<{ onLogout: () => void }> = ({ onLogou
     }
   ]);
 
-  // Eventos del Calendario vinculados a expedientes/tickets
+  // Eventos del Calendario vinculados a los días de Septiembre 2026
   const [eventosCalendario] = useState<EventoCalendario[]>([
     {
       id: 'ev-1',
       folio: 'JUR-2026-089',
       agencia: 'Divol Norte',
       tipoEvento: 'Incidencia',
-      titulo: 'Vencimiento de Término Legal de Emplazamiento Mercantil',
+      titulo: 'Vencimiento Emplazamiento Mercantil Juicio 402/2026',
       fecha: '01/09/2026',
+      diaNumero: 1,
       hora: '23:59 PM',
       lugar: 'Juzgado 4° de lo Mercantil CDMX',
       abogado: 'Lic. Mariana Fernández',
-      detalles: 'Límite improrrogable para ingresar la contestación de demanda mercantil en la oficialía de partes.'
+      detalles: 'Límite improrrogable para ingresar la contestación de demanda mercantil.'
     },
     {
       id: 'ev-2',
       folio: 'JUR-2026-084',
       agencia: 'Divol Perinorte',
       tipoEvento: 'Audiencia',
-      titulo: 'Audiencia Conciliatoria de Juicio Laboral (Exp. 145/2026)',
+      titulo: 'Audiencia Conciliatoria Juicio Laboral 145/2026',
       fecha: '02/09/2026',
+      diaNumero: 2,
       hora: '10:00 AM',
-      lugar: 'Tribunal Laboral N° 4 - Cuautitlán Izcalli',
+      lugar: 'Tribunal Laboral N° 4 - Cuautitlán',
       abogado: 'Lic. Roberto Garza',
-      detalles: 'Comparecencia de la representación legal de la empresa para desahogo de convenio laboral.'
+      detalles: 'Comparecencia de representación legal para firma de desahogo de convenio.'
     },
     {
       id: 'ev-3',
       folio: 'JUR-2026-081',
       agencia: 'Suzuki Montevideo',
       tipoEvento: 'Reunión',
-      titulo: 'Reunión de Negociación con Arrendador de Inmueble Refacciones',
+      titulo: 'Negociación Cláusulas Arrendamiento Sucursal',
       fecha: '03/09/2026',
+      diaNumero: 3,
       hora: '16:00 PM',
-      lugar: 'Sala de Juntas - Suzuki Montevideo',
+      lugar: 'Sala de Juntas Corporativa',
       abogado: 'Lic. Mariana Fernández',
-      detalles: 'Mesa de trabajo para acordar ajuste a la cláusula de incremento anual de renta.'
+      detalles: 'Mesa de trabajo presencial con representantes del propietario del inmueble.'
     },
     {
       id: 'ev-4',
-      folio: 'JUR-2026-075',
-      agencia: 'Cupra La Villa',
-      tipoEvento: 'Cita Notarial',
-      titulo: 'Firma y Protocolización de Poderes Notariales (Escritura 584)',
-      fecha: '09/09/2026',
-      hora: '09:00 AM',
-      lugar: 'Notaría Pública N° 142 CDMX',
-      abogado: 'Lic. Carlos Mendoza',
-      detalles: 'Entrega del libro de escrituras certificado con facultades de pleitos y cobranzas.'
+      folio: 'JUR-2026-092',
+      agencia: 'Omoda Esmeralda',
+      tipoEvento: 'Incidencia',
+      titulo: 'Vencimiento Impugnación Multa Administraiva',
+      fecha: '04/09/2026',
+      diaNumero: 4,
+      hora: '18:00 PM',
+      lugar: 'Tribunal de Justicia Administrativa',
+      abogado: 'Lic. Roberto Garza',
+      detalles: 'Último día para interposición de recurso de revocación ante autoridad tributaria.'
     },
     {
       id: 'ev-5',
-      folio: 'JUR-2026-092',
+      folio: 'JUR-2026-075',
+      agencia: 'Cupra La Villa',
+      tipoEvento: 'Cita Notarial',
+      titulo: 'Firma y Protocolización Escritura Poderes 584',
+      fecha: '09/09/2026',
+      diaNumero: 9,
+      hora: '09:00 AM',
+      lugar: 'Notaría Pública N° 142 CDMX',
+      abogado: 'Lic. Carlos Mendoza',
+      detalles: 'Recogida de testimonio firmado ante Notario Público.'
+    },
+    {
+      id: 'ev-6',
+      folio: 'JUR-2026-095',
       agencia: 'Divol Tlalnepantla',
       tipoEvento: 'Audiencia',
-      titulo: 'Comparecencia de Inspección Ordinaria STPS',
+      titulo: 'Comparecencia Inspección STPS Normativa',
       fecha: '12/09/2026',
+      diaNumero: 12,
       hora: '11:30 AM',
-      lugar: 'Delegación Federal del Trabajo - Estado de México',
+      lugar: 'Delegación Federal del Trabajo',
       abogado: 'Lic. Roberto Garza',
-      detalles: 'Presentación de evidencias de comisiones mixtas y capacitación laboral.'
+      detalles: 'Presentación de actas de comisiones mixtas de seguridad e higiene.'
+    },
+    {
+      id: 'ev-7',
+      folio: 'JUR-2026-098',
+      agencia: 'Divol Lindavista',
+      tipoEvento: 'Reunión',
+      titulo: 'Junta de Revisión de Contrato Colectivo',
+      fecha: '18/09/2026',
+      diaNumero: 18,
+      hora: '12:00 PM',
+      lugar: 'Oficinas Divol Lindavista',
+      abogado: 'Lic. Carlos Mendoza',
+      detalles: 'Revisión periódica de estipulaciones con representantes sindicales.'
     }
   ]);
 
@@ -307,6 +341,13 @@ export const ExecutiveDashboard: React.FC<{ onLogout: () => void }> = ({ onLogou
   const filteredEventos = eventosCalendario.filter(e => {
     return filtroTipoEvento === 'TODOS' || e.tipoEvento === filtroTipoEvento;
   });
+
+  // Estructura de Días para el Calendario Mensual de Septiembre 2026 (empieza en Martes = índice 2)
+  // Septiembre tiene 30 días
+  const diasMesSeptiembre: (number | null)[] = [
+    null, null, // Dom, Lun vacíos (empieza en Martes 1)
+    1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30
+  ];
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: '#0b0e14' }}>
@@ -714,7 +755,7 @@ export const ExecutiveDashboard: React.FC<{ onLogout: () => void }> = ({ onLogou
             </section>
           </div>
 
-        /* VISTA 2: VISTA DEDICADA DE CALENDARIO LEGAL DE AUDIENCIAS, INCIDENCIAS, CITAS Y REUNIONES */
+        /* VISTA 2: VISTA DEDICADA DE CALENDARIO LEGAL (OPCIÓN GRID MENSUAL LITERAL vs LISTA) */
         ) : currentSection === 'calendario' && !selectedTicket ? (
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
@@ -723,148 +764,280 @@ export const ExecutiveDashboard: React.FC<{ onLogout: () => void }> = ({ onLogou
                   Calendario Legal de Actuaciones y Eventos
                 </h2>
                 <p style={{ fontSize: '0.8rem', color: '#94a3b8' }}>
-                  Agenda central de audiencias judicializadas, incidencias/términos de tickets, citas notariales y reuniones
+                  Agenda central de audiencias, incidencias/términos, citas notariales y reuniones
                 </p>
               </div>
 
-              {/* FILTROS POR TIPO DE EVENTO */}
-              <div style={{ display: 'flex', gap: '8px', background: '#141a24', border: '1px solid #263347', padding: '4px', borderRadius: '6px' }}>
-                {(['TODOS', 'Audiencia', 'Incidencia', 'Cita Notarial', 'Reunión'] as const).map(t => (
+              {/* OPCIONES DE NAVEGACIÓN ENTRE VISTA CALENDARIO MENSUAL Y LISTA */}
+              <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                <div style={{ display: 'flex', background: '#141a24', border: '1px solid #263347', padding: '4px', borderRadius: '6px' }}>
                   <button
-                    key={t}
-                    onClick={() => setFiltroTipoEvento(t)}
+                    onClick={() => setModoCalendario('grid')}
                     style={{
-                      background: filtroTipoEvento === t ? '#19212d' : 'transparent',
-                      border: filtroTipoEvento === t ? '1px solid #334155' : 'none',
-                      color: filtroTipoEvento === t ? '#c29b47' : '#94a3b8',
-                      padding: '6px 12px',
+                      background: modoCalendario === 'grid' ? '#19212d' : 'transparent',
+                      border: modoCalendario === 'grid' ? '1px solid #334155' : 'none',
+                      color: modoCalendario === 'grid' ? '#c29b47' : '#94a3b8',
+                      padding: '6px 14px',
                       borderRadius: '4px',
-                      fontSize: '0.75rem',
+                      fontSize: '0.775rem',
                       fontFamily: 'Montserrat, sans-serif',
                       fontWeight: 600,
-                      cursor: 'pointer'
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px'
                     }}
                   >
-                    {t === 'TODOS' ? 'Todos los Eventos' : t}
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                    <span>Vista Calendario Mensual</span>
                   </button>
-                ))}
+
+                  <button
+                    onClick={() => setModoCalendario('lista')}
+                    style={{
+                      background: modoCalendario === 'lista' ? '#19212d' : 'transparent',
+                      border: modoCalendario === 'lista' ? '1px solid #334155' : 'none',
+                      color: modoCalendario === 'lista' ? '#c29b47' : '#94a3b8',
+                      padding: '6px 14px',
+                      borderRadius: '4px',
+                      fontSize: '0.775rem',
+                      fontFamily: 'Montserrat, sans-serif',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px'
+                    }}
+                  >
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+                    <span>Vista Cronológica</span>
+                  </button>
+                </div>
+
+                {/* FILTROS POR TIPO DE EVENTO */}
+                <select
+                  className="custom-input"
+                  value={filtroTipoEvento}
+                  onChange={e => setFiltroTipoEvento(e.target.value)}
+                  style={{ paddingLeft: '12px', fontSize: '0.8rem' }}
+                >
+                  <option value="TODOS">Todos los Eventos Legales</option>
+                  <option value="Audiencia">Audiencias Judiciales</option>
+                  <option value="Incidencia">Incidencias & Términos</option>
+                  <option value="Cita Notarial">Citas Notariales</option>
+                  <option value="Reunión">Reuniones Corporativas</option>
+                </select>
               </div>
             </div>
 
-            {/* MÓDULO DE CALENDARIO VISUAL Y EVENTOS DETALLADOS */}
-            <div style={{ background: '#141a24', border: '1px solid #263347', borderRadius: '8px', padding: '1.75rem' }}>
-              
-              {/* TARJETAS RESUMEN DE CATEGORÍAS */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
-                <div style={{ background: '#0b0e14', border: '1px solid rgba(239, 68, 68, 0.3)', padding: '1.25rem', borderRadius: '6px' }}>
-                  <div style={{ fontSize: '0.7rem', color: '#f87171', textTransform: 'uppercase', fontWeight: 600 }}>Incidencias / Términos</div>
-                  <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#ffffff', margin: '4px 0', fontFamily: 'Cormorant Garamond, serif' }}>1 Pendiente</div>
-                  <div style={{ fontSize: '0.7rem', color: '#94a3b8' }}>Vencimiento de contestación</div>
+            {/* MODO 1: VISTA CALENDARIO MENSUAL LITERAL (GRID DE MES COMPLETO) */}
+            {modoCalendario === 'grid' ? (
+              <div style={{ background: '#141a24', border: '1px solid #263347', borderRadius: '8px', padding: '1.75rem' }}>
+                
+                {/* CABECERA DEL MES */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', borderBottom: '1px solid #263347', paddingBottom: '1rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    <h3 className="formal-header-font" style={{ fontSize: '1.5rem', color: '#ffffff' }}>
+                      SEPTIEMBRE 2026
+                    </h3>
+                    <span style={{ fontSize: '0.75rem', padding: '3px 10px', background: 'rgba(194, 155, 71, 0.1)', color: '#c29b47', border: '1px solid rgba(194, 155, 71, 0.3)', borderRadius: '4px', fontWeight: 600, fontFamily: 'Montserrat, sans-serif' }}>
+                      Mes Actual
+                    </span>
+                  </div>
+
+                  {/* LEYENDA DE COLORES */}
+                  <div style={{ display: 'flex', gap: '1.25rem', fontSize: '0.75rem', fontFamily: 'Montserrat, sans-serif' }}>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#f87171' }}>
+                      <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#f87171' }}></span> Incidencias
+                    </span>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#60a5fa' }}>
+                      <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#60a5fa' }}></span> Audiencias
+                    </span>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#fbbf24' }}>
+                      <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#fbbf24' }}></span> Citas Notariales
+                    </span>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#c084fc' }}>
+                      <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#c084fc' }}></span> Reuniones
+                    </span>
+                  </div>
                 </div>
 
-                <div style={{ background: '#0b0e14', border: '1px solid rgba(59, 130, 246, 0.3)', padding: '1.25rem', borderRadius: '6px' }}>
-                  <div style={{ fontSize: '0.7rem', color: '#60a5fa', textTransform: 'uppercase', fontWeight: 600 }}>Audiencias Judiciales</div>
-                  <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#ffffff', margin: '4px 0', fontFamily: 'Cormorant Garamond, serif' }}>2 Programadas</div>
-                  <div style={{ fontSize: '0.7rem', color: '#94a3b8' }}>Laborales y Mercantiles</div>
-                </div>
-
-                <div style={{ background: '#0b0e14', border: '1px solid rgba(245, 158, 11, 0.3)', padding: '1.25rem', borderRadius: '6px' }}>
-                  <div style={{ fontSize: '0.7rem', color: '#fbbf24', textTransform: 'uppercase', fontWeight: 600 }}>Citas Notariales</div>
-                  <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#ffffff', margin: '4px 0', fontFamily: 'Cormorant Garamond, serif' }}>1 Agendada</div>
-                  <div style={{ fontSize: '0.7rem', color: '#94a3b8' }}>Protocolización de Poderes</div>
-                </div>
-
-                <div style={{ background: '#0b0e14', border: '1px solid rgba(168, 85, 247, 0.3)', padding: '1.25rem', borderRadius: '6px' }}>
-                  <div style={{ fontSize: '0.7rem', color: '#c084fc', textTransform: 'uppercase', fontWeight: 600 }}>Reuniones Corporativas</div>
-                  <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#ffffff', margin: '4px 0', fontFamily: 'Cormorant Garamond, serif' }}>1 Agendada</div>
-                  <div style={{ fontSize: '0.7rem', color: '#94a3b8' }}>Negociación de Arrendamiento</div>
-                </div>
-              </div>
-
-              {/* LISTADO DETALLADO DE EVENTOS DEL CALENDARIO */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-                {filteredEventos.map(ev => {
-                  const colorBadge = 
-                    ev.tipoEvento === 'Incidencia' ? '#f87171' :
-                    ev.tipoEvento === 'Audiencia' ? '#60a5fa' :
-                    ev.tipoEvento === 'Cita Notarial' ? '#fbbf24' : '#c084fc';
+                {/* GRID DEL CALENDARIO LITERAL (7 COLUMNAS: DOM A SÁB) */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '8px' }}>
                   
-                  const bgBadge = 
-                    ev.tipoEvento === 'Incidencia' ? 'rgba(239, 68, 68, 0.12)' :
-                    ev.tipoEvento === 'Audiencia' ? 'rgba(59, 130, 246, 0.12)' :
-                    ev.tipoEvento === 'Cita Notarial' ? 'rgba(245, 158, 11, 0.12)' : 'rgba(168, 85, 247, 0.12)';
-
-                  return (
-                    <div key={ev.id} style={{ background: '#0b0e14', border: '1px solid #263347', borderRadius: '8px', padding: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1.25rem' }}>
-                      <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
-                        {/* FECHA DESTACADA */}
-                        <div style={{ background: '#19212d', border: `1px solid ${colorBadge}`, padding: '12px 18px', borderRadius: '8px', textAlign: 'center', minWidth: '110px' }}>
-                          <div style={{ fontSize: '1rem', fontWeight: 700, color: colorBadge, fontFamily: 'Montserrat, sans-serif' }}>{ev.fecha}</div>
-                          <div style={{ fontSize: '0.775rem', color: '#ffffff', fontWeight: 600, marginTop: '2px' }}>{ev.hora}</div>
-                        </div>
-
-                        <div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
-                            <span style={{ padding: '3px 8px', borderRadius: '4px', fontSize: '0.7rem', fontWeight: 700, background: bgBadge, color: colorBadge, border: `1px solid ${colorBadge}`, fontFamily: 'Montserrat, sans-serif', textTransform: 'uppercase' }}>
-                              {ev.tipoEvento}
-                            </span>
-                            <span style={{ fontSize: '0.75rem', color: '#c29b47', fontWeight: 600, fontFamily: 'Montserrat, sans-serif' }}>
-                              FOLIO: {ev.folio}
-                            </span>
-                            <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
-                              • {ev.agencia}
-                            </span>
-                          </div>
-
-                          <h3 style={{ fontSize: '1.1rem', color: '#ffffff', fontWeight: 600, marginBottom: '4px' }}>
-                            {ev.titulo}
-                          </h3>
-
-                          <div style={{ fontSize: '0.825rem', color: '#cbd5e1', marginBottom: '4px' }}>
-                            📍 Sede / Lugar: <strong>{ev.lugar}</strong>
-                          </div>
-
-                          <div style={{ fontSize: '0.8rem', color: '#94a3b8' }}>
-                            {ev.detalles}
-                          </div>
-                        </div>
-                      </div>
-
-                      <div style={{ textAlign: 'right' }}>
-                        <div style={{ fontSize: '0.75rem', color: '#94a3b8', textTransform: 'uppercase', fontFamily: 'Montserrat, sans-serif', marginBottom: '2px' }}>Abogado Responsable</div>
-                        <div style={{ fontSize: '0.875rem', color: '#ffffff', fontWeight: 600, marginBottom: '10px' }}>{ev.abogado}</div>
-                        
-                        <button
-                          onClick={() => {
-                            const foundTicket = tickets.find(t => t.folio === ev.folio);
-                            if (foundTicket) {
-                              setSelectedTicket(foundTicket);
-                              setCurrentSection('expedientes');
-                            } else {
-                              alert(`Abriendo expediente de folio ${ev.folio}...`);
-                            }
-                          }}
-                          style={{
-                            background: 'rgba(194, 155, 71, 0.08)',
-                            border: '1px solid rgba(194, 155, 71, 0.3)',
-                            color: '#c29b47',
-                            padding: '7px 14px',
-                            borderRadius: '4px',
-                            fontSize: '0.75rem',
-                            fontFamily: 'Montserrat, sans-serif',
-                            cursor: 'pointer',
-                            fontWeight: 600
-                          }}
-                        >
-                          Ver Expediente del Ticket
-                        </button>
-                      </div>
+                  {/* DIAS DE LA SEMANA */}
+                  {['DOM', 'LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB'].map((dia, idx) => (
+                    <div key={idx} style={{ textAlign: 'center', fontSize: '0.75rem', fontWeight: 700, color: '#94a3b8', padding: '8px 0', borderBottom: '1px solid #263347', fontFamily: 'Montserrat, sans-serif' }}>
+                      {dia}
                     </div>
-                  );
-                })}
-              </div>
+                  ))}
 
-            </div>
+                  {/* CASILLAS DE CADA DÍA DEL MES */}
+                  {diasMesSeptiembre.map((numDia, index) => {
+                    if (numDia === null) {
+                      return <div key={index} style={{ background: '#0b0e14', opacity: 0.3, minHeight: '110px', borderRadius: '6px' }}></div>;
+                    }
+
+                    // Buscar eventos de este día
+                    const eventosDelDia = filteredEventos.filter(e => e.diaNumero === numDia);
+                    const esHoy = numDia === 1; // Hoy 1 de Septiembre
+
+                    return (
+                      <div
+                        key={index}
+                        style={{
+                          background: esHoy ? 'rgba(194, 155, 71, 0.04)' : '#0b0e14',
+                          border: esHoy ? '1px solid #c29b47' : '1px solid #263347',
+                          borderRadius: '6px',
+                          padding: '8px',
+                          minHeight: '115px',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          justifyContent: 'space-between',
+                          position: 'relative'
+                        }}
+                      >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                          <span style={{ fontSize: '0.85rem', fontWeight: 700, color: esHoy ? '#c29b47' : '#ffffff', fontFamily: 'Montserrat, sans-serif' }}>
+                            {numDia}
+                          </span>
+                          {esHoy && (
+                            <span style={{ fontSize: '0.625rem', background: '#c29b47', color: '#0b0e14', padding: '1px 5px', borderRadius: '3px', fontWeight: 800 }}>HOY</span>
+                          )}
+                        </div>
+
+                        {/* LISTA DE CHIPS DE EVENTOS DEL DÍA */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', overflowY: 'auto', maxHeight: '80px' }}>
+                          {eventosDelDia.map(ev => {
+                            const colorBadge = 
+                              ev.tipoEvento === 'Incidencia' ? '#f87171' :
+                              ev.tipoEvento === 'Audiencia' ? '#60a5fa' :
+                              ev.tipoEvento === 'Cita Notarial' ? '#fbbf24' : '#c084fc';
+                            
+                            const bgBadge = 
+                              ev.tipoEvento === 'Incidencia' ? 'rgba(239, 68, 68, 0.2)' :
+                              ev.tipoEvento === 'Audiencia' ? 'rgba(59, 130, 246, 0.2)' :
+                              ev.tipoEvento === 'Cita Notarial' ? 'rgba(245, 158, 11, 0.2)' : 'rgba(168, 85, 247, 0.2)';
+
+                            return (
+                              <div
+                                key={ev.id}
+                                onClick={() => setSelectedEventoModal(ev)}
+                                title={`${ev.tipoEvento}: ${ev.titulo} (${ev.hora})`}
+                                style={{
+                                  background: bgBadge,
+                                  border: `1px solid ${colorBadge}`,
+                                  color: '#ffffff',
+                                  padding: '4px 6px',
+                                  borderRadius: '4px',
+                                  fontSize: '0.675rem',
+                                  cursor: 'pointer',
+                                  lineHeight: 1.25
+                                }}
+                              >
+                                <div style={{ color: colorBadge, fontWeight: 700, fontSize: '0.65rem' }}>
+                                  {ev.hora} • {ev.folio}
+                                </div>
+                                <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontWeight: 500 }}>
+                                  {ev.titulo}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : (
+
+              /* MODO 2: VISTA CRONOLÓGICA LISTADO DESGLOSADO */
+              <div style={{ background: '#141a24', border: '1px solid #263347', borderRadius: '8px', padding: '1.75rem' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                  {filteredEventos.map(ev => {
+                    const colorBadge = 
+                      ev.tipoEvento === 'Incidencia' ? '#f87171' :
+                      ev.tipoEvento === 'Audiencia' ? '#60a5fa' :
+                      ev.tipoEvento === 'Cita Notarial' ? '#fbbf24' : '#c084fc';
+                    
+                    const bgBadge = 
+                      ev.tipoEvento === 'Incidencia' ? 'rgba(239, 68, 68, 0.12)' :
+                      ev.tipoEvento === 'Audiencia' ? 'rgba(59, 130, 246, 0.12)' :
+                      ev.tipoEvento === 'Cita Notarial' ? 'rgba(245, 158, 11, 0.12)' : 'rgba(168, 85, 247, 0.12)';
+
+                    return (
+                      <div key={ev.id} style={{ background: '#0b0e14', border: '1px solid #263347', borderRadius: '8px', padding: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1.25rem' }}>
+                        <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
+                          {/* FECHA DESTACADA */}
+                          <div style={{ background: '#19212d', border: `1px solid ${colorBadge}`, padding: '12px 18px', borderRadius: '8px', textAlign: 'center', minWidth: '110px' }}>
+                            <div style={{ fontSize: '1rem', fontWeight: 700, color: colorBadge, fontFamily: 'Montserrat, sans-serif' }}>{ev.fecha}</div>
+                            <div style={{ fontSize: '0.775rem', color: '#ffffff', fontWeight: 600, marginTop: '2px' }}>{ev.hora}</div>
+                          </div>
+
+                          <div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
+                              <span style={{ padding: '3px 8px', borderRadius: '4px', fontSize: '0.7rem', fontWeight: 700, background: bgBadge, color: colorBadge, border: `1px solid ${colorBadge}`, fontFamily: 'Montserrat, sans-serif', textTransform: 'uppercase' }}>
+                                {ev.tipoEvento}
+                              </span>
+                              <span style={{ fontSize: '0.75rem', color: '#c29b47', fontWeight: 600, fontFamily: 'Montserrat, sans-serif' }}>
+                                FOLIO: {ev.folio}
+                              </span>
+                              <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
+                                • {ev.agencia}
+                              </span>
+                            </div>
+
+                            <h3 style={{ fontSize: '1.1rem', color: '#ffffff', fontWeight: 600, marginBottom: '4px' }}>
+                              {ev.titulo}
+                            </h3>
+
+                            <div style={{ fontSize: '0.825rem', color: '#cbd5e1', marginBottom: '4px' }}>
+                              📍 Sede / Lugar: <strong>{ev.lugar}</strong>
+                            </div>
+
+                            <div style={{ fontSize: '0.8rem', color: '#94a3b8' }}>
+                              {ev.detalles}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div style={{ textAlign: 'right' }}>
+                          <div style={{ fontSize: '0.75rem', color: '#94a3b8', textTransform: 'uppercase', fontFamily: 'Montserrat, sans-serif', marginBottom: '2px' }}>Abogado Responsable</div>
+                          <div style={{ fontSize: '0.875rem', color: '#ffffff', fontWeight: 600, marginBottom: '10px' }}>{ev.abogado}</div>
+                          
+                          <button
+                            onClick={() => {
+                              const foundTicket = tickets.find(t => t.folio === ev.folio);
+                              if (foundTicket) {
+                                setSelectedTicket(foundTicket);
+                                setCurrentSection('expedientes');
+                              } else {
+                                alert(`Abriendo expediente de folio ${ev.folio}...`);
+                              }
+                            }}
+                            style={{
+                              background: 'rgba(194, 155, 71, 0.08)',
+                              border: '1px solid rgba(194, 155, 71, 0.3)',
+                              color: '#c29b47',
+                              padding: '7px 14px',
+                              borderRadius: '4px',
+                              fontSize: '0.75rem',
+                              fontFamily: 'Montserrat, sans-serif',
+                              cursor: 'pointer',
+                              fontWeight: 600
+                            }}
+                          >
+                            Ver Expediente del Ticket
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
           </div>
         ) : selectedTicket ? (
 
@@ -1341,6 +1514,74 @@ export const ExecutiveDashboard: React.FC<{ onLogout: () => void }> = ({ onLogou
         )}
 
       </main>
+
+      {/* MODAL DETALLE DE EVENTO AL HACER CLIC EN EL CALENDARIO MENSUAL */}
+      {selectedEventoModal && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.82)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 999 }}>
+          <div style={{ background: '#141a24', border: '1px solid #263347', borderRadius: '8px', width: '100%', maxWidth: '520px', padding: '2rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem', borderBottom: '1px solid #263347', paddingBottom: '0.75rem' }}>
+              <div>
+                <span style={{ fontSize: '0.725rem', color: '#c29b47', fontWeight: 700, fontFamily: 'Montserrat, sans-serif', textTransform: 'uppercase' }}>
+                  {selectedEventoModal.tipoEvento} • FOLIO: {selectedEventoModal.folio}
+                </span>
+                <h3 className="formal-header-font" style={{ fontSize: '1.3rem', color: '#ffffff', marginTop: '2px' }}>
+                  {selectedEventoModal.titulo}
+                </h3>
+              </div>
+              <button onClick={() => setSelectedEventoModal(null)} style={{ background: 'transparent', border: 'none', color: '#94a3b8', fontSize: '1.2rem', cursor: 'pointer' }}>✕</button>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', background: '#0b0e14', padding: '1rem', borderRadius: '6px', border: '1px solid #263347', marginBottom: '1.25rem' }}>
+              <div>
+                <span style={{ fontSize: '0.7rem', color: '#94a3b8', textTransform: 'uppercase', fontFamily: 'Montserrat, sans-serif' }}>Fecha y Hora</span>
+                <div style={{ fontSize: '0.9rem', color: '#ffffff', fontWeight: 600 }}>{selectedEventoModal.fecha} a las {selectedEventoModal.hora}</div>
+              </div>
+              <div>
+                <span style={{ fontSize: '0.7rem', color: '#94a3b8', textTransform: 'uppercase', fontFamily: 'Montserrat, sans-serif' }}>Sucursal / Agencia</span>
+                <div style={{ fontSize: '0.9rem', color: '#c29b47', fontWeight: 600 }}>{selectedEventoModal.agencia}</div>
+              </div>
+            </div>
+
+            <div style={{ marginBottom: '1.25rem' }}>
+              <span style={{ fontSize: '0.725rem', color: '#94a3b8', textTransform: 'uppercase', fontFamily: 'Montserrat, sans-serif' }}>Sede / Instancia</span>
+              <div style={{ fontSize: '0.85rem', color: '#ffffff', marginTop: '2px' }}>📍 {selectedEventoModal.lugar}</div>
+            </div>
+
+            <div style={{ marginBottom: '1.5rem' }}>
+              <span style={{ fontSize: '0.725rem', color: '#94a3b8', textTransform: 'uppercase', fontFamily: 'Montserrat, sans-serif' }}>Detalles de la Actuación</span>
+              <p style={{ fontSize: '0.85rem', color: '#cbd5e1', background: '#19212d', padding: '10px 14px', borderRadius: '6px', border: '1px solid #263347', marginTop: '4px', lineHeight: 1.5 }}>
+                {selectedEventoModal.detalles}
+              </p>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
+                Abogado: <strong style={{ color: '#ffffff' }}>{selectedEventoModal.abogado}</strong>
+              </div>
+
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button type="button" onClick={() => setSelectedEventoModal(null)} style={{ background: 'transparent', border: '1px solid #334155', color: '#cbd5e1', padding: '8px 14px', borderRadius: '4px', cursor: 'pointer', fontSize: '0.775rem' }}>Cerrar</button>
+                <button 
+                  type="button" 
+                  onClick={() => {
+                    const foundTicket = tickets.find(t => t.folio === selectedEventoModal.folio);
+                    if (foundTicket) {
+                      setSelectedTicket(foundTicket);
+                      setCurrentSection('expedientes');
+                    } else {
+                      alert(`Abriendo expediente del folio ${selectedEventoModal.folio}...`);
+                    }
+                    setSelectedEventoModal(null);
+                  }} 
+                  style={{ background: '#c29b47', border: 'none', color: '#0b0e14', padding: '8px 18px', borderRadius: '4px', fontWeight: 700, cursor: 'pointer', fontSize: '0.775rem' }}
+                >
+                  Abrir Expediente
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* MODAL DAR DE ALTA USUARIO */}
       {showAddUserModal && (
