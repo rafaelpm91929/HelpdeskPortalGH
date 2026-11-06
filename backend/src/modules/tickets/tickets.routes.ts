@@ -39,7 +39,7 @@ export async function crearNotificaciones(ticketId: number, agenciaId: number, m
         const nombreAgencia = agenciaRes.recordset.length > 0 ? agenciaRes.recordset[0].nombre : 'Helpdesk';
 
         // Enlace del portal estático para atender la solicitud (Soporte HTTPS)
-        const linkPortal = 'https://helpdesksmartsolutions.mooo.com:5173/';
+        const linkPortal = 'https://helpdesksmartsolutions.mooo.com';
 
         // Seleccionamos tanto el ID como el email de los admins y superadmins de la agencia
         const adminsResult = await pool.request()
@@ -324,7 +324,7 @@ router.get('/stats', authMiddleware, async (req: any, res: any) => {
                     FROM tbl_mensajes m
                     INNER JOIN tbl_usuarios u ON m.usuario_id = u.id
                     WHERE m.ticket_id = t.id AND u.rol IN ('admin', 'superadmin', 'agente')
-                ) as fecha_primera_respuesta
+                ) as fecha_primera_respuesta, t.fecha_actualizacion, t.numero_secuencial
             FROM tbl_tickets t
             LEFT JOIN tbl_usuarios a ON t.agente_id = a.id
             LEFT JOIN tbl_agencias ag ON t.agencia_id = ag.id
@@ -1452,7 +1452,7 @@ router.post('/:id/responder', authMiddleware, uploadAdmin.array('archivos', 5), 
                                                             <table cellpadding="0" cellspacing="0" border="0">
                                                                 <tr>
                                                                     <td bgcolor="#2563eb" align="center" style="background-color: #2563eb; border-radius: 6px;">
-                                                                        <a href="https://helpdesksmartsolutions.mooo.com:5173/" target="_blank" style="display: block; font-family: 'Segoe UI', Arial, sans-serif; font-size: 15px; font-weight: bold; color: #ffffff; text-decoration: none; padding: 14px 32px; border: 1px solid #2563eb; border-radius: 6px;">
+                                                                        <a href="https://helpdesksmartsolutions.mooo.com" target="_blank" style="display: block; font-family: 'Segoe UI', Arial, sans-serif; font-size: 15px; font-weight: bold; color: #ffffff; text-decoration: none; padding: 14px 32px; border: 1px solid #2563eb; border-radius: 6px;">
                                                                             Ver Respuesta
                                                                         </a>
                                                                     </td>
@@ -1475,7 +1475,7 @@ router.post('/:id/responder', authMiddleware, uploadAdmin.array('archivos', 5), 
                             </tr>
                         </table>
                     `;
-                    sendNotificationEmail(email, `Helpdesk: Nueva Respuesta`, emailHtml, titulo, mensajeNotif, 'Helpdesk', 'https://helpdesksmartsolutions.mooo.com:5173/').catch(err => {
+                    sendNotificationEmail(email, `Helpdesk: Nueva Respuesta`, emailHtml, titulo, mensajeNotif, 'Helpdesk', 'https://helpdesksmartsolutions.mooo.com').catch(err => {
                         writeLog(`[POST /responder] ❌ Error asíncrono al enviar email al cliente: ${err.message}`);
                     });
                 }

@@ -7,6 +7,7 @@ import { Usuarios } from '../components/Usuarios';
 import { logout } from '../utils/logout';
 import { PUBLIC_IP, IMAGE_BASE_URL, FRONTEND_BASE_URL, API_BASE_URL } from '../config';
 import { AdminTickets } from '../components/AdminTickets';
+import { AdminStats } from '../components/AdminStats';
 
 // ============================================
 // TIPOS
@@ -1375,76 +1376,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
                 {/* ESTADÍSTICAS */}
                 {activeTab === 'estadisticas' && (
-                    <div style={{
-                        backgroundColor: colores.tarjeta,
-                        color: colores.texto,
-                        padding: '20px',
-                        borderRadius: '8px',
-                        boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
-                        border: '1px solid ' + colores.borde
-                    }}>
-                        <h3 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '16px' }}>
-                            📈 Estadísticas Avanzadas
-                        </h3>
-                        <p style={{ color: colores.textoMuted }}>
-                            Próximamente: gráficas y estadísticas detalladas de tickets.
-                        </p>
-                        <div style={{
-                            display: 'grid',
-                            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-                            gap: '16px',
-                            marginTop: '16px'
-                        }}>
-                            <div style={{
-                                backgroundColor: colores.hoverBg,
-                                border: '1px solid ' + colores.borde,
-                                padding: '16px',
-                                borderRadius: '8px',
-                                textAlign: 'center'
-                            }}>
-                                <p style={{ fontSize: '24px', fontWeight: 'bold', color: colores.primario }}>
-                                    {estadisticas.total}
-                                </p>
-                                <p style={{ fontSize: '13px', color: colores.textoMuted }}>Total</p>
-                            </div>
-                            <div style={{
-                                backgroundColor: colores.hoverBg,
-                                border: '1px solid ' + colores.borde,
-                                padding: '16px',
-                                borderRadius: '8px',
-                                textAlign: 'center'
-                            }}>
-                                <p style={{ fontSize: '24px', fontWeight: 'bold', color: '#f59e0b' }}>
-                                    {estadisticas.pendientes}
-                                </p>
-                                <p style={{ fontSize: '13px', color: colores.textoMuted }}>Pendientes</p>
-                            </div>
-                            <div style={{
-                                backgroundColor: colores.hoverBg,
-                                border: '1px solid ' + colores.borde,
-                                padding: '16px',
-                                borderRadius: '8px',
-                                textAlign: 'center'
-                            }}>
-                                <p style={{ fontSize: '24px', fontWeight: 'bold', color: '#3b82f6' }}>
-                                    {estadisticas.abiertos}
-                                </p>
-                                <p style={{ fontSize: '13px', color: colores.textoMuted }}>Abiertos</p>
-                            </div>
-                            <div style={{
-                                backgroundColor: colores.hoverBg,
-                                border: '1px solid ' + colores.borde,
-                                padding: '16px',
-                                borderRadius: '8px',
-                                textAlign: 'center'
-                            }}>
-                                <p style={{ fontSize: '24px', fontWeight: 'bold', color: '#10b981' }}>
-                                    {estadisticas.resueltos}
-                                </p>
-                                <p style={{ fontSize: '13px', color: colores.textoMuted }}>Resueltos</p>
-                            </div>
-                        </div>
-                    </div>
+                    <AdminStats 
+                        agenciaId={agenciaId || agenciaInfo?.id || user?.agencia_id || 0}
+                        colores={colores}
+                        isDarkMode={isDarkMode}
+                        refreshTrigger={refreshTicketsTrigger}
+                    />
                 )}
 
                 {/* CONFIGURACIÓN */}
