@@ -163,6 +163,145 @@ export class AuthController {
         }
     }
 
+    // ✅ Crear usuarios masivamente desde Excel (admin o superadmin)
+    static async createBulkUsers(req: any, res: Response) {
+        try {
+            const { agencia_id, usuarios } = req.body;
+            const currentUser = req.user;
+
+            if (!currentUser || (currentUser.rol !== 'admin' && currentUser.rol !== 'superadmin')) {
+                return res.status(403).json({
+                    success: false,
+                    error: 'No tienes permiso para crear usuarios'
+                });
+            }
+
+            const agenciaIdNum = parseInt(agencia_id, 10);
+            if (isNaN(agenciaIdNum)) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'ID de agencia inválido'
+                });
+            }
+
+            if (currentUser.rol === 'admin' && currentUser.agenciaId !== agenciaIdNum) {
+                return res.status(403).json({
+                    success: false,
+                    error: 'No puedes crear usuarios en otra agencia'
+                });
+            }
+
+            if (!Array.isArray(usuarios) || usuarios.length === 0) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'No se proporcionaron usuarios para registrar'
+                });
+            }
+
+            const pool = await getConnection();
+            const creados: any[] = [];
+            const errores: { fila?: number; email?: string; nombre?: string; error: string }[] = [];
+
+            for (let i = 0; i < usuarios.length; i++) {
+                const u = usuarios[i];
+                const nombre = String(u.nombre || '').trim();
+                const apellido = String(u.apellido || '').trim();
+                const email = String(u.email || '').trim().toLowerCase();
+                const password = String(u.password || '').trim();
+                const telefono = String(u.telefono || '').trim();
+                const puesto = String(u.puesto || '').trim();
+                const area = String(u.area || '').trim();
+                const fila = u.fila || (i + 1);
+
+                if (!nombre || !apellido || !email || !password) {
+                    errores.push({
+                        fila,
+                        email: email || 'Sin correo',
+                        nombre: `${nombre} ${apellido}`.trim() || `Fila ${fila}`,
+                        error: 'Faltan campos obligatorios (Nombre, Apellido, Email o Contraseña)'
+                    });
+                    continue;
+                }
+
+                if (password.length < 6) {
+                    errores.push({
+                        fila,
+                        email,
+                        nombre: `${nombre} ${apellido}`,
+                        error: 'La contraseña debe tener al menos 6 caracteres'
+                    });
+                    continue;
+                }
+
+                try {
+                    const existingUser = await UsuarioModel.findByEmail(email, agenciaIdNum);
+                    if (existingUser) {
+                        errores.push({
+                            fila,
+                            email,
+                            nombre: `${nombre} ${apellido}`,
+                            error: 'El correo electrónico ya está registrado en esta agencia'
+                        });
+                        continue;
+                    }
+
+                    // Si el área viene especificada y no existe aún en tbl_areas de la agencia, la registramos
+                    if (area) {
+                        const areaCheck = await pool.request()
+                            .input('agencia_id', agenciaIdNum)
+                            .input('nombre', area)
+                            .query('SELECT id FROM tbl_areas WHERE agencia_id = @agencia_id AND LOWER(nombre) = LOWER(@nombre)');
+                        if (areaCheck.recordset.length === 0) {
+                            await pool.request()
+                                .input('agencia_id', agenciaIdNum)
+                                .input('nombre', area)
+                                .input('descripcion', 'Área creada desde importación Excel')
+                                .query('INSERT INTO tbl_areas (agencia_id, nombre, descripcion) VALUES (@agencia_id, @nombre, @descripcion)');
+                        }
+                    }
+
+                    const result = await AuthService.register({
+                        nombre,
+                        apellido,
+                        email,
+                        password,
+                        agencia_id: agenciaIdNum,
+                        rol: 'usuario',
+                        telefono,
+                        puesto,
+                        area
+                    });
+
+                    creados.push(result.user);
+                } catch (err: any) {
+                    errores.push({
+                        fila,
+                        email,
+                        nombre: `${nombre} ${apellido}`,
+                        error: err.message || 'Error al registrar usuario'
+                    });
+                }
+            }
+
+            res.status(200).json({
+                success: true,
+                data: {
+                    creadosCount: creados.length,
+                    erroresCount: errores.length,
+                    creados,
+                    errores
+                },
+                message: `Se registraron ${creados.length} usuario(s) correctamente`
+            });
+        } catch (error: any) {
+            console.error('❌ Error en createBulkUsers:', error);
+            res.status(500).json({
+                success: false,
+                error: error.message
+            });
+        }
+    }
+
     // ✅ Obtener usuarios de una agencia (solo admin)
     static async getUsers(req: any, res: Response) {
         try {

@@ -33,6 +33,9 @@ router.get('/users/all', authMiddleware, AuthController.getAllAdmins);
 // 🔥 Crear usuario (admin o superadmin)
 router.post('/users', authMiddleware, AuthController.createUser);
 
+// 🔥 Crear usuarios de forma masiva (Excel)
+router.post('/users/bulk', authMiddleware, AuthController.createBulkUsers);
+
 // 🔥 ACTUALIZAR usuario (admin o superadmin)
 router.put('/users/:id', authMiddleware, AuthController.updateUser);
 
